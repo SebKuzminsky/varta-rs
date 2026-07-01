@@ -4,3 +4,4 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+zencan-client = { git = "https://github.com/mcbridejc/zencan.git", features = ["socketcan"] }

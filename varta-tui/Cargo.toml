@@ -5,5 +5,7 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4.5.37", features = ["derive"] }
-zencan-client = { git = "https://github.com/mcbridejc/zencan.git", features = ["socketcan"] }
 tokio = { version = "1.45.0", features = ["net", "macros", "rt-multi-thread"] }
+zencan-client = { git = "https://github.com/mcbridejc/zencan.git" }
+
+varta-easyblade = { path = "../varta-easyblade" }
