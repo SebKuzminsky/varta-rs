@@ -11,10 +11,7 @@ struct Args {
 async fn main() {
     let args = Args::parse();
 
-    let (tx, rx) = zencan_client::open_socketcan(&args.can_interface).expect(&format!(
-        "Failed to open CAN interface {}",
-        args.can_interface
-    ));
-    let mut varta = varta_easyblade::Varta::new(tx, rx);
+    let mut varta = varta_easyblade::Varta::new(&args.can_interface);
+
     varta.scan().await;
 }

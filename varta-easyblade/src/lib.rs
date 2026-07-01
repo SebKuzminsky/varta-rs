@@ -1,20 +1,11 @@
-use zencan_client::common::traits::AsyncCanSender;
-
-pub struct Varta<S>
-where
-    S: AsyncCanSender + Send + Sync,
-{
-    canbus_manager: zencan_client::BusManager<S>,
+pub struct Varta {
+    canbus_manager: zencan_client::BusManager<zencan_client::common::SocketCanSender>,
 }
 
-impl<S> Varta<S>
-where
-    S: AsyncCanSender + Send + Sync,
-{
-    pub fn new(
-        tx: S,
-        rx: impl zencan_client::common::traits::AsyncCanReceiver + Sync + 'static,
-    ) -> Self {
+impl Varta {
+    pub fn new(canbus_interface: &str) -> Self {
+        let (tx, rx) = zencan_client::open_socketcan(canbus_interface)
+            .unwrap_or_else(|e| panic!("Failed to open CAN interface {}: {}", canbus_interface, e));
         Self {
             canbus_manager: zencan_client::BusManager::new(tx, rx),
         }
