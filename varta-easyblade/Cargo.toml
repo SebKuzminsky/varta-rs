@@ -3,7 +3,18 @@ name = "varta-easyblade"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+std = []
+default = [ "std" ]
+
+[build-dependencies]
+anyhow = "1.0.103"
+dbc-codegen = { git = "https://github.com/oxibus/dbc-codegen.git" }
+
 [dependencies]
+bitvec = "1.0.1"
+embedded-can = "0.4.1"
 num_enum = "0.7.6"
+socketcan = { version = "3.6.2", features = ["tokio"] }
 thiserror = "2.0.18"
 zencan-client = { git = "https://github.com/mcbridejc/zencan.git", features = ["socketcan"] }

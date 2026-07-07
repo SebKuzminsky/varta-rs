@@ -10,6 +10,8 @@ pub struct VartaEasyblade {
     pub hardware_version: Option<String>,
     pub last_seen: std::time::Instant,
     // pub nmt_state: Option<NmtState>,
+    pub voltage: Option<f32>,
+    pub current: Option<f32>,
 }
 
 /// Device Error values logged by the Varta Easyblade module in SDO 0x2018

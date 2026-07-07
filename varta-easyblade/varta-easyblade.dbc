@@ -1,0 +1,1016 @@
+VERSION "1.0"
+NS_ : 
+BS_:
+BU_:
+
+BO_ 385 PACK01_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 641 PACK01_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 897 PACK01_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1153 PACK01_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 386 PACK02_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 642 PACK02_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 898 PACK02_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1154 PACK02_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_16_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 387 PACK03_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 643 PACK03_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 899 PACK03_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1155 PACK03_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 388 PACK04_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 644 PACK04_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 900 PACK04_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1156 PACK04_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 389 PACK05_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 645 PACK05_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 901 PACK05_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1157 PACK05_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 390 PACK06_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 646 PACK06_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 902 PACK06_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1158 PACK06_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 391 PACK07_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 647 PACK07_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 903 PACK07_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1159 PACK07_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 392 PACK08_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 648 PACK08_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 904 PACK08_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1160 PACK08_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 393 PACK09_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 649 PACK09_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 905 PACK09_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1161 PACK09_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 394 PACK10_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 650 PACK10_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 906 PACK10_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1162 PACK10_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 395 PACK11_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 651 PACK11_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 907 PACK11_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1163 PACK11_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 396 PACK12_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 652 PACK12_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 908 PACK12_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1164 PACK12_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 397 PACK13_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 653 PACK13_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 909 PACK13_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1165 PACK13_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 398 PACK14_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 654 PACK14_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 910 PACK14_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1166 PACK14_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 399 PACK15_PackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 655 PACK15_Info2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ ChargeVoltageReq : 32|16@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ ChargeCurrentReq : 48|16@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 911 PACK15_Info3: 6 Vector
+ SG_ BatteryDesignCap : 0|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryFullCap : 16|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ BatteryRemCap : 32|16@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1167 PACK15_MSGS: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
+
+
+BO_ 411 MasterPackInfo1: 8 Vector
+ SG_ Voltage : 0|32@1+ (0.001,0) [0|0] "V" Vector__XXX
+ SG_ Current : 32|32@1- (0.001,0) [0|0] "A" Vector__XXX
+
+BO_ 612 MasterChargeControl:  8 Vector
+  SG_ ChargeControl: 0|8@1+ (1,0) [0|0] "" Vector__XXX
+  SG_ SOC: 8|8@1+ (1,0) [0|0] "%" Vector__XXX
+  SG_ ChargeVoltageRequest: 24|16@1+ (0.00390625,0) [0|0] "V" Vector__XXX
+  SG_ ChargeCurrentRequest: 40|16@1+ (0.0625,0) [0|0] "A" Vector__XXX
+  SG_ BatteryStatus: 56|8@1+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 667 MasterPackInfo2: 8 Vector
+ SG_ maxBatteryFetTemp : 0|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ maxBatteryCellTemp : 16|16@1- (0.1,0) [0|0] "C" Vector__XXX
+ SG_ masterDesignCapacity : 32|32@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 923 MasterPackInfo3: 8 Vector
+ SG_ masterFullChargeCapacity : 0|32@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+ SG_ masterRemainingCapacity : 32|32@1+ (0.001,0) [0|0] "Ah" Vector__XXX
+
+BO_ 1179 MasterErrorMsgs: 8 Vector
+ SG_ InfoBit_0_Empty : 0|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_1_AlmostEmpty : 1|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_2_CHGFETClosed : 2|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_3_DSGFETClosed : 3|1@1+ (1,0) [0|0] "mode" Vector__XXX
+ SG_ InfoBit_4_BypassFETOn: 4|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ InfoBit_6_FullyCharged : 6|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_0_LowVoltage: 16|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_1_LowSOC: 17|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_2_ReserveSOC : 18|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_3_OverOrUnderTempDischarge: 19|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_4_OverOrUnderTempCharge : 20|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_7_MaxChargeConditionRecuperation : 23|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_11_CanNetworkFailure : 27|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_12_SetDeactivationEnable : 28|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_14_SetNodeIDProcessEnable : 30|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ WarnBit_15_Unknown : 31|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_0_ErrorLockFlagDischarge : 32|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_1_ErrorLockFlagCharge : 33|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_2_OverChargeConditionRecuperation : 34|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_3_ShortcircuitChargeAlarm : 35|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_4_ShortcircuitDischargeAlarm : 36|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_5_MaxVoltageAlarm : 37|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_6_DischargeFETError : 38|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_7_ChargeFETError : 39|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_8_MaxChargeCurrentAlarm : 40|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_9_MaxDischargeCurrentAlarm : 41|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_10_UnderChargeAlarm : 42|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_11_OverChargeAlarm : 43|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_12_OverUnderTempCharge : 44|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_13_OverUnderTempDischarge : 45|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_14_ModuleDefect : 46|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ErrorBit_15_Uknown: 47|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_0_ChargeVoltageEnabled : 48|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_1_ChargeVoltageKeepPower : 49|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_4_ChargeCurrentEnable : 52|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_5_ChargeCurrentKeepPower : 53|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_6_ChargeCurrentLowTempRange : 54|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_7_ChargeCurrentNormalTempRange : 55|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_8_ChargeCurrentHighTempRange : 56|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_10_ChargeMaxChargeCurrentRequest : 58|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_11_ChargeMaxChargeCellVoltageRequest : 59|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_12_ChargeMasterSetChargerOutputOff : 60|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_13_ChargeFETDisableTempRangeCells : 61|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_14_MasterChargerControlChargingReady : 62|1@1+ (1,0) [0|0] "" Vector__XXX
+ SG_ ChargeBit_15_ChargerSupplyConditionsReady : 63|1@1+ (1,0) [0|0] "" Vector__XXX
