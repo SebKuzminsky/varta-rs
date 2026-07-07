@@ -8,10 +8,15 @@ struct Args {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     let mut varta = varta_easyblade::Varta::new(&args.can_interface);
 
-    varta.scan().await;
+    let varta_easyblades = varta.scan().await?;
+    for varta_easyblade in &varta_easyblades {
+        println!("{:?}", varta_easyblade);
+    }
+
+    Ok(())
 }
