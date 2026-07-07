@@ -900,7 +900,7 @@ dependencies = [
 [[package]]
 name = "zencan-client"
 version = "0.0.4"
-source = "git+https://github.com/mcbridejc/zencan.git#def4f72ff18d5b5849020ca39cd8af60a09bff82"
+source = "git+https://github.com/mcbridejc/zencan.git#e05de88e75b965043e2a68c640951555f3a75ccb"
 dependencies = [
  "crc16",
  "futures",
@@ -918,7 +918,7 @@ dependencies = [
 [[package]]
 name = "zencan-common"
 version = "0.0.4"
-source = "git+https://github.com/mcbridejc/zencan.git#def4f72ff18d5b5849020ca39cd8af60a09bff82"
+source = "git+https://github.com/mcbridejc/zencan.git#e05de88e75b965043e2a68c640951555f3a75ccb"
 dependencies = [
  "arbitrary-int",
  "chrono",
