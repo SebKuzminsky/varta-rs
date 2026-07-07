@@ -30,6 +30,24 @@ impl Varta {
         }
         Ok(varta_easyblades)
     }
+
+    pub async fn read_device_error_history(&self, node: &VartaEasyblade) -> Result<(), Error> {
+        let mut sdo_client = self.canbus_manager.sdo_client(node.node_id);
+        let highest_subindex = sdo_client.read_u8(0x2018, 0x00).await?;
+        assert_eq!(highest_subindex, 16);
+
+        for sub_index in 1..=highest_subindex {
+            let val = sdo_client.read_u8(0x2018, sub_index).await?;
+            let e: varta_easyblade::DeviceError = match varta_easyblade::DeviceError::try_from(val)
+            {
+                Ok(e) => e,
+                Err(_) => varta_easyblade::DeviceError::Unknown,
+            };
+            println!("2018.{sub_index:02x}: {val:02x} ({e:?})");
+        }
+
+        Ok(())
+    }
 }
 
 // Private API

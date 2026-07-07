@@ -16,6 +16,7 @@ async fn main() -> anyhow::Result<()> {
     let varta_easyblades = varta.scan().await?;
     for varta_easyblade in &varta_easyblades {
         println!("{:?}", varta_easyblade);
+        varta.read_device_error_history(varta_easyblade).await?;
     }
 
     Ok(())

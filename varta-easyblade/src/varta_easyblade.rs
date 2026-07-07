@@ -1,3 +1,5 @@
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+
 #[derive(Debug, Clone)]
 pub struct VartaEasyblade {
     pub node_id: u8,
@@ -8,4 +10,81 @@ pub struct VartaEasyblade {
     pub hardware_version: Option<String>,
     pub last_seen: std::time::Instant,
     // pub nmt_state: Option<NmtState>,
+}
+
+/// Device Error values logged by the Varta Easyblade module in SDO 0x2018
+/// (DeviceError History Values).
+#[repr(u8)]
+#[derive(Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+pub enum DeviceError {
+    None = 0x00,
+
+    CellOverTempWhileCharging = 0x01,
+    CellUnderTempWhileCharging = 0x02,
+    ChargeFetOverTempWhileCharging = 0x03,
+    CellOverTempWhileDischarging = 0x04,
+    CellUnderTempWhileDischarging = 0x05,
+    DischargeFetOverTempWhileDischarging = 0x06,
+    NotUsed0x07 = 0x07,
+    CellOverVoltageWhileCharging = 0x08,
+    CellUnderVoltageWhileDischarging = 0x09,
+    CellVoltageTooLow = 0x0a,
+    SevereCellUnbalance = 0x0b,
+    NotUsed0x0c = 0x0c,
+    PackOverVoltage = 0x0d,
+    NotUsed0x0e = 0x0e,
+    VoltageSumDifference = 0x0f,
+    ModuleUnderVoltage = 0x10,
+    NotUsed0x11 = 0x11,
+    NotUsed0x12 = 0x12,
+    NotUsed0x13 = 0x13,
+    NotUsed0x14 = 0x14,
+    ShortCircuitWhileCharging = 0x15,
+    OverCurrent65AWhileCharging = 0x16,
+    OverCurrent85AWhileCharging = 0x17,
+    NotUsed0x18 = 0x18,
+    ShortCircuitWhileDischarging = 0x19,
+    OverCurrent65AWhileDischarging = 0x1a,
+    OverCurrent85AWhileDischarging = 0x1b,
+    OverCurrentWhileDischarging = 0x1c,
+    CurrentMeasurementError = 0x1d,
+    NotUsed0x1e = 0x1e,
+    NotUsed0x1f = 0x1f,
+    NotUsed0x20 = 0x20,
+    NotUsed0x21 = 0x21,
+    NotUsed0x22 = 0x22,
+    NotUsed0x23 = 0x23,
+    NotUsed0x24 = 0x24,
+    NotUsed0x25 = 0x25,
+    NotUsed0x26 = 0x26,
+    NotUsed0x27 = 0x27,
+    NotUsed0x28 = 0x28,
+    AdcMinScale = 0x29,
+    AdcMaxScale = 0x2a,
+    CellTempSensorHighFailure = 0x2b,
+    CellTempSensorLowFailure = 0x2c,
+    FetTempSensorHighFailure = 0x2d,
+    FetTempSensorLowFailure = 0x2e,
+    NotUsed0x2f = 0x2f,
+    NotUsed0x30 = 0x30,
+    NotUsed0x31 = 0x31,
+    CurrentSensorHighFailure = 0x32,
+    NotUsed0x33 = 0x33,
+    CurrentSensorHighFailureWhileDischarging = 0x34,
+    DischargeFetShorted = 0x35,
+    ChargeFetShorted = 0x36,
+    NotUsed0x37 = 0x37,
+    TempDischargeErrorLock = 0x38,
+    TempChargeErrorLock = 0x39,
+    OverCurrentWhileRecuperating = 0x3a,
+    CellOverVoltageWhileRecuperating = 0x3b,
+    V24UnderVoltage = 0x3c,
+    V24OverVoltage = 0x3d,
+    CanNodeIdNotAssigned = 0x3e,
+    CanNodeIdDuplicate = 0x3f,
+    ParameterConfigError = 0x40,
+
+    AnalogFrontEndFailure = 0x43,
+
+    Unknown = 0xff,
 }
