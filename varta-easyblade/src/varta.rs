@@ -49,6 +49,20 @@ impl Varta {
 
         Ok(())
     }
+
+    pub async fn read_cell_voltages(&self, node: &VartaEasyblade) -> Result<Vec<f32>, Error> {
+        let mut sdo_client = self.canbus_manager.sdo_client(node.node_id);
+        let highest_subindex = sdo_client.read_u8(0x2100, 0x00).await?;
+        assert_eq!(highest_subindex, 16);
+
+        let mut cell_voltages: Vec<f32> = vec![];
+        for sub_index in 1..=14 {
+            let val = sdo_client.read_u32(0x2100, sub_index).await?;
+            cell_voltages.push((val as f32) / 1000.0);
+        }
+
+        Ok(cell_voltages)
+    }
 }
 
 // Private API
