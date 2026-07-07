@@ -1,3 +1,4 @@
+use crate::varta_easyblade;
 use crate::Error;
 use crate::VartaEasyblade;
 
