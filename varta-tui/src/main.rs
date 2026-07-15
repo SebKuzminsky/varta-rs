@@ -50,7 +50,7 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
     let master = &varta.master;
     if master.last_seen.is_some() {
         let info = format!(
-            "V: {:.2}  I: {:.2}  SOC: {}%\n\
+            "V: {:.2}  I: {:.2}  SOC: {:.4}%\n\
              Tfet: {:.1}°C  Tcell: {:.1}°C\n\
              Req: {:.2}V / {:.2}A  Status: {}",
             master.voltage.unwrap_or(0.0),

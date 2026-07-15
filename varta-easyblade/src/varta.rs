@@ -202,7 +202,8 @@ impl Varta {
             },
 
             varta_easyblade_can_messages::Messages::MasterChargeControl(master_charge_control) => {
-                self.master.soc = Some(master_charge_control.soc());
+                // Ignore the SoC field, we compute it to higher fidelity from reported
+                // remaining/full capacity.
                 self.master.charge_voltage_request =
                     Some(master_charge_control.charge_voltage_request());
                 self.master.charge_current_request =
@@ -220,10 +221,15 @@ impl Varta {
             },
 
             varta_easyblade_can_messages::Messages::MasterPackInfo3(master_packinfo3) => {
-                self.master.master_full_charge_capacity =
-                    Some(master_packinfo3.master_full_charge_capacity());
-                self.master.master_remaining_capacity =
-                    Some(master_packinfo3.master_remaining_capacity());
+                let full = master_packinfo3.master_full_charge_capacity();
+                let remaining = master_packinfo3.master_remaining_capacity();
+                self.master.master_full_charge_capacity = Some(full);
+                self.master.master_remaining_capacity = Some(remaining);
+                self.master.soc = if full > 0.0 {
+                    Some((remaining / full) * 100.0)
+                } else {
+                    None
+                };
                 self.master.last_seen = Some(std::time::SystemTime::now());
             },
 

@@ -4,7 +4,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 pub struct MasterInfo {
     pub voltage: Option<f32>,
     pub current: Option<f32>,
-    pub soc: Option<u8>,
+    pub soc: Option<f32>,
     pub charge_voltage_request: Option<f32>,
     pub charge_current_request: Option<f32>,
     pub battery_status: Option<u8>,
