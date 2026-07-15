@@ -8,7 +8,7 @@ pub struct VartaEasyblade {
     // pub device_name: Option<String>,
     pub software_version: Option<String>,
     pub hardware_version: Option<String>,
-    pub last_seen: std::time::Instant,
+    pub last_seen: std::time::SystemTime,
     // pub nmt_state: Option<NmtState>,
     pub voltage: Option<f32>,
     pub current: Option<f32>,

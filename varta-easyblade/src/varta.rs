@@ -210,7 +210,7 @@ impl Varta {
                 serial_number,
                 software_version: n.software_version,
                 hardware_version: n.hardware_version,
-                last_seen: n.last_seen,
+                last_seen: std::time::SystemTime::now(),
                 voltage: None,
                 current: None,
             };
@@ -273,6 +273,7 @@ impl Varta {
         };
         easyblade.voltage = Some(voltage);
         easyblade.current = Some(current);
+        easyblade.last_seen = std::time::SystemTime::now();
         Ok(())
     }
 }
