@@ -425,11 +425,15 @@ impl Varta {
         Ok(())
     }
 
-    pub async fn read_device_error_history(&self, node: &VartaEasyblade) -> Result<(), Error> {
+    pub async fn read_device_error_history(
+        &self,
+        node: &VartaEasyblade,
+    ) -> Result<Vec<varta_easyblade::DeviceError>, Error> {
         let mut sdo_client = self.canbus_manager.sdo_client(node.node_id);
         let highest_subindex = sdo_client.read_u8(0x2018, 0x00).await?;
         assert_eq!(highest_subindex, 16);
 
+        let mut errors = Vec::new();
         for sub_index in 1..=highest_subindex {
             let val = sdo_client.read_u8(0x2018, sub_index).await?;
             let e: varta_easyblade::DeviceError = match varta_easyblade::DeviceError::try_from(val)
@@ -437,10 +441,10 @@ impl Varta {
                 Ok(e) => e,
                 Err(_) => varta_easyblade::DeviceError::Unknown,
             };
-            println!("2018.{sub_index:02x}: {val:02x} ({e:?})");
+            errors.push(e);
         }
 
-        Ok(())
+        Ok(errors)
     }
 
     /// Returns the easyblade at the given index (0-based) among active modules.

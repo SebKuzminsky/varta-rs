@@ -5,7 +5,9 @@ use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 use ratatui::prelude::*;
+use ratatui::text::Text;
 use ratatui::widgets::{Block, Paragraph, Row, Table, Wrap};
+use std::collections::HashMap;
 use std::io::stdout;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -37,13 +39,23 @@ fn format_last_seen(last_seen: SystemTime) -> String {
         .to_string()
 }
 
-fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
+fn draw_frame(
+    f: &mut Frame,
+    varta: &varta_easyblade::Varta,
+    selected: usize,
+    error_history: &HashMap<usize, Vec<varta_easyblade::DeviceError>>,
+) {
     let area = f.area();
 
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(3), Constraint::Min(5), Constraint::Min(3)])
         .split(area);
+
+    let bottom_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
+        .split(layout[2]);
 
     let top_block = Block::bordered().title(" Master Info ");
     let top_inner = top_block.inner(layout[0]);
@@ -119,8 +131,9 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
 
     f.render_widget(table, middle_inner);
 
-    let bottom_block = Block::bordered().title(" SDO Info ");
-    let bottom_inner = bottom_block.inner(layout[2]);
+    let sdo_block = Block::bordered().title(" SDO Info ");
+    let sdo_inner = sdo_block.inner(bottom_layout[0]);
+    f.render_widget(&sdo_block, bottom_layout[0]);
     if let Some(eb) = varta.get_easyblade_by_index(selected) {
         let info = format!(
             "Node ID:          {}\n\
@@ -131,7 +144,7 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
              Current:          {}\n\
              SOC:              {}\n\
              SOH:              {}\n\
-             Last Seen:        {}\n",
+             Last Seen:        {}",
             eb.node_id,
             eb.serial_number,
             eb.software_version.as_deref().unwrap_or("N/A"),
@@ -145,10 +158,29 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
             format_last_seen(eb.last_seen),
         );
         let text = Paragraph::new(info).wrap(Wrap { trim: true });
-        f.render_widget(text, bottom_inner);
+        f.render_widget(text, sdo_inner);
     } else {
         let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
-        f.render_widget(text, bottom_inner);
+        f.render_widget(text, sdo_inner);
+    }
+
+    let error_block = Block::bordered().title(" Error History ");
+    let error_inner = error_block.inner(bottom_layout[1]);
+    f.render_widget(&error_block, bottom_layout[1]);
+    if let Some(errors) = error_history.get(&selected) {
+        let error_text: Text = errors
+            .iter()
+            .enumerate()
+            .map(|(i, e)| format!("[{:#03}] {:?}\n", i + 1, e))
+            .collect();
+        let text = Paragraph::new(error_text).wrap(Wrap { trim: true });
+        f.render_widget(text, error_inner);
+    } else if varta.get_easyblade_by_index(selected).is_some() {
+        let text = Paragraph::new("No error history").wrap(Wrap { trim: true });
+        f.render_widget(text, error_inner);
+    } else {
+        let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
+        f.render_widget(text, error_inner);
     }
 }
 
@@ -172,6 +204,8 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let mut selected = 0;
+    let mut prev_selected = usize::MAX;
+    let mut error_history = HashMap::<usize, Vec<varta_easyblade::DeviceError>>::new();
     let mut expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
 
     loop {
@@ -180,7 +214,7 @@ async fn main() -> anyhow::Result<()> {
             selected = count.saturating_sub(1);
         }
 
-        terminal.draw(|f| draw_frame(f, &varta, selected))?;
+        terminal.draw(|f| draw_frame(f, &varta, selected, &error_history))?;
 
         tokio::select! {
             result = varta.process_socketcan_msg() => {
@@ -206,6 +240,15 @@ async fn main() -> anyhow::Result<()> {
                             selected += 1;
                         }
                         _ => {}
+                    }
+                }
+
+                if selected != prev_selected {
+                    prev_selected = selected;
+                    if let Some(eb) = varta.get_easyblade_by_index(selected)
+                        && let Ok(errors) = varta.read_device_error_history(eb).await
+                    {
+                        error_history.insert(selected, errors);
                     }
                 }
             }

@@ -2,6 +2,7 @@ pub mod varta;
 pub use varta::Varta;
 
 pub mod varta_easyblade;
+pub use varta_easyblade::DeviceError;
 pub use varta_easyblade::MasterInfo;
 pub use varta_easyblade::VartaEasyblade;
 
