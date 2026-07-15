@@ -75,7 +75,7 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
     f.render_widget(&middle_block, layout[1]);
     let middle_inner = middle_block.inner(layout[1]);
 
-    let header = Row::new(["Serial", "Voltage", "Current", "Last Seen"])
+    let header = Row::new(["Serial", "Voltage", "Current", "SOC", "SOH", "Last Seen"])
         .style(Style::new().add_modifier(Modifier::BOLD));
 
     let mut rows = Vec::new();
@@ -91,8 +91,11 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
         let current = eb
             .current
             .map_or("----".to_string(), |c| format!("{c:.2} A"));
+        let soc = eb.soc.map_or("----".to_string(), |v| format!("{:.1}%", v));
+        let soh = eb.soh.map_or("----".to_string(), |v| format!("{:.1}%", v));
         let last_seen = format_last_seen(eb.last_seen);
-        let row = Row::new([format!("{}", eb.serial_number), voltage, current, last_seen]);
+        let row =
+            Row::new([format!("{}", eb.serial_number), voltage, current, soc, soh, last_seen]);
         if idx == selected {
             rows.push(row.style(Style::new().add_modifier(Modifier::REVERSED)));
         } else {
@@ -103,10 +106,12 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
     let table = Table::new(
         rows,
         [
+            Constraint::Percentage(12),
             Constraint::Percentage(15),
-            Constraint::Percentage(18),
-            Constraint::Percentage(18),
-            Constraint::Percentage(49),
+            Constraint::Percentage(15),
+            Constraint::Percentage(12),
+            Constraint::Percentage(12),
+            Constraint::Percentage(34),
         ],
     )
     .header(header)
@@ -124,6 +129,8 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
              Hardware Version: {}\n\
              Voltage:          {}\n\
              Current:          {}\n\
+             SOC:              {}\n\
+             SOH:              {}\n\
              Last Seen:        {}\n",
             eb.node_id,
             eb.serial_number,
@@ -133,6 +140,8 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
                 .map_or("N/A".to_string(), |v| format!("{:.2} V", v)),
             eb.current
                 .map_or("N/A".to_string(), |c| format!("{:.2} A", c)),
+            eb.soc.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
+            eb.soh.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
             format_last_seen(eb.last_seen),
         );
         let text = Paragraph::new(info).wrap(Wrap { trim: true });

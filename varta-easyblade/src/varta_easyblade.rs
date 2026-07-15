@@ -28,6 +28,8 @@ pub struct VartaEasyblade {
     // pub nmt_state: Option<NmtState>,
     pub voltage: Option<f32>,
     pub current: Option<f32>,
+    pub soc: Option<f32>,
+    pub soh: Option<f32>,
 }
 
 /// Device Error values logged by the Varta Easyblade module in SDO 0x2018

@@ -195,6 +195,127 @@ impl Varta {
                 )?;
             },
 
+            varta_easyblade_can_messages::Messages::Pack01Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    1,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack02Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    2,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack03Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    3,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack04Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    4,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack05Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    5,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack06Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    6,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack07Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    7,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack08Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    8,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack09Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    9,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack10Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    10,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack11Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    11,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack12Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    12,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack13Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    13,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack14Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    14,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+            varta_easyblade_can_messages::Messages::Pack15Info3(msg) => {
+                self.update_easyblade_soc_soh(
+                    15,
+                    msg.battery_full_cap(),
+                    msg.battery_rem_cap(),
+                    msg.battery_design_cap(),
+                )?;
+            },
+
             varta_easyblade_can_messages::Messages::MasterPackInfo1(master_packinfo1) => {
                 self.master.voltage = Some(master_packinfo1.voltage());
                 self.master.current = Some(master_packinfo1.current());
@@ -295,6 +416,8 @@ impl Varta {
                 last_seen: std::time::SystemTime::now(),
                 voltage: None,
                 current: None,
+                soc: None,
+                soh: None,
             };
             self.easyblades[n.node_id as usize] = Some(easyblade);
         }
@@ -365,6 +488,30 @@ impl Varta {
         };
         easyblade.voltage = Some(voltage);
         easyblade.current = Some(current);
+        easyblade.last_seen = std::time::SystemTime::now();
+        Ok(())
+    }
+
+    fn update_easyblade_soc_soh(
+        &mut self,
+        node_id: u8,
+        full_cap: f32,
+        rem_cap: f32,
+        design_cap: f32,
+    ) -> Result<(), Error> {
+        let Some(easyblade) = &mut self.easyblades[node_id as usize] else {
+            return Err(Error::UnexpectedModule { node_id });
+        };
+        easyblade.soc = if full_cap > 0.0 {
+            Some((rem_cap / full_cap) * 100.0)
+        } else {
+            None
+        };
+        easyblade.soh = if design_cap > 0.0 {
+            Some((full_cap / design_cap) * 100.0)
+        } else {
+            None
+        };
         easyblade.last_seen = std::time::SystemTime::now();
         Ok(())
     }
