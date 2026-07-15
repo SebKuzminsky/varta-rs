@@ -1,6 +1,7 @@
 use socketcan::{CanFilter, EmbeddedFrame, SocketOptions};
 
 use crate::Error;
+use crate::MAX_MODULES;
 use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
@@ -11,7 +12,7 @@ pub struct Varta {
     pub socketcan_interface: socketcan::tokio::AsyncCanSocket<socketcan::CanSocket>,
 
     pub canbus_interface: String,
-    pub easyblades: [Option<VartaEasyblade>; 16],
+    pub easyblades: [Option<VartaEasyblade>; MAX_MODULES],
 }
 
 // Public API
@@ -48,7 +49,7 @@ impl Varta {
             canbus_manager,
             socketcan_interface,
             canbus_interface: String::from(canbus_interface),
-            easyblades: [const { None }; 16],
+            easyblades: [const { None }; MAX_MODULES],
         };
         varta.scan().await?;
         Ok(varta)
@@ -199,7 +200,7 @@ impl Varta {
 
     pub async fn scan(&mut self) -> Result<(), Error> {
         // Drop old list of scanned modules.
-        self.easyblades = [const { None }; 16];
+        self.easyblades = [const { None }; MAX_MODULES];
 
         let scanned_canopen_nodes = self.canbus_manager.scan_nodes().await?;
         for n in scanned_canopen_nodes {

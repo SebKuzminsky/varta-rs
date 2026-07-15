@@ -7,6 +7,9 @@ pub use varta_easyblade::VartaEasyblade;
 #[allow(clippy::too_many_arguments)]
 mod varta_easyblade_can_messages;
 
+/// Maximum number of EasyBlade modules supported.
+pub const MAX_MODULES: usize = 16;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
