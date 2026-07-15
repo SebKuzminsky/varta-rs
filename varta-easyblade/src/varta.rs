@@ -2,6 +2,7 @@ use socketcan::{CanFilter, EmbeddedFrame, SocketOptions};
 
 use crate::Error;
 use crate::MAX_MODULES;
+use crate::MasterInfo;
 use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
@@ -12,6 +13,7 @@ pub struct Varta {
     pub socketcan_interface: socketcan::tokio::AsyncCanSocket<socketcan::CanSocket>,
 
     pub canbus_interface: String,
+    pub master: MasterInfo,
     pub easyblades: [Option<VartaEasyblade>; MAX_MODULES],
 }
 
@@ -49,6 +51,7 @@ impl Varta {
             canbus_manager,
             socketcan_interface,
             canbus_interface: String::from(canbus_interface),
+            master: MasterInfo::default(),
             easyblades: [const { None }; MAX_MODULES],
         };
         varta.scan().await?;
@@ -190,6 +193,38 @@ impl Varta {
                     pack15_packinfo1.voltage(),
                     pack15_packinfo1.current(),
                 )?;
+            },
+
+            varta_easyblade_can_messages::Messages::MasterPackInfo1(master_packinfo1) => {
+                self.master.voltage = Some(master_packinfo1.voltage());
+                self.master.current = Some(master_packinfo1.current());
+                self.master.last_seen = Some(std::time::SystemTime::now());
+            },
+
+            varta_easyblade_can_messages::Messages::MasterChargeControl(master_charge_control) => {
+                self.master.soc = Some(master_charge_control.soc());
+                self.master.charge_voltage_request =
+                    Some(master_charge_control.charge_voltage_request());
+                self.master.charge_current_request =
+                    Some(master_charge_control.charge_current_request());
+                self.master.battery_status = Some(master_charge_control.battery_status());
+                self.master.last_seen = Some(std::time::SystemTime::now());
+            },
+
+            varta_easyblade_can_messages::Messages::MasterPackInfo2(master_packinfo2) => {
+                self.master.max_battery_fet_temp = Some(master_packinfo2.max_battery_fet_temp());
+                self.master.max_battery_cell_temp = Some(master_packinfo2.max_battery_cell_temp());
+                self.master.master_design_capacity =
+                    Some(master_packinfo2.master_design_capacity());
+                self.master.last_seen = Some(std::time::SystemTime::now());
+            },
+
+            varta_easyblade_can_messages::Messages::MasterPackInfo3(master_packinfo3) => {
+                self.master.master_full_charge_capacity =
+                    Some(master_packinfo3.master_full_charge_capacity());
+                self.master.master_remaining_capacity =
+                    Some(master_packinfo3.master_remaining_capacity());
+                self.master.last_seen = Some(std::time::SystemTime::now());
             },
 
             _ => {},

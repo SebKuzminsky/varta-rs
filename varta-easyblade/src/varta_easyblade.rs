@@ -1,5 +1,21 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+#[derive(Debug, Clone, Default)]
+pub struct MasterInfo {
+    pub voltage: Option<f32>,
+    pub current: Option<f32>,
+    pub soc: Option<u8>,
+    pub charge_voltage_request: Option<f32>,
+    pub charge_current_request: Option<f32>,
+    pub battery_status: Option<u8>,
+    pub max_battery_fet_temp: Option<f32>,
+    pub max_battery_cell_temp: Option<f32>,
+    pub master_design_capacity: Option<f32>,
+    pub master_full_charge_capacity: Option<f32>,
+    pub master_remaining_capacity: Option<f32>,
+    pub last_seen: Option<std::time::SystemTime>,
+}
+
 #[derive(Debug, Clone)]
 pub struct VartaEasyblade {
     pub node_id: u8,

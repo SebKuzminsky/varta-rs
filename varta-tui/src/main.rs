@@ -46,7 +46,30 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
         .split(area);
 
     let top_block = Block::bordered().title(" Master Info ");
-    f.render_widget(&top_block, layout[0]);
+    let top_inner = top_block.inner(layout[0]);
+    let master = &varta.master;
+    if master.last_seen.is_some() {
+        let info = format!(
+            "V: {:.2}  I: {:.2}  SOC: {}%\n\
+             Tfet: {:.1}°C  Tcell: {:.1}°C\n\
+             Req: {:.2}V / {:.2}A  Status: {}",
+            master.voltage.unwrap_or(0.0),
+            master.current.unwrap_or(0.0),
+            master.soc.map_or(String::from("-"), |v| v.to_string()),
+            master.max_battery_fet_temp.unwrap_or(0.0),
+            master.max_battery_cell_temp.unwrap_or(0.0),
+            master.charge_voltage_request.unwrap_or(0.0),
+            master.charge_current_request.unwrap_or(0.0),
+            master
+                .battery_status
+                .map_or(String::from("?"), |v| v.to_string()),
+        );
+        let text = Paragraph::new(info).wrap(Wrap { trim: true });
+        f.render_widget(text, top_inner);
+    } else {
+        let text = Paragraph::new("No master data").wrap(Wrap { trim: true });
+        f.render_widget(text, top_inner);
+    }
 
     let middle_block = Block::bordered().title(" EasyBlade Modules ");
     f.render_widget(&middle_block, layout[1]);
