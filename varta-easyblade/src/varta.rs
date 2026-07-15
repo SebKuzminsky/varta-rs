@@ -1,9 +1,9 @@
 use socketcan::{CanFilter, EmbeddedFrame, SocketOptions};
 
-use crate::varta_easyblade;
-use crate::varta_easyblade_can_messages;
 use crate::Error;
 use crate::VartaEasyblade;
+use crate::varta_easyblade;
+use crate::varta_easyblade_can_messages;
 
 #[derive(Debug)]
 pub struct Varta {
@@ -77,7 +77,7 @@ impl Varta {
                     pack01_packinfo1.voltage(),
                     pack01_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack02PackInfo1(pack02_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -85,7 +85,7 @@ impl Varta {
                     pack02_packinfo1.voltage(),
                     pack02_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack03PackInfo1(pack03_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -93,7 +93,7 @@ impl Varta {
                     pack03_packinfo1.voltage(),
                     pack03_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack04PackInfo1(pack04_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -101,7 +101,7 @@ impl Varta {
                     pack04_packinfo1.voltage(),
                     pack04_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack05PackInfo1(pack05_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -109,7 +109,7 @@ impl Varta {
                     pack05_packinfo1.voltage(),
                     pack05_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack06PackInfo1(pack06_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -117,7 +117,7 @@ impl Varta {
                     pack06_packinfo1.voltage(),
                     pack06_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack07PackInfo1(pack07_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -125,7 +125,7 @@ impl Varta {
                     pack07_packinfo1.voltage(),
                     pack07_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack08PackInfo1(pack08_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -133,7 +133,7 @@ impl Varta {
                     pack08_packinfo1.voltage(),
                     pack08_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack09PackInfo1(pack09_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -141,7 +141,7 @@ impl Varta {
                     pack09_packinfo1.voltage(),
                     pack09_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack10PackInfo1(pack10_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -149,7 +149,7 @@ impl Varta {
                     pack10_packinfo1.voltage(),
                     pack10_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack11PackInfo1(pack11_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -157,7 +157,7 @@ impl Varta {
                     pack11_packinfo1.voltage(),
                     pack11_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack12PackInfo1(pack12_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -165,7 +165,7 @@ impl Varta {
                     pack12_packinfo1.voltage(),
                     pack12_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack13PackInfo1(pack13_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -173,7 +173,7 @@ impl Varta {
                     pack13_packinfo1.voltage(),
                     pack13_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack14PackInfo1(pack14_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -181,7 +181,7 @@ impl Varta {
                     pack14_packinfo1.voltage(),
                     pack14_packinfo1.current(),
                 )?;
-            }
+            },
 
             varta_easyblade_can_messages::Messages::Pack15PackInfo1(pack15_packinfo1) => {
                 self.update_easyblade_voltage_current(
@@ -189,9 +189,9 @@ impl Varta {
                     pack15_packinfo1.voltage(),
                     pack15_packinfo1.current(),
                 )?;
-            }
+            },
 
-            _ => {}
+            _ => {},
         }
 
         Ok(())
