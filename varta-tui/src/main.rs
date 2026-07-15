@@ -163,6 +163,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     let mut selected = 0;
+    let mut expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
 
     loop {
         let count = varta.easyblade_count();
@@ -177,6 +178,11 @@ async fn main() -> anyhow::Result<()> {
                 if let Err(e) = result {
                     eprintln!("Error processing CAN message: {e}");
                 }
+                expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
+            }
+            _ = expire_timer.as_mut() => {
+                varta.expire_missing_modules();
+                expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
             }
             event = rx.recv() => {
                 if let Some(Event::Key(key)) = event

@@ -230,7 +230,48 @@ impl Varta {
             _ => {},
         }
 
+        self.expire_missing_modules();
+
         Ok(())
+    }
+
+    /// Expire any modules that have not reported in the last 10 seconds.
+    pub fn expire_missing_modules(&mut self) {
+        let now = std::time::SystemTime::now();
+        for entry in self.easyblades.iter_mut() {
+            if entry
+                .as_ref()
+                .and_then(|eb| now.duration_since(eb.last_seen).ok())
+                .map(|d| d.as_secs() > 10)
+                .unwrap_or(false)
+            {
+                *entry = None;
+            }
+        }
+    }
+
+    /// Returns the duration until the oldest module should be expired, or 10s if no modules exist.
+    pub fn next_expiry_delay(&self) -> std::time::Duration {
+        let now = std::time::SystemTime::now();
+        let oldest_last_seen = self
+            .easyblades
+            .iter()
+            .filter_map(|e| e.as_ref())
+            .map(|e| e.last_seen)
+            .min();
+
+        match oldest_last_seen {
+            Some(last_seen) => {
+                let expiry = last_seen
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .checked_add(std::time::Duration::from_secs(10))
+                    .unwrap();
+                let now_since_epoch = now.duration_since(std::time::UNIX_EPOCH).unwrap();
+                expiry.saturating_sub(now_since_epoch)
+            },
+            None => std::time::Duration::from_secs(10),
+        }
     }
 
     pub async fn scan(&mut self) -> Result<(), Error> {
