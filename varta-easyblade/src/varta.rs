@@ -238,6 +238,11 @@ impl Varta {
         Ok(())
     }
 
+    /// Returns the total number of active easyblade modules.
+    pub fn easyblade_count(&self) -> usize {
+        self.easyblades.iter().filter_map(|e| e.as_ref()).count()
+    }
+
     pub async fn read_cell_voltages(&self, node: &VartaEasyblade) -> Result<Vec<f32>, Error> {
         let mut sdo_client = self.canbus_manager.sdo_client(node.node_id);
         let highest_subindex = sdo_client.read_u8(0x2100, 0x00).await?;

@@ -37,19 +37,31 @@ fn format_last_seen(last_seen: SystemTime) -> String {
         .to_string()
 }
 
-fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta) {
+fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
     let area = f.area();
 
-    let block = Block::bordered().title(" VARTA EasyBlade Monitor ");
-    f.render_widget(&block, area);
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(3), Constraint::Min(5), Constraint::Min(3)])
+        .split(area);
 
-    let inner = block.inner(area);
+    let top_block = Block::bordered().title(" Master Info ");
+    f.render_widget(&top_block, layout[0]);
+
+    let middle_block = Block::bordered().title(" EasyBlade Modules ");
+    f.render_widget(&middle_block, layout[1]);
+    let middle_inner = middle_block.inner(layout[1]);
 
     let header = Row::new(["Serial", "Voltage", "Current", "Last Seen"])
         .style(Style::new().add_modifier(Modifier::BOLD));
 
     let mut rows = Vec::new();
-    for eb in varta.easyblades.iter().filter_map(|e| e.as_ref()) {
+    for (idx, eb) in varta
+        .easyblades
+        .iter()
+        .filter_map(|e| e.as_ref())
+        .enumerate()
+    {
         let voltage = eb
             .voltage
             .map_or("----".to_string(), |v| format!("{v:.2} V"));
@@ -57,12 +69,12 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta) {
             .current
             .map_or("----".to_string(), |c| format!("{c:.2} A"));
         let last_seen = format_last_seen(eb.last_seen);
-        rows.push(Row::new([
-            format!("{}", eb.serial_number),
-            voltage,
-            current,
-            last_seen,
-        ]));
+        let row = Row::new([format!("{}", eb.serial_number), voltage, current, last_seen]);
+        if idx == selected {
+            rows.push(row.style(Style::new().add_modifier(Modifier::REVERSED)));
+        } else {
+            rows.push(row);
+        }
     }
 
     let table = Table::new(
@@ -77,7 +89,10 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta) {
     .header(header)
     .column_spacing(1);
 
-    f.render_widget(table, inner);
+    f.render_widget(table, middle_inner);
+
+    let bottom_block = Block::bordered().title(" SDO Info ");
+    f.render_widget(&bottom_block, layout[2]);
 }
 
 #[tokio::main]
@@ -99,8 +114,15 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    let mut selected = 0;
+
     loop {
-        terminal.draw(|f| draw_frame(f, &varta))?;
+        let count = varta.easyblade_count();
+        if selected >= count {
+            selected = count.saturating_sub(1);
+        }
+
+        terminal.draw(|f| draw_frame(f, &varta, selected))?;
 
         tokio::select! {
             result = varta.process_socketcan_msg() => {
@@ -111,9 +133,17 @@ async fn main() -> anyhow::Result<()> {
             event = rx.recv() => {
                 if let Some(Event::Key(key)) = event
                     && key.kind == KeyEventKind::Press
-                    && key.code == crossterm::event::KeyCode::Char('q')
                 {
-                    break;
+                    match key.code {
+                        crossterm::event::KeyCode::Char('q') => break,
+                        crossterm::event::KeyCode::Up if count > 0 => {
+                            selected = selected.saturating_sub(1);
+                        }
+                        crossterm::event::KeyCode::Down if selected + 1 < count => {
+                            selected += 1;
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
