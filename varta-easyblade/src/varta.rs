@@ -238,6 +238,11 @@ impl Varta {
         Ok(())
     }
 
+    /// Returns the easyblade at the given index (0-based) among active modules.
+    pub fn get_easyblade_by_index(&self, index: usize) -> Option<&VartaEasyblade> {
+        self.easyblades.iter().filter_map(|e| e.as_ref()).nth(index)
+    }
+
     /// Returns the total number of active easyblade modules.
     pub fn easyblade_count(&self) -> usize {
         self.easyblades.iter().filter_map(|e| e.as_ref()).count()

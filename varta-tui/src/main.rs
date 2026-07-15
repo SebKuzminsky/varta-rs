@@ -5,7 +5,7 @@ use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, Row, Table};
+use ratatui::widgets::{Block, Paragraph, Row, Table, Wrap};
 use std::io::stdout;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -92,7 +92,32 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize) {
     f.render_widget(table, middle_inner);
 
     let bottom_block = Block::bordered().title(" SDO Info ");
-    f.render_widget(&bottom_block, layout[2]);
+    let bottom_inner = bottom_block.inner(layout[2]);
+    if let Some(eb) = varta.get_easyblade_by_index(selected) {
+        let info = format!(
+            "Node ID:          {}\n\
+             Serial Number:    {}\n\
+             Software Version: {}\n\
+             Hardware Version: {}\n\
+             Voltage:          {}\n\
+             Current:          {}\n\
+             Last Seen:        {}\n",
+            eb.node_id,
+            eb.serial_number,
+            eb.software_version.as_deref().unwrap_or("N/A"),
+            eb.hardware_version.as_deref().unwrap_or("N/A"),
+            eb.voltage
+                .map_or("N/A".to_string(), |v| format!("{:.2} V", v)),
+            eb.current
+                .map_or("N/A".to_string(), |c| format!("{:.2} A", c)),
+            format_last_seen(eb.last_seen),
+        );
+        let text = Paragraph::new(info).wrap(Wrap { trim: true });
+        f.render_widget(text, bottom_inner);
+    } else {
+        let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
+        f.render_widget(text, bottom_inner);
+    }
 }
 
 #[tokio::main]
