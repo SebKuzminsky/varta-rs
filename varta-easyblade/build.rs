@@ -5,7 +5,7 @@ fn main() {
     let dbc_contents = std::fs::read_to_string(&dbc_path)
         .context("failed to read DBC file {dbc_path}\n")
         .unwrap();
-    println!("cargo:rerun-if-changed={}", &dbc_path);
+    println!("cargo:rerun-if-changed={}", dbc_path);
 
     let output_path = String::from("src/varta_easyblade_can_messages.rs");
 
