@@ -1,5 +1,21 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+pub enum SdoRequest {
+    SerialNumber,
+    SoftwareVersion,
+    HardwareVersion,
+    DeviceErrorHistory,
+    CellVoltages,
+}
+
+pub enum SdoResponse {
+    SerialNumber { node_id: u8, value: Result<u16, String> },
+    SoftwareVersion { node_id: u8, value: Result<String, String> },
+    HardwareVersion { node_id: u8, value: Result<String, String> },
+    DeviceErrorHistory { node_id: u8, value: Result<Vec<DeviceError>, String> },
+    CellVoltages { node_id: u8, value: Result<Vec<f32>, String> },
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct MasterInfo {
     pub voltage: Option<f32>,
@@ -16,20 +32,22 @@ pub struct MasterInfo {
     pub last_seen: Option<std::time::SystemTime>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct VartaEasyblade {
     pub node_id: u8,
-    pub serial_number: u16,
-    // pub identity: Option<LssIdentity>,
-    // pub device_name: Option<String>,
+    pub serial_number: Option<u16>,
     pub software_version: Option<String>,
     pub hardware_version: Option<String>,
     pub last_seen: std::time::SystemTime,
-    // pub nmt_state: Option<NmtState>,
     pub voltage: Option<f32>,
     pub current: Option<f32>,
     pub soc: Option<f32>,
     pub soh: Option<f32>,
+    pub cell_voltages: Option<Vec<f32>>,
+    pub device_errors: Option<Vec<DeviceError>>,
+    pub sdo_request_tx: tokio::sync::mpsc::UnboundedSender<SdoRequest>,
+    pub task_handle: tokio::task::JoinHandle<()>,
+    pub cancellation_token: tokio_util::sync::CancellationToken,
 }
 
 /// Device Error values logged by the Varta Easyblade module in SDO 0x2018

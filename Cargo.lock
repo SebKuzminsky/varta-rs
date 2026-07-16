@@ -1449,6 +1449,8 @@ dependencies = [
  "num_enum",
  "socketcan",
  "thiserror",
+ "tokio",
+ "tokio-util",
  "zencan-client",
 ]
 

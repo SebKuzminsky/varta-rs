@@ -4,6 +4,8 @@ pub use varta::Varta;
 pub mod varta_easyblade;
 pub use varta_easyblade::DeviceError;
 pub use varta_easyblade::MasterInfo;
+pub use varta_easyblade::SdoRequest;
+pub use varta_easyblade::SdoResponse;
 pub use varta_easyblade::VartaEasyblade;
 
 #[rustfmt::skip]
@@ -27,18 +29,4 @@ pub enum Error {
         #[source]
         e: std::io::Error,
     },
-
-    #[error("CAN packet from unexpected module {node_id}")]
-    UnexpectedModule { node_id: u8 },
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//
-//     #[test]
-//     fn it_works() {
-//         let result = add(2, 2);
-//         assert_eq!(result, 4);
-//     }
-// }

@@ -3,29 +3,93 @@ use socketcan::{CanFilter, EmbeddedFrame, SocketOptions};
 use crate::Error;
 use crate::MAX_MODULES;
 use crate::MasterInfo;
+use crate::SdoRequest;
+use crate::SdoResponse;
 use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
 
+fn get_node_id_from_can_message(msg: &varta_easyblade_can_messages::Messages) -> Option<u8> {
+    match msg {
+        varta_easyblade_can_messages::Messages::Pack01PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack01Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack01Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack01Msgs(_) => Some(1),
+        varta_easyblade_can_messages::Messages::Pack02PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack02Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack02Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack02Msgs(_) => Some(2),
+        varta_easyblade_can_messages::Messages::Pack03PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack03Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack03Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack03Msgs(_) => Some(3),
+        varta_easyblade_can_messages::Messages::Pack04PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack04Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack04Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack04Msgs(_) => Some(4),
+        varta_easyblade_can_messages::Messages::Pack05PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack05Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack05Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack05Msgs(_) => Some(5),
+        varta_easyblade_can_messages::Messages::Pack06PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack06Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack06Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack06Msgs(_) => Some(6),
+        varta_easyblade_can_messages::Messages::Pack07PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack07Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack07Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack07Msgs(_) => Some(7),
+        varta_easyblade_can_messages::Messages::Pack08PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack08Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack08Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack08Msgs(_) => Some(8),
+        varta_easyblade_can_messages::Messages::Pack09PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack09Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack09Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack09Msgs(_) => Some(9),
+        varta_easyblade_can_messages::Messages::Pack10PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack10Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack10Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack10Msgs(_) => Some(10),
+        varta_easyblade_can_messages::Messages::Pack11PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack11Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack11Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack11Msgs(_) => Some(11),
+        varta_easyblade_can_messages::Messages::Pack12PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack12Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack12Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack12Msgs(_) => Some(12),
+        varta_easyblade_can_messages::Messages::Pack13PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack13Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack13Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack13Msgs(_) => Some(13),
+        varta_easyblade_can_messages::Messages::Pack14PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack14Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack14Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack14Msgs(_) => Some(14),
+        varta_easyblade_can_messages::Messages::Pack15PackInfo1(_)
+        | varta_easyblade_can_messages::Messages::Pack15Info2(_)
+        | varta_easyblade_can_messages::Messages::Pack15Info3(_)
+        | varta_easyblade_can_messages::Messages::Pack15Msgs(_) => Some(15),
+        _ => None,
+    }
+    .filter(|&n| n < MAX_MODULES as u8)
+}
+
 #[derive(Debug)]
 pub struct Varta {
-    canbus_manager: zencan_client::BusManager<zencan_client::common::SocketCanSender>,
     pub socketcan_interface: socketcan::tokio::AsyncCanSocket<socketcan::CanSocket>,
-
     pub canbus_interface: String,
     pub master: MasterInfo,
     pub easyblades: [Option<VartaEasyblade>; MAX_MODULES],
+    pub sdo_response_tx: tokio::sync::mpsc::UnboundedSender<SdoResponse>,
 }
 
 // Public API
 impl Varta {
-    pub async fn new(canbus_interface: &str) -> Result<Self, Error> {
-        let (tx, rx) = zencan_client::open_socketcan(canbus_interface).map_err(|e| Error::Io {
-            can_interface: String::from(canbus_interface),
-            e,
-        })?;
-        let canbus_manager = zencan_client::BusManager::new(tx, rx);
-
+    pub async fn new(
+        canbus_interface: &str,
+    ) -> Result<(Self, tokio::sync::mpsc::UnboundedReceiver<SdoResponse>), Error> {
         let socketcan_interface =
             socketcan::tokio::CanSocket::open(canbus_interface).map_err(|e| Error::Io {
                 can_interface: String::from(canbus_interface),
@@ -47,18 +111,24 @@ impl Varta {
                 e,
             })?;
 
-        let mut varta = Self {
-            canbus_manager,
+        let (sdo_response_tx, sdo_response_rx) = tokio::sync::mpsc::unbounded_channel();
+
+        let varta = Self {
             socketcan_interface,
             canbus_interface: String::from(canbus_interface),
             master: MasterInfo::default(),
             easyblades: [const { None }; MAX_MODULES],
+            sdo_response_tx,
         };
-        varta.scan().await?;
-        Ok(varta)
+        Ok((varta, sdo_response_rx))
     }
 
-    /// Read and process one message from socketcan interface.
+    pub fn send_sdo_request(&self, node_id: u8, request: SdoRequest) {
+        if let Some(Some(eb)) = self.easyblades.get(node_id as usize) {
+            let _ = eb.sdo_request_tx.send(request);
+        }
+    }
+
     pub async fn process_socketcan_msg(&mut self) -> Result<(), Error> {
         let can_frame = self
             .socketcan_interface
@@ -74,276 +144,218 @@ impl Varta {
             can_frame.data(),
         )?;
 
+        let node_id = get_node_id_from_can_message(&msg);
+
+        if let Some(node_id) = node_id {
+            let was_new = self.easyblades[node_id as usize].is_none();
+            let easyblade = self.get_or_init_easyblade(node_id);
+            if was_new {
+                easyblade.sdo_request_tx.send(SdoRequest::SerialNumber).ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::SoftwareVersion)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::HardwareVersion)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceErrorHistory)
+                    .ok();
+                easyblade.sdo_request_tx.send(SdoRequest::CellVoltages).ok();
+            }
+            match msg {
+                varta_easyblade_can_messages::Messages::Pack01PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack02PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack03PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack04PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack05PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack06PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack07PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack08PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack09PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack10PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack11PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack12PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack13PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack14PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack15PackInfo1(m) => {
+                    Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
+                },
+                varta_easyblade_can_messages::Messages::Pack01Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack02Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack03Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack04Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack05Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack06Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack07Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack08Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack09Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack10Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack11Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack12Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack13Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack14Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack15Info3(m) => {
+                    Self::update_easyblade_soc_soh(
+                        easyblade,
+                        m.battery_full_cap(),
+                        m.battery_rem_cap(),
+                        m.battery_design_cap(),
+                    );
+                },
+                _ => {},
+            }
+        }
+
         match msg {
-            varta_easyblade_can_messages::Messages::Pack01PackInfo1(pack01_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    1,
-                    pack01_packinfo1.voltage(),
-                    pack01_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack02PackInfo1(pack02_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    2,
-                    pack02_packinfo1.voltage(),
-                    pack02_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack03PackInfo1(pack03_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    3,
-                    pack03_packinfo1.voltage(),
-                    pack03_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack04PackInfo1(pack04_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    4,
-                    pack04_packinfo1.voltage(),
-                    pack04_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack05PackInfo1(pack05_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    5,
-                    pack05_packinfo1.voltage(),
-                    pack05_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack06PackInfo1(pack06_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    6,
-                    pack06_packinfo1.voltage(),
-                    pack06_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack07PackInfo1(pack07_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    7,
-                    pack07_packinfo1.voltage(),
-                    pack07_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack08PackInfo1(pack08_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    8,
-                    pack08_packinfo1.voltage(),
-                    pack08_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack09PackInfo1(pack09_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    9,
-                    pack09_packinfo1.voltage(),
-                    pack09_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack10PackInfo1(pack10_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    10,
-                    pack10_packinfo1.voltage(),
-                    pack10_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack11PackInfo1(pack11_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    11,
-                    pack11_packinfo1.voltage(),
-                    pack11_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack12PackInfo1(pack12_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    12,
-                    pack12_packinfo1.voltage(),
-                    pack12_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack13PackInfo1(pack13_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    13,
-                    pack13_packinfo1.voltage(),
-                    pack13_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack14PackInfo1(pack14_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    14,
-                    pack14_packinfo1.voltage(),
-                    pack14_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack15PackInfo1(pack15_packinfo1) => {
-                self.update_easyblade_voltage_current(
-                    15,
-                    pack15_packinfo1.voltage(),
-                    pack15_packinfo1.current(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::Pack01Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    1,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack02Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    2,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack03Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    3,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack04Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    4,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack05Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    5,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack06Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    6,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack07Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    7,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack08Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    8,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack09Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    9,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack10Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    10,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack11Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    11,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack12Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    12,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack13Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    13,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack14Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    14,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-            varta_easyblade_can_messages::Messages::Pack15Info3(msg) => {
-                self.update_easyblade_soc_soh(
-                    15,
-                    msg.battery_full_cap(),
-                    msg.battery_rem_cap(),
-                    msg.battery_design_cap(),
-                )?;
-            },
-
-            varta_easyblade_can_messages::Messages::MasterPackInfo1(master_packinfo1) => {
-                self.master.voltage = Some(master_packinfo1.voltage());
-                self.master.current = Some(master_packinfo1.current());
+            varta_easyblade_can_messages::Messages::MasterPackInfo1(m) => {
+                self.master.voltage = Some(m.voltage());
+                self.master.current = Some(m.current());
                 self.master.last_seen = Some(std::time::SystemTime::now());
             },
-
-            varta_easyblade_can_messages::Messages::MasterChargeControl(master_charge_control) => {
-                // Ignore the SoC field, we compute it to higher fidelity from reported
-                // remaining/full capacity.
-                self.master.charge_voltage_request =
-                    Some(master_charge_control.charge_voltage_request());
-                self.master.charge_current_request =
-                    Some(master_charge_control.charge_current_request());
-                self.master.battery_status = Some(master_charge_control.battery_status());
+            varta_easyblade_can_messages::Messages::MasterChargeControl(m) => {
+                self.master.charge_voltage_request = Some(m.charge_voltage_request());
+                self.master.charge_current_request = Some(m.charge_current_request());
+                self.master.battery_status = Some(m.battery_status());
                 self.master.last_seen = Some(std::time::SystemTime::now());
             },
-
-            varta_easyblade_can_messages::Messages::MasterPackInfo2(master_packinfo2) => {
-                self.master.max_battery_fet_temp = Some(master_packinfo2.max_battery_fet_temp());
-                self.master.max_battery_cell_temp = Some(master_packinfo2.max_battery_cell_temp());
-                self.master.master_design_capacity =
-                    Some(master_packinfo2.master_design_capacity());
+            varta_easyblade_can_messages::Messages::MasterPackInfo2(m) => {
+                self.master.max_battery_fet_temp = Some(m.max_battery_fet_temp());
+                self.master.max_battery_cell_temp = Some(m.max_battery_cell_temp());
+                self.master.master_design_capacity = Some(m.master_design_capacity());
                 self.master.last_seen = Some(std::time::SystemTime::now());
             },
-
-            varta_easyblade_can_messages::Messages::MasterPackInfo3(master_packinfo3) => {
-                let full = master_packinfo3.master_full_charge_capacity();
-                let remaining = master_packinfo3.master_remaining_capacity();
+            varta_easyblade_can_messages::Messages::MasterPackInfo3(m) => {
+                let full = m.master_full_charge_capacity();
+                let remaining = m.master_remaining_capacity();
                 self.master.master_full_charge_capacity = Some(full);
                 self.master.master_remaining_capacity = Some(remaining);
                 self.master.soc = if full > 0.0 {
@@ -353,7 +365,6 @@ impl Varta {
                 };
                 self.master.last_seen = Some(std::time::SystemTime::now());
             },
-
             _ => {},
         }
 
@@ -371,8 +382,9 @@ impl Varta {
                 .and_then(|eb| now.duration_since(eb.last_seen).ok())
                 .map(|d| d.as_secs() > 10)
                 .unwrap_or(false)
+                && let Some(eb) = entry.take()
             {
-                *entry = None;
+                eb.cancellation_token.cancel();
             }
         }
     }
@@ -401,50 +413,144 @@ impl Varta {
         }
     }
 
-    pub async fn scan(&mut self) -> Result<(), Error> {
-        // Drop old list of scanned modules.
-        self.easyblades = [const { None }; MAX_MODULES];
+    pub fn get_or_init_easyblade(&mut self, node_id: u8) -> &mut VartaEasyblade {
+        if self.easyblades[node_id as usize].is_none() {
+            let (sdo_request_tx, sdo_request_rx) = tokio::sync::mpsc::unbounded_channel();
+            let (socketcan_tx, socketcan_rx) =
+                zencan_client::open_socketcan(&self.canbus_interface).unwrap();
+            let sdo_response_tx = self.sdo_response_tx.clone();
+            let cancellation_token = tokio_util::sync::CancellationToken::new();
+            let cancellation_token_clone = cancellation_token.clone();
 
-        let scanned_canopen_nodes = self.canbus_manager.scan_nodes().await?;
-        for n in scanned_canopen_nodes {
-            let serial_number = self.read_serial_number(n.node_id).await?;
-            let easyblade = VartaEasyblade {
-                node_id: n.node_id,
-                serial_number,
-                software_version: n.software_version,
-                hardware_version: n.hardware_version,
+            let task_handle = tokio::spawn(async move {
+                Self::easyblade_task(
+                    node_id,
+                    socketcan_tx,
+                    socketcan_rx,
+                    sdo_request_rx,
+                    sdo_response_tx,
+                    cancellation_token_clone,
+                )
+                .await;
+            });
+
+            self.easyblades[node_id as usize] = Some(VartaEasyblade {
+                node_id,
+                serial_number: None,
+                software_version: None,
+                hardware_version: None,
                 last_seen: std::time::SystemTime::now(),
                 voltage: None,
                 current: None,
                 soc: None,
                 soh: None,
-            };
-            self.easyblades[n.node_id as usize] = Some(easyblade);
+                cell_voltages: None,
+                device_errors: None,
+                sdo_request_tx,
+                task_handle,
+                cancellation_token,
+            });
         }
-
-        Ok(())
+        self.easyblades[node_id as usize].as_mut().unwrap()
     }
 
-    pub async fn read_device_error_history(
-        &self,
-        node: &VartaEasyblade,
-    ) -> Result<Vec<varta_easyblade::DeviceError>, Error> {
-        let mut sdo_client = self.canbus_manager.sdo_client(node.node_id);
-        let highest_subindex = sdo_client.read_u8(0x2018, 0x00).await?;
-        assert_eq!(highest_subindex, 16);
-
-        let mut errors = Vec::new();
-        for sub_index in 1..=highest_subindex {
-            let val = sdo_client.read_u8(0x2018, sub_index).await?;
-            let e: varta_easyblade::DeviceError = match varta_easyblade::DeviceError::try_from(val)
-            {
-                Ok(e) => e,
-                Err(_) => varta_easyblade::DeviceError::Unknown,
-            };
-            errors.push(e);
+    async fn easyblade_task(
+        node_id: u8,
+        socketcan_tx: zencan_client::common::SocketCanSender,
+        socketcan_rx: zencan_client::common::SocketCanReceiver,
+        mut sdo_request_rx: tokio::sync::mpsc::UnboundedReceiver<SdoRequest>,
+        sdo_response_tx: tokio::sync::mpsc::UnboundedSender<SdoResponse>,
+        cancellation_token: tokio_util::sync::CancellationToken,
+    ) {
+        let mut sdo_client = zencan_client::SdoClient::new_std(node_id, socketcan_tx, socketcan_rx);
+        loop {
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    break;
+                }
+                request = sdo_request_rx.recv() => {
+                    match request {
+                        Some(SdoRequest::SerialNumber) => {
+                            let value = async {
+                                let bytes = sdo_client.upload(0x2004, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                if bytes.len() < 2 {
+                                    return Err("Serial number data too short".to_string());
+                                }
+                                Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::SerialNumber { node_id, value });
+                        },
+                        Some(SdoRequest::SoftwareVersion) => {
+                            let value = async {
+                                let bytes = sdo_client.upload(0x2000, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(String::from_utf8_lossy(&bytes).trim_matches('\0').to_string())
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::SoftwareVersion { node_id, value });
+                        },
+                        Some(SdoRequest::HardwareVersion) => {
+                            let value = async {
+                                let bytes = sdo_client.upload(0x2000, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(String::from_utf8_lossy(&bytes).trim_matches('\0').to_string())
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::HardwareVersion { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceErrorHistory) => {
+                            let value = async {
+                                let highest_subindex = sdo_client.read_u8(0x2018, 0x00)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                if highest_subindex != 16 {
+                                    return Err(format!("Expected 16 error entries, got {}", highest_subindex));
+                                }
+                                let mut errors = Vec::new();
+                                for sub_index in 1..=16u8 {
+                                    let val = sdo_client.read_u8(0x2018, sub_index)
+                                        .await
+                                        .map_err(|e| e.to_string())?;
+                                    let e: varta_easyblade::DeviceError =
+                                        match varta_easyblade::DeviceError::try_from(val) {
+                                            Ok(e) => e,
+                                            Err(_) => varta_easyblade::DeviceError::Unknown,
+                                        };
+                                    errors.push(e);
+                                }
+                                Ok(errors)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceErrorHistory { node_id, value });
+                        },
+                        Some(SdoRequest::CellVoltages) => {
+                            let value = async {
+                                let highest_subindex = sdo_client.read_u8(0x2100, 0x00)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                if highest_subindex != 16 {
+                                    return Err(format!("Expected 16 cell voltage entries, got {}", highest_subindex));
+                                }
+                                // 48V Easyblade is 14S, so only sub-indices 1..=14 are valid
+                                let mut cell_voltages: Vec<f32> = Vec::new();
+                                for sub_index in 1..=14u8 {
+                                    let val = sdo_client.read_u32(0x2100, sub_index)
+                                        .await
+                                        .map_err(|e| e.to_string())?;
+                                    cell_voltages.push((val as f32) / 1000.0);
+                                }
+                                Ok(cell_voltages)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellVoltages { node_id, value });
+                        },
+                        None => {
+                            break;
+                        }
+                    }
+                }
+            }
         }
-
-        Ok(errors)
     }
 
     /// Returns the easyblade at the given index (0-based) among active modules.
@@ -456,56 +562,26 @@ impl Varta {
     pub fn easyblade_count(&self) -> usize {
         self.easyblades.iter().filter_map(|e| e.as_ref()).count()
     }
-
-    pub async fn read_cell_voltages(&self, node: &VartaEasyblade) -> Result<Vec<f32>, Error> {
-        let mut sdo_client = self.canbus_manager.sdo_client(node.node_id);
-        let highest_subindex = sdo_client.read_u8(0x2100, 0x00).await?;
-        assert_eq!(highest_subindex, 16);
-
-        let mut cell_voltages: Vec<f32> = vec![];
-        for sub_index in 1..=14 {
-            let val = sdo_client.read_u32(0x2100, sub_index).await?;
-            cell_voltages.push((val as f32) / 1000.0);
-        }
-
-        Ok(cell_voltages)
-    }
 }
 
 // Private API
 impl Varta {
-    async fn read_serial_number(&self, node_id: u8) -> Result<u16, Error> {
-        let mut sdo_client = self.canbus_manager.sdo_client(node_id);
-        let bytes = sdo_client.upload(0x2004, 0x01).await?;
-        let serial_number = u16::from_le_bytes([bytes[0], bytes[1]]);
-        Ok(serial_number)
-    }
-
     fn update_easyblade_voltage_current(
-        &mut self,
-        node_id: u8,
+        easyblade: &mut VartaEasyblade,
         voltage: f32,
         current: f32,
-    ) -> Result<(), Error> {
-        let Some(easyblade) = &mut self.easyblades[node_id as usize] else {
-            return Err(Error::UnexpectedModule { node_id });
-        };
+    ) {
         easyblade.voltage = Some(voltage);
         easyblade.current = Some(current);
         easyblade.last_seen = std::time::SystemTime::now();
-        Ok(())
     }
 
     fn update_easyblade_soc_soh(
-        &mut self,
-        node_id: u8,
+        easyblade: &mut VartaEasyblade,
         full_cap: f32,
         rem_cap: f32,
         design_cap: f32,
-    ) -> Result<(), Error> {
-        let Some(easyblade) = &mut self.easyblades[node_id as usize] else {
-            return Err(Error::UnexpectedModule { node_id });
-        };
+    ) {
         easyblade.soc = if full_cap > 0.0 {
             Some((rem_cap / full_cap) * 100.0)
         } else {
@@ -517,6 +593,5 @@ impl Varta {
             None
         };
         easyblade.last_seen = std::time::SystemTime::now();
-        Ok(())
     }
 }
