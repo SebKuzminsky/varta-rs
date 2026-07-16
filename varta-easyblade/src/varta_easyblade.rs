@@ -103,8 +103,8 @@ pub enum DeviceError {
     CanNodeIdNotAssigned = 0x3e,
     CanNodeIdDuplicate = 0x3f,
     ParameterConfigError = 0x40,
-
-    AnalogFrontEndFailure = 0x43,
-
-    Unknown = 0xff,
+    AnalogFrontEndCommunicationErorr = 0x41,
+    AnalogFrontEndSelftestError = 0x42,
+    AnalogFrontEndFullScaleError = 0x43,
+    TempMuxSelftestError = 0x44,
 }
