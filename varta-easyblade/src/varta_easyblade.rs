@@ -107,4 +107,6 @@ pub enum DeviceError {
     AnalogFrontEndSelftestError = 0x42,
     AnalogFrontEndFullScaleError = 0x43,
     TempMuxSelftestError = 0x44,
+
+    Unknown = 0xff,
 }
