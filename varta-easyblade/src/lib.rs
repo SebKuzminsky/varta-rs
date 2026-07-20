@@ -6,6 +6,7 @@ pub use varta_easyblade::DeviceError;
 pub use varta_easyblade::MasterInfo;
 pub use varta_easyblade::VartaEasyblade;
 
+#[rustfmt::skip]
 #[allow(clippy::too_many_arguments)]
 mod varta_easyblade_can_messages;
 
