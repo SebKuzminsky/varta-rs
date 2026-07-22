@@ -253,7 +253,7 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                     let lines: String = voltages
                         .iter()
                         .enumerate()
-                        .map(|(i, v)| format!("Cell {}: {:.3} V\n", i + 1, v))
+                        .map(|(i, v)| format!("Cell {:>2}: {:.3} V\n", i + 1, v))
                         .collect();
                     let text = Paragraph::new(lines).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
