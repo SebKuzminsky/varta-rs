@@ -165,6 +165,122 @@ impl Varta {
                     .send(SdoRequest::DeviceErrorHistory)
                     .ok();
                 easyblade.sdo_request_tx.send(SdoRequest::CellVoltages).ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceConfigInfo)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceSerialNumberInfo)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceDateInfo)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceVariantInfo)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceControlParam)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceOperationTime)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::DeviceErrorCounter)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellVoltageMinMax)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellVoltageLimit)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryVoltage)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryVoltageLimit)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryCurrent)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryCurrentLimit)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::FetTemperature)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::FetTemperatureMinMax)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::FetTemperatureLimit)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellTemperature)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellTemperatureMinMax)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellTemperatureLimit)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellBalanceStatus)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellBalanceLimit)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::CellImpedance)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryCapacity)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryCapacityParam)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryCycleCount)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryChargeVoltage)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryChargeCurrent)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::BatteryChargeTemperature)
+                    .ok();
+                easyblade
+                    .sdo_request_tx
+                    .send(SdoRequest::MasterBatteryTemperature)
+                    .ok();
             }
             match msg {
                 varta_easyblade_can_messages::Messages::Pack01PackInfo1(m) => {
@@ -568,6 +684,35 @@ impl Varta {
                 cell_voltages: None,
                 device_errors: None,
                 fet_status: None,
+                device_config_info: None,
+                device_serial_number_info: None,
+                device_date_info: None,
+                device_variant_info: None,
+                device_control_param: None,
+                device_operation_time: None,
+                device_error_counter: None,
+                cell_voltage_min_max: None,
+                cell_voltage_limit: None,
+                battery_voltage: None,
+                battery_voltage_limit: None,
+                battery_current: None,
+                battery_current_limit: None,
+                fet_temperature: None,
+                fet_temperature_min_max: None,
+                fet_temperature_limit: None,
+                cell_temperature: None,
+                cell_temperature_min_max: None,
+                cell_temperature_limit: None,
+                cell_balance_status: None,
+                cell_balance_limit: None,
+                cell_impedance: None,
+                battery_capacity: None,
+                battery_capacity_param: None,
+                battery_cycle_count: None,
+                battery_charge_voltage: None,
+                battery_charge_current: None,
+                battery_charge_temperature: None,
+                master_battery_temperature: None,
                 sdo_request_tx,
                 task_handle,
                 cancellation_token,
@@ -670,6 +815,488 @@ impl Varta {
                                 Ok(cell_voltages)
                             }.await;
                             let _ = sdo_response_tx.send(SdoResponse::CellVoltages { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceConfigInfo) => {
+                            let value = async {
+                                let c1 = sdo_client.upload(0x2002, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c2 = sdo_client.upload(0x2002, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c3 = sdo_client.upload(0x2002, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((
+                                    String::from_utf8_lossy(&c1).trim_matches('\0').to_string(),
+                                    String::from_utf8_lossy(&c2).trim_matches('\0').to_string(),
+                                    String::from_utf8_lossy(&c3).trim_matches('\0').to_string(),
+                                ))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceConfigInfo { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceSerialNumberInfo) => {
+                            let value = async {
+                                let s1 = sdo_client.read_u32(0x2004, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s2 = sdo_client.read_u32(0x2004, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s3 = sdo_client.read_u32(0x2004, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((s1, s2, s3))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceSerialNumberInfo { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceDateInfo) => {
+                            let value = async {
+                                let d1 = sdo_client.read_u16(0x2006, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let d2 = sdo_client.read_u16(0x2006, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let d3 = sdo_client.read_u16(0x2006, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((d1, d2, d3))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceDateInfo { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceVariantInfo) => {
+                            let value = async {
+                                let s1 = sdo_client.read_u8(0x2008, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s2 = sdo_client.read_u8(0x2008, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s3 = sdo_client.read_u8(0x2008, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s4 = sdo_client.read_u16(0x2008, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s5 = sdo_client.read_u16(0x2008, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s6 = sdo_client.read_u16(0x2008, 0x06)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s7 = sdo_client.read_u8(0x2008, 0x07)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((s1, s2, s3, s4, s5, s6, s7))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceVariantInfo { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceControlParam) => {
+                            let value = async {
+                                let v = sdo_client.read_u16(0x2010, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceControlParam { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceOperationTime) => {
+                            let value = async {
+                                let m1 = sdo_client.read_u8(0x2016, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let m2 = sdo_client.read_u8(0x2016, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let m3 = sdo_client.read_u8(0x2016, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let m4 = sdo_client.read_u8(0x2016, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let m5 = sdo_client.read_u8(0x2016, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let h1 = sdo_client.read_u32(0x2016, 0x06)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let h2 = sdo_client.read_u32(0x2016, 0x07)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let h3 = sdo_client.read_u32(0x2016, 0x08)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let h4 = sdo_client.read_u32(0x2016, 0x09)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let h5 = sdo_client.read_u32(0x2016, 0x0a)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((m1, m2, m3, m4, m5, h1, h2, h3, h4, h5))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceOperationTime { node_id, value });
+                        },
+                        Some(SdoRequest::DeviceErrorCounter) => {
+                            let value = async {
+                                let highest_subindex = sdo_client.read_u8(0x201a, 0x00)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let mut counters = Vec::new();
+                                for sub_index in 1..=highest_subindex {
+                                    let val = sdo_client.read_u16(0x201a, sub_index)
+                                        .await
+                                        .map_err(|e| e.to_string())?;
+                                    counters.push(val);
+                                }
+                                Ok(counters)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::DeviceErrorCounter { node_id, value });
+                        },
+                        Some(SdoRequest::CellVoltageMinMax) => {
+                            let value = async {
+                                let min = sdo_client.read_u32(0x2102, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let max = sdo_client.read_u32(0x2102, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((min, max))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellVoltageMinMax { node_id, value });
+                        },
+                        Some(SdoRequest::CellVoltageLimit) => {
+                            let value = async {
+                                let v = sdo_client.read_u32(0x2104, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellVoltageLimit { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryVoltage) => {
+                            let value = async {
+                                let v1 = sdo_client.read_u32(0x2200, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let v2 = sdo_client.read_u32(0x2200, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let v3 = sdo_client.read_u32(0x2200, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((v1, v2, v3))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryVoltage { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryVoltageLimit) => {
+                            let value = async {
+                                let v = sdo_client.read_u32(0x2204, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryVoltageLimit { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryCurrent) => {
+                            let value = async {
+                                let c1 = sdo_client.read_i32(0x2300, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c2 = sdo_client.read_i32(0x2300, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c3 = sdo_client.read_i32(0x2300, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c4 = sdo_client.read_i32(0x2300, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c5 = sdo_client.read_i32(0x2300, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((c1, c2, c3, c4, c5))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryCurrent { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryCurrentLimit) => {
+                            let value = async {
+                                let v = sdo_client.read_i32(0x2304, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryCurrentLimit { node_id, value });
+                        },
+                        Some(SdoRequest::FetTemperature) => {
+                            let value = async {
+                                let t1 = sdo_client.read_i32(0x2400, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t2 = sdo_client.read_i32(0x2400, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((t1, t2))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::FetTemperature { node_id, value });
+                        },
+                        Some(SdoRequest::FetTemperatureMinMax) => {
+                            let value = async {
+                                let min = sdo_client.read_i32(0x2402, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let max = sdo_client.read_i32(0x2402, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((min, max))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::FetTemperatureMinMax { node_id, value });
+                        },
+                        Some(SdoRequest::FetTemperatureLimit) => {
+                            let value = async {
+                                let v = sdo_client.read_i32(0x2404, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::FetTemperatureLimit { node_id, value });
+                        },
+                        Some(SdoRequest::CellTemperature) => {
+                            let value = async {
+                                let t1 = sdo_client.read_i32(0x2500, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t2 = sdo_client.read_i32(0x2500, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t3 = sdo_client.read_i32(0x2500, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t4 = sdo_client.read_i32(0x2500, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t5 = sdo_client.read_i32(0x2500, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t6 = sdo_client.read_i32(0x2500, 0x06)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((t1, t2, t3, t4, t5, t6))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellTemperature { node_id, value });
+                        },
+                        Some(SdoRequest::CellTemperatureMinMax) => {
+                            let value = async {
+                                let min = sdo_client.read_i32(0x2502, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let max = sdo_client.read_i32(0x2502, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((min, max))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellTemperatureMinMax { node_id, value });
+                        },
+                        Some(SdoRequest::CellTemperatureLimit) => {
+                            let value = async {
+                                let v = sdo_client.read_i32(0x2504, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellTemperatureLimit { node_id, value });
+                        },
+                        Some(SdoRequest::CellBalanceStatus) => {
+                            let value = async {
+                                let s1 = sdo_client.read_u16(0x2600, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s2 = sdo_client.read_u16(0x2600, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let s3 = sdo_client.read_u16(0x2600, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((s1, s2, s3))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellBalanceStatus { node_id, value });
+                        },
+                        Some(SdoRequest::CellBalanceLimit) => {
+                            let value = async {
+                                let v = sdo_client.read_u32(0x2604, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellBalanceLimit { node_id, value });
+                        },
+                        Some(SdoRequest::CellImpedance) => {
+                            let value = async {
+                                let mut vals = [0u16; 18];
+                                for i in 0..18u8 {
+                                    vals[i as usize] = sdo_client.read_u16(0x2700, i + 1)
+                                        .await
+                                        .map_err(|e| e.to_string())?;
+                                }
+                                Ok(vals)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::CellImpedance { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryCapacity) => {
+                            let value = async {
+                                let design = sdo_client.read_u32(0x2800, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let fcc = sdo_client.read_u32(0x2800, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let remain = sdo_client.read_u32(0x2800, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let soc = sdo_client.read_u8(0x2800, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let soh = sdo_client.read_u8(0x2800, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let discharged = sdo_client.read_u32(0x2800, 0x06)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let charged = sdo_client.read_u32(0x2800, 0x07)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((design, fcc, remain, soc, soh, discharged, charged))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryCapacity { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryCapacityParam) => {
+                            let value = async {
+                                let v = sdo_client.read_u8(0x2804, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok(v)
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryCapacityParam { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryCycleCount) => {
+                            let value = async {
+                                let c1 = sdo_client.read_u32(0x2900, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c2 = sdo_client.read_u32(0x2900, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c3 = sdo_client.read_u32(0x2900, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c4 = sdo_client.read_u32(0x2900, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c5 = sdo_client.read_u32(0x2900, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c6 = sdo_client.read_u32(0x2900, 0x06)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c7 = sdo_client.read_u32(0x2900, 0x07)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c8 = sdo_client.read_u32(0x2900, 0x08)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c9 = sdo_client.read_u32(0x2900, 0x09)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryCycleCount { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryChargeVoltage) => {
+                            let value = async {
+                                let v1 = sdo_client.read_u32(0x3000, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let v2 = sdo_client.read_u32(0x3000, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let v3 = sdo_client.read_u32(0x3000, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((v1, v2, v3))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryChargeVoltage { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryChargeCurrent) => {
+                            let value = async {
+                                let c1 = sdo_client.read_u32(0x3100, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c2 = sdo_client.read_u32(0x3100, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c3 = sdo_client.read_u32(0x3100, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c4 = sdo_client.read_u32(0x3100, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c5 = sdo_client.read_u32(0x3100, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c6 = sdo_client.read_u16(0x3100, 0x06)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c7 = sdo_client.read_u16(0x3100, 0x07)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c8 = sdo_client.read_u16(0x3100, 0x08)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c9 = sdo_client.read_u16(0x3100, 0x09)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let c10 = sdo_client.read_u32(0x3100, 0x0a)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryChargeCurrent { node_id, value });
+                        },
+                        Some(SdoRequest::BatteryChargeTemperature) => {
+                            let value = async {
+                                let t1 = sdo_client.read_i32(0x3200, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t2 = sdo_client.read_i32(0x3200, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t3 = sdo_client.read_i32(0x3200, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t4 = sdo_client.read_i32(0x3200, 0x04)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t5 = sdo_client.read_i32(0x3200, 0x05)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t6 = sdo_client.read_i32(0x3200, 0x06)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((t1, t2, t3, t4, t5, t6))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::BatteryChargeTemperature { node_id, value });
+                        },
+                        Some(SdoRequest::MasterBatteryTemperature) => {
+                            let value = async {
+                                let t1 = sdo_client.read_i32(0x3700, 0x01)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let t2 = sdo_client.read_i32(0x3700, 0x02)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                Ok((t1, t2))
+                            }.await;
+                            let _ = sdo_response_tx.send(SdoResponse::MasterBatteryTemperature { node_id, value });
                         },
                         None => {
                             break;

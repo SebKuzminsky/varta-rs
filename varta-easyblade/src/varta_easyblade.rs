@@ -1,19 +1,181 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+#[allow(clippy::type_complexity)]
 pub enum SdoRequest {
     SerialNumber,
     SoftwareVersion,
     HardwareVersion,
     DeviceErrorHistory,
     CellVoltages,
+    DeviceConfigInfo,
+    DeviceSerialNumberInfo,
+    DeviceDateInfo,
+    DeviceVariantInfo,
+    DeviceControlParam,
+    DeviceOperationTime,
+    DeviceErrorCounter,
+    CellVoltageMinMax,
+    CellVoltageLimit,
+    BatteryVoltage,
+    BatteryVoltageLimit,
+    BatteryCurrent,
+    BatteryCurrentLimit,
+    FetTemperature,
+    FetTemperatureMinMax,
+    FetTemperatureLimit,
+    CellTemperature,
+    CellTemperatureMinMax,
+    CellTemperatureLimit,
+    CellBalanceStatus,
+    CellBalanceLimit,
+    CellImpedance,
+    BatteryCapacity,
+    BatteryCapacityParam,
+    BatteryCycleCount,
+    BatteryChargeVoltage,
+    BatteryChargeCurrent,
+    BatteryChargeTemperature,
+    MasterBatteryTemperature,
 }
 
+#[allow(clippy::type_complexity)]
 pub enum SdoResponse {
-    SerialNumber { node_id: u8, value: Result<u16, String> },
-    SoftwareVersion { node_id: u8, value: Result<String, String> },
-    HardwareVersion { node_id: u8, value: Result<String, String> },
-    DeviceErrorHistory { node_id: u8, value: Result<Vec<DeviceError>, String> },
-    CellVoltages { node_id: u8, value: Result<Vec<f32>, String> },
+    SerialNumber {
+        node_id: u8,
+        value: Result<u16, String>,
+    },
+    SoftwareVersion {
+        node_id: u8,
+        value: Result<String, String>,
+    },
+    HardwareVersion {
+        node_id: u8,
+        value: Result<String, String>,
+    },
+    DeviceErrorHistory {
+        node_id: u8,
+        value: Result<Vec<DeviceError>, String>,
+    },
+    CellVoltages {
+        node_id: u8,
+        value: Result<Vec<f32>, String>,
+    },
+    DeviceConfigInfo {
+        node_id: u8,
+        value: Result<(String, String, String), String>,
+    },
+    DeviceSerialNumberInfo {
+        node_id: u8,
+        value: Result<(u32, u32, u32), String>,
+    },
+    DeviceDateInfo {
+        node_id: u8,
+        value: Result<(u16, u16, u16), String>,
+    },
+    DeviceVariantInfo {
+        node_id: u8,
+        value: Result<(u8, u8, u8, u16, u16, u16, u8), String>,
+    },
+    DeviceControlParam {
+        node_id: u8,
+        value: Result<u16, String>,
+    },
+    DeviceOperationTime {
+        node_id: u8,
+        value: Result<(u8, u8, u8, u8, u8, u32, u32, u32, u32, u32), String>,
+    },
+    DeviceErrorCounter {
+        node_id: u8,
+        value: Result<Vec<u16>, String>,
+    },
+    CellVoltageMinMax {
+        node_id: u8,
+        value: Result<(u32, u32), String>,
+    },
+    CellVoltageLimit {
+        node_id: u8,
+        value: Result<u32, String>,
+    },
+    BatteryVoltage {
+        node_id: u8,
+        value: Result<(u32, u32, u32), String>,
+    },
+    BatteryVoltageLimit {
+        node_id: u8,
+        value: Result<u32, String>,
+    },
+    BatteryCurrent {
+        node_id: u8,
+        value: Result<(i32, i32, i32, i32, i32), String>,
+    },
+    BatteryCurrentLimit {
+        node_id: u8,
+        value: Result<i32, String>,
+    },
+    FetTemperature {
+        node_id: u8,
+        value: Result<(i32, i32), String>,
+    },
+    FetTemperatureMinMax {
+        node_id: u8,
+        value: Result<(i32, i32), String>,
+    },
+    FetTemperatureLimit {
+        node_id: u8,
+        value: Result<i32, String>,
+    },
+    CellTemperature {
+        node_id: u8,
+        value: Result<(i32, i32, i32, i32, i32, i32), String>,
+    },
+    CellTemperatureMinMax {
+        node_id: u8,
+        value: Result<(i32, i32), String>,
+    },
+    CellTemperatureLimit {
+        node_id: u8,
+        value: Result<i32, String>,
+    },
+    CellBalanceStatus {
+        node_id: u8,
+        value: Result<(u16, u16, u16), String>,
+    },
+    CellBalanceLimit {
+        node_id: u8,
+        value: Result<u32, String>,
+    },
+    CellImpedance {
+        node_id: u8,
+        value: Result<[u16; 18], String>,
+    },
+    BatteryCapacity {
+        node_id: u8,
+        value: Result<(u32, u32, u32, u8, u8, u32, u32), String>,
+    },
+    BatteryCapacityParam {
+        node_id: u8,
+        value: Result<u8, String>,
+    },
+    BatteryCycleCount {
+        node_id: u8,
+        value: Result<(u32, u32, u32, u32, u32, u32, u32, u32, u32), String>,
+    },
+    BatteryChargeVoltage {
+        node_id: u8,
+        value: Result<(u32, u32, u32), String>,
+    },
+    BatteryChargeCurrent {
+        node_id: u8,
+        value: Result<(u32, u32, u32, u32, u32, u16, u16, u16, u16, u32), String>,
+    },
+    BatteryChargeTemperature {
+        node_id: u8,
+        value: Result<(i32, i32, i32, i32, i32, i32), String>,
+    },
+    MasterBatteryTemperature {
+        node_id: u8,
+        value: Result<(i32, i32), String>,
+    },
 }
 
 #[derive(Debug, Clone, Default)]
@@ -33,6 +195,7 @@ pub struct MasterInfo {
 }
 
 #[derive(Debug)]
+#[allow(clippy::type_complexity)]
 pub struct VartaEasyblade {
     pub node_id: u8,
     pub serial_number: Option<u16>,
@@ -46,6 +209,35 @@ pub struct VartaEasyblade {
     pub cell_voltages: Option<Vec<f32>>,
     pub device_errors: Option<Vec<DeviceError>>,
     pub fet_status: Option<(bool, bool, bool)>,
+    pub device_config_info: Option<(String, String, String)>,
+    pub device_serial_number_info: Option<(u32, u32, u32)>,
+    pub device_date_info: Option<(u16, u16, u16)>,
+    pub device_variant_info: Option<(u8, u8, u8, u16, u16, u16, u8)>,
+    pub device_control_param: Option<u16>,
+    pub device_operation_time: Option<(u8, u8, u8, u8, u8, u32, u32, u32, u32, u32)>,
+    pub device_error_counter: Option<Vec<u16>>,
+    pub cell_voltage_min_max: Option<(u32, u32)>,
+    pub cell_voltage_limit: Option<u32>,
+    pub battery_voltage: Option<(u32, u32, u32)>,
+    pub battery_voltage_limit: Option<u32>,
+    pub battery_current: Option<(i32, i32, i32, i32, i32)>,
+    pub battery_current_limit: Option<i32>,
+    pub fet_temperature: Option<(i32, i32)>,
+    pub fet_temperature_min_max: Option<(i32, i32)>,
+    pub fet_temperature_limit: Option<i32>,
+    pub cell_temperature: Option<(i32, i32, i32, i32, i32, i32)>,
+    pub cell_temperature_min_max: Option<(i32, i32)>,
+    pub cell_temperature_limit: Option<i32>,
+    pub cell_balance_status: Option<(u16, u16, u16)>,
+    pub cell_balance_limit: Option<u32>,
+    pub cell_impedance: Option<[u16; 18]>,
+    pub battery_capacity: Option<(u32, u32, u32, u8, u8, u32, u32)>,
+    pub battery_capacity_param: Option<u8>,
+    pub battery_cycle_count: Option<(u32, u32, u32, u32, u32, u32, u32, u32, u32)>,
+    pub battery_charge_voltage: Option<(u32, u32, u32)>,
+    pub battery_charge_current: Option<(u32, u32, u32, u32, u32, u16, u16, u16, u16, u32)>,
+    pub battery_charge_temperature: Option<(i32, i32, i32, i32, i32, i32)>,
+    pub master_battery_temperature: Option<(i32, i32)>,
     pub sdo_request_tx: tokio::sync::mpsc::UnboundedSender<SdoRequest>,
     pub task_handle: tokio::task::JoinHandle<()>,
     pub cancellation_token: tokio_util::sync::CancellationToken,
