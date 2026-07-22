@@ -606,10 +606,15 @@ impl Varta {
                         },
                         Some(SdoRequest::SoftwareVersion) => {
                             let value = async {
-                                let bytes = sdo_client.upload(0x2000, 0x02)
+                                let sw = sdo_client.upload(0x2000, 0x02)
                                     .await
                                     .map_err(|e| e.to_string())?;
-                                Ok(String::from_utf8_lossy(&bytes).trim_matches('\0').to_string())
+                                let fw = sdo_client.upload(0x2000, 0x03)
+                                    .await
+                                    .map_err(|e| e.to_string())?;
+                                let sw_str = String::from_utf8_lossy(&sw).trim_matches('\0').to_string();
+                                let fw_str = String::from_utf8_lossy(&fw).trim_matches('\0').to_string();
+                                Ok(format!("{}{}", sw_str, fw_str))
                             }.await;
                             let _ = sdo_response_tx.send(SdoResponse::SoftwareVersion { node_id, value });
                         },
