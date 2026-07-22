@@ -212,35 +212,33 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
     match tab {
         SelectedTab::ModuleInfo => {
             if let Some(eb) = eb {
-                let node_id = eb.node_id.to_string();
-                let serial = eb
-                    .serial_number
-                    .map_or("N/A".to_string(), |v| format!("{}", v));
-                let sw_ver = eb.software_version.as_deref().unwrap_or("N/A");
-                let hw_ver = eb.hardware_version.as_deref().unwrap_or("N/A");
-                let voltage = eb
-                    .voltage
-                    .map_or("N/A".to_string(), |v| format!("{:.2} V", v));
-                let current = eb
-                    .current
-                    .map_or("N/A".to_string(), |c| format!("{:.2} A", c));
-                let soc = eb.soc.map_or("N/A".to_string(), |v| format!("{:.1}%", v));
-                let soh = eb.soh.map_or("N/A".to_string(), |v| format!("{:.1}%", v));
-                let last_seen = format_last_seen(eb.last_seen);
-                let rows = vec![
-                    Row::new(["Node ID", &node_id]),
-                    Row::new(["Serial Number", &serial]),
-                    Row::new(["Software Version", sw_ver]),
-                    Row::new(["Hardware Version", hw_ver]),
-                    Row::new(["Voltage", &voltage]),
-                    Row::new(["Current", &current]),
-                    Row::new(["SOC", &soc]),
-                    Row::new(["SOH", &soh]),
-                    Row::new(["Last Seen", &last_seen]),
-                ];
-                let table =
-                    Table::new(rows, [Constraint::Max(18), Constraint::Fill(1)]).column_spacing(2);
-                f.render_widget(table, content_area);
+                let info = format!(
+                    "Node ID:              {}\n\
+                     Serial Number:        {}\n\
+                     Software Version:     {}\n\
+                     Hardware Version:     {}\n\
+                     Voltage:              {}\n\
+                     Current:              {}\n\
+                     SOC:                  {}\n\
+                     SOH:                  {}\n\
+                     FET Status:           {}\n\
+                     Last Seen:            {}\n",
+                    eb.node_id,
+                    eb.serial_number
+                        .map_or("N/A".to_string(), |v| format!("{}", v)),
+                    eb.software_version.as_deref().unwrap_or("N/A"),
+                    eb.hardware_version.as_deref().unwrap_or("N/A"),
+                    eb.voltage
+                        .map_or("N/A".to_string(), |v| format!("{:.2} V", v)),
+                    eb.current
+                        .map_or("N/A".to_string(), |c| format!("{:.2} A", c)),
+                    eb.soc.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
+                    eb.soh.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
+                    format_fet_status(eb.fet_status),
+                    format_last_seen(eb.last_seen),
+                );
+                let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                f.render_widget(text, content_area);
             } else {
                 let text = Paragraph::new("No module selected");
                 f.render_widget(text, content_area);
