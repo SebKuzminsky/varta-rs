@@ -223,10 +223,8 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                     Row::new(["SOH", &soh]),
                     Row::new(["Last Seen", &last_seen]),
                 ];
-                let table = Table::new(
-                    rows,
-                    [Constraint::Percentage(50), Constraint::Percentage(50)],
-                );
+                let table =
+                    Table::new(rows, [Constraint::Max(18), Constraint::Fill(1)]).column_spacing(2);
                 f.render_widget(table, content_area);
             } else {
                 let text = Paragraph::new("No module selected");
