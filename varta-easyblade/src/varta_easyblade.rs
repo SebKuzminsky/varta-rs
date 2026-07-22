@@ -45,6 +45,7 @@ pub struct VartaEasyblade {
     pub soh: Option<f32>,
     pub cell_voltages: Option<Vec<f32>>,
     pub device_errors: Option<Vec<DeviceError>>,
+    pub fet_status: Option<(bool, bool, bool)>,
     pub sdo_request_tx: tokio::sync::mpsc::UnboundedSender<SdoRequest>,
     pub task_handle: tokio::task::JoinHandle<()>,
     pub cancellation_token: tokio_util::sync::CancellationToken,

@@ -101,6 +101,7 @@ impl Varta {
                 CanFilter::new(0x180, 0x7f0), // module info1: voltage & current for each module
                 CanFilter::new(0x280, 0x7f0), // module info2: temps & charge requests for each module
                 CanFilter::new(0x380, 0x7f0), // module info3: capacities for each module
+                CanFilter::new(0x480, 0x7f0), // module msgs: FET status for each module
                 CanFilter::new(0x264, 0x7ff), // master charge control
                 CanFilter::new(0x19b, 0x7ff), // master info1: voltage & current for pack
                 CanFilter::new(0x29b, 0x7ff), // master info2: temps & design capacity
@@ -331,6 +332,126 @@ impl Varta {
                         m.battery_design_cap(),
                     );
                 },
+                varta_easyblade_can_messages::Messages::Pack01Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack02Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack03Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack04Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack05Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack06Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack07Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack08Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack09Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack10Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack11Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack12Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack13Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack14Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
+                varta_easyblade_can_messages::Messages::Pack15Msgs(m) => {
+                    Self::update_easyblade_fet_status(
+                        easyblade,
+                        m.info_bit_2_chgfet_closed(),
+                        m.info_bit_3_dsgfet_closed(),
+                        m.info_bit_4_bypass_fet_on(),
+                    );
+                },
                 _ => {},
             }
         }
@@ -446,6 +567,7 @@ impl Varta {
                 soh: None,
                 cell_voltages: None,
                 device_errors: None,
+                fet_status: None,
                 sdo_request_tx,
                 task_handle,
                 cancellation_token,
@@ -592,6 +714,16 @@ impl Varta {
         } else {
             None
         };
+        easyblade.last_seen = std::time::SystemTime::now();
+    }
+
+    fn update_easyblade_fet_status(
+        easyblade: &mut VartaEasyblade,
+        charge_fet: bool,
+        discharge_fet: bool,
+        bypass_fet: bool,
+    ) {
+        easyblade.fet_status = Some((charge_fet, discharge_fet, bypass_fet));
         easyblade.last_seen = std::time::SystemTime::now();
     }
 }

@@ -66,6 +66,18 @@ fn format_last_seen(last_seen: SystemTime) -> String {
         .to_string()
 }
 
+fn format_fet_status(fet: Option<(bool, bool, bool)>) -> String {
+    match fet {
+        Some((c, d, b)) => format!(
+            "{}{}{}",
+            if c { "C" } else { "-" },
+            if d { "D" } else { "-" },
+            if b { "B" } else { "-" },
+        ),
+        None => "---".to_string(),
+    }
+}
+
 fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, tab: SelectedTab) {
     let area = f.area();
 
@@ -117,7 +129,7 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
     f.render_widget(&middle_block, layout[1]);
     let middle_inner = middle_block.inner(layout[1]);
 
-    let header = Row::new(["Serial", "Voltage", "Current", "SOC", "Last Seen"])
+    let header = Row::new(["Serial", "Voltage", "Current", "SOC", "FET", "Last Seen"])
         .style(Style::new().add_modifier(Modifier::BOLD));
 
     let mut rows = Vec::new();
@@ -134,6 +146,7 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
             .current
             .map_or("----".to_string(), |c| format!("{c:.2} A"));
         let soc = eb.soc.map_or("----".to_string(), |v| format!("{:.1}%", v));
+        let fet = format_fet_status(eb.fet_status);
         let last_seen = format_last_seen(eb.last_seen);
         let row = Row::new([
             eb.serial_number
@@ -141,6 +154,7 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
             voltage,
             current,
             soc,
+            fet,
             last_seen,
         ]);
         if idx == selected {
@@ -154,10 +168,11 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
         rows,
         [
             Constraint::Percentage(12),
-            Constraint::Percentage(18),
-            Constraint::Percentage(18),
-            Constraint::Percentage(14),
-            Constraint::Percentage(38),
+            Constraint::Percentage(16),
+            Constraint::Percentage(16),
+            Constraint::Percentage(12),
+            Constraint::Percentage(12),
+            Constraint::Percentage(32),
         ],
     )
     .header(header)
