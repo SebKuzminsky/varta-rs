@@ -1,0 +1,599 @@
+use clap::{Parser, Subcommand};
+use serde_json::{Map, Value, json};
+use std::fs;
+use std::io::Write;
+use std::time::Duration;
+use varta_easyblade::{DeviceError, Varta};
+use zencan_client::SdoClient;
+use zencan_client::common::{SocketCanReceiver, SocketCanSender};
+
+type ZenSdoClient = SdoClient<SocketCanSender, SocketCanReceiver>;
+
+#[derive(Debug, Parser)]
+#[command(name = "varta-cli")]
+struct Args {
+    /// The CAN interface to connect to (e.g. 'can0' or 'vcan0').
+    #[arg(short, long, default_value_t = String::from("can0"))]
+    can_interface: String,
+
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Listen for CAN PDO packets for 3 seconds and print discovered serial numbers.
+    Scan,
+    /// Read all SDOs from the module with the given serial number and output JSON.
+    Read {
+        /// Serial number of the module to read.
+        serial_number: u16,
+        /// Write output to a file instead of stdout.
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+}
+
+fn device_error_to_string(err: &DeviceError) -> String {
+    match err {
+        DeviceError::None => "None".to_string(),
+        DeviceError::CellOverTempWhileCharging => "CellOverTempWhileCharging".to_string(),
+        DeviceError::CellUnderTempWhileCharging => "CellUnderTempWhileCharging".to_string(),
+        DeviceError::ChargeFetOverTempWhileCharging => "ChargeFetOverTempWhileCharging".to_string(),
+        DeviceError::CellOverTempWhileDischarging => "CellOverTempWhileDischarging".to_string(),
+        DeviceError::CellUnderTempWhileDischarging => "CellUnderTempWhileDischarging".to_string(),
+        DeviceError::DischargeFetOverTempWhileDischarging => {
+            "DischargeFetOverTempWhileDischarging".to_string()
+        },
+        DeviceError::NotUsed0x07 => "NotUsed0x07".to_string(),
+        DeviceError::CellOverVoltageWhileCharging => "CellOverVoltageWhileCharging".to_string(),
+        DeviceError::CellUnderVoltageWhileDischarging => {
+            "CellUnderVoltageWhileDischarging".to_string()
+        },
+        DeviceError::CellVoltageTooLow => "CellVoltageTooLow".to_string(),
+        DeviceError::SevereCellUnbalance => "SevereCellUnbalance".to_string(),
+        DeviceError::NotUsed0x0c => "NotUsed0x0c".to_string(),
+        DeviceError::PackOverVoltage => "PackOverVoltage".to_string(),
+        DeviceError::NotUsed0x0e => "NotUsed0x0e".to_string(),
+        DeviceError::VoltageSumDifference => "VoltageSumDifference".to_string(),
+        DeviceError::ModuleUnderVoltage => "ModuleUnderVoltage".to_string(),
+        DeviceError::NotUsed0x11 => "NotUsed0x11".to_string(),
+        DeviceError::NotUsed0x12 => "NotUsed0x12".to_string(),
+        DeviceError::NotUsed0x13 => "NotUsed0x13".to_string(),
+        DeviceError::NotUsed0x14 => "NotUsed0x14".to_string(),
+        DeviceError::ShortCircuitWhileCharging => "ShortCircuitWhileCharging".to_string(),
+        DeviceError::OverCurrent65AWhileCharging => "OverCurrent65AWhileCharging".to_string(),
+        DeviceError::OverCurrent85AWhileCharging => "OverCurrent85AWhileCharging".to_string(),
+        DeviceError::NotUsed0x18 => "NotUsed0x18".to_string(),
+        DeviceError::ShortCircuitWhileDischarging => "ShortCircuitWhileDischarging".to_string(),
+        DeviceError::OverCurrent65AWhileDischarging => "OverCurrent65AWhileDischarging".to_string(),
+        DeviceError::OverCurrent85AWhileDischarging => "OverCurrent85AWhileDischarging".to_string(),
+        DeviceError::OverCurrentWhileDischarging => "OverCurrentWhileDischarging".to_string(),
+        DeviceError::CurrentMeasurementError => "CurrentMeasurementError".to_string(),
+        DeviceError::NotUsed0x1e => "NotUsed0x1e".to_string(),
+        DeviceError::NotUsed0x1f => "NotUsed0x1f".to_string(),
+        DeviceError::NotUsed0x20 => "NotUsed0x20".to_string(),
+        DeviceError::NotUsed0x21 => "NotUsed0x21".to_string(),
+        DeviceError::NotUsed0x22 => "NotUsed0x22".to_string(),
+        DeviceError::NotUsed0x23 => "NotUsed0x23".to_string(),
+        DeviceError::NotUsed0x24 => "NotUsed0x24".to_string(),
+        DeviceError::NotUsed0x25 => "NotUsed0x25".to_string(),
+        DeviceError::NotUsed0x26 => "NotUsed0x26".to_string(),
+        DeviceError::NotUsed0x27 => "NotUsed0x27".to_string(),
+        DeviceError::NotUsed0x28 => "NotUsed0x28".to_string(),
+        DeviceError::AdcMinScale => "AdcMinScale".to_string(),
+        DeviceError::AdcMaxScale => "AdcMaxScale".to_string(),
+        DeviceError::CellTempSensorHighFailure => "CellTempSensorHighFailure".to_string(),
+        DeviceError::CellTempSensorLowFailure => "CellTempSensorLowFailure".to_string(),
+        DeviceError::FetTempSensorHighFailure => "FetTempSensorHighFailure".to_string(),
+        DeviceError::FetTempSensorLowFailure => "FetTempSensorLowFailure".to_string(),
+        DeviceError::NotUsed0x2f => "NotUsed0x2f".to_string(),
+        DeviceError::NotUsed0x30 => "NotUsed0x30".to_string(),
+        DeviceError::NotUsed0x31 => "NotUsed0x31".to_string(),
+        DeviceError::CurrentSensorHighFailure => "CurrentSensorHighFailure".to_string(),
+        DeviceError::NotUsed0x33 => "NotUsed0x33".to_string(),
+        DeviceError::CurrentSensorHighFailureWhileDischarging => {
+            "CurrentSensorHighFailureWhileDischarging".to_string()
+        },
+        DeviceError::DischargeFetShorted => "DischargeFetShorted".to_string(),
+        DeviceError::ChargeFetShorted => "ChargeFetShorted".to_string(),
+        DeviceError::NotUsed0x37 => "NotUsed0x37".to_string(),
+        DeviceError::TempDischargeErrorLock => "TempDischargeErrorLock".to_string(),
+        DeviceError::TempChargeErrorLock => "TempChargeErrorLock".to_string(),
+        DeviceError::OverCurrentWhileRecuperating => "OverCurrentWhileRecuperating".to_string(),
+        DeviceError::CellOverVoltageWhileRecuperating => {
+            "CellOverVoltageWhileRecuperating".to_string()
+        },
+        DeviceError::V24UnderVoltage => "V24UnderVoltage".to_string(),
+        DeviceError::V24OverVoltage => "V24OverVoltage".to_string(),
+        DeviceError::CanNodeIdNotAssigned => "CanNodeIdNotAssigned".to_string(),
+        DeviceError::CanNodeIdDuplicate => "CanNodeIdDuplicate".to_string(),
+        DeviceError::ParameterConfigError => "ParameterConfigError".to_string(),
+        DeviceError::AnalogFrontEndCommunicationErorr => {
+            "AnalogFrontEndCommunicationErorr".to_string()
+        },
+        DeviceError::AnalogFrontEndSelftestError => "AnalogFrontEndSelftestError".to_string(),
+        DeviceError::AnalogFrontEndFullScaleError => "AnalogFrontEndFullScaleError".to_string(),
+        DeviceError::TempMuxSelftestError => "TempMuxSelftestError".to_string(),
+        DeviceError::Unknown => "Unknown".to_string(),
+    }
+}
+
+struct SdoData {
+    software_version: Option<Value>,
+    hardware_version: Option<Value>,
+    device_config_info: Option<Value>,
+    device_serial_number_info: Option<Value>,
+    device_date_info: Option<Value>,
+    device_variant_info: Option<Value>,
+    device_control_param: Option<Value>,
+    device_operation_time: Option<Value>,
+    device_error_history: Option<Value>,
+    device_error_counter: Option<Value>,
+    cell_voltages: Option<Value>,
+    cell_voltage_min_max: Option<Value>,
+    cell_voltage_limit: Option<Value>,
+    battery_voltage: Option<Value>,
+    battery_voltage_limit: Option<Value>,
+    battery_current: Option<Value>,
+    battery_current_limit: Option<Value>,
+    fet_temperature: Option<Value>,
+    fet_temperature_min_max: Option<Value>,
+    fet_temperature_limit: Option<Value>,
+    cell_temperature: Option<Value>,
+    cell_temperature_min_max: Option<Value>,
+    cell_temperature_limit: Option<Value>,
+    cell_balance_status: Option<Value>,
+    cell_balance_limit: Option<Value>,
+    cell_impedance: Option<Value>,
+    battery_capacity: Option<Value>,
+    battery_capacity_param: Option<Value>,
+    battery_cycle_count: Option<Value>,
+    battery_charge_voltage: Option<Value>,
+    battery_charge_current: Option<Value>,
+    battery_charge_temperature: Option<Value>,
+    master_battery_temperature: Option<Value>,
+}
+
+fn ok_value<T>(result: Result<T, String>, transform: impl Fn(T) -> Value) -> Value {
+    match result {
+        Ok(v) => transform(v),
+        Err(e) => json!({"error": e}),
+    }
+}
+
+async fn read_serial_number(sdo_client: &mut ZenSdoClient) -> Result<u16, String> {
+    Varta::sdo_read_serial_number(sdo_client).await
+}
+
+async fn read_all_sdos(sdo_client: &mut ZenSdoClient) -> SdoData {
+    SdoData {
+        software_version: Some(ok_value(
+            Varta::sdo_read_software_version(sdo_client).await,
+            |v| json!(v),
+        )),
+        hardware_version: Some(ok_value(
+            Varta::sdo_read_hardware_version(sdo_client).await,
+            |v| json!(v),
+        )),
+        device_config_info: Some(ok_value(
+            Varta::sdo_read_device_config_info(sdo_client).await,
+            |v| json!(v),
+        )),
+        device_serial_number_info: Some(ok_value(
+            Varta::sdo_read_device_serial_number_info(sdo_client).await,
+            |v| json!(v),
+        )),
+        device_date_info: Some(ok_value(
+            Varta::sdo_read_device_date_info(sdo_client).await,
+            |v| json!(v),
+        )),
+        device_variant_info: Some(ok_value(
+            Varta::sdo_read_device_variant_info(sdo_client).await,
+            |v| json!(v),
+        )),
+        device_control_param: Some(ok_value(
+            Varta::sdo_read_device_control_param(sdo_client).await,
+            |v| json!(v),
+        )),
+        device_operation_time: Some(ok_value(
+            Varta::sdo_read_device_operation_time(sdo_client).await,
+            |v| json!(v),
+        )),
+        device_error_history: Some(ok_value(
+            Varta::sdo_read_device_error_history(sdo_client).await,
+            |errors| {
+                json!(
+                    errors
+                        .iter()
+                        .map(device_error_to_string)
+                        .collect::<Vec<_>>()
+                )
+            },
+        )),
+        device_error_counter: Some(ok_value(
+            Varta::sdo_read_device_error_counter(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_voltages: Some(ok_value(
+            Varta::sdo_read_cell_voltages(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_voltage_min_max: Some(ok_value(
+            Varta::sdo_read_cell_voltage_min_max(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_voltage_limit: Some(ok_value(
+            Varta::sdo_read_cell_voltage_limit(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_voltage: Some(ok_value(
+            Varta::sdo_read_battery_voltage(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_voltage_limit: Some(ok_value(
+            Varta::sdo_read_battery_voltage_limit(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_current: Some(ok_value(
+            Varta::sdo_read_battery_current(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_current_limit: Some(ok_value(
+            Varta::sdo_read_battery_current_limit(sdo_client).await,
+            |v| json!(v),
+        )),
+        fet_temperature: Some(ok_value(
+            Varta::sdo_read_fet_temperature(sdo_client).await,
+            |v| json!(v),
+        )),
+        fet_temperature_min_max: Some(ok_value(
+            Varta::sdo_read_fet_temperature_min_max(sdo_client).await,
+            |v| json!(v),
+        )),
+        fet_temperature_limit: Some(ok_value(
+            Varta::sdo_read_fet_temperature_limit(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_temperature: Some(ok_value(
+            Varta::sdo_read_cell_temperature(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_temperature_min_max: Some(ok_value(
+            Varta::sdo_read_cell_temperature_min_max(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_temperature_limit: Some(ok_value(
+            Varta::sdo_read_cell_temperature_limit(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_balance_status: Some(ok_value(
+            Varta::sdo_read_cell_balance_status(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_balance_limit: Some(ok_value(
+            Varta::sdo_read_cell_balance_limit(sdo_client).await,
+            |v| json!(v),
+        )),
+        cell_impedance: Some(ok_value(
+            Varta::sdo_read_cell_impedance(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_capacity: Some(ok_value(
+            Varta::sdo_read_battery_capacity(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_capacity_param: Some(ok_value(
+            Varta::sdo_read_battery_capacity_param(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_cycle_count: Some(ok_value(
+            Varta::sdo_read_battery_cycle_count(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_charge_voltage: Some(ok_value(
+            Varta::sdo_read_battery_charge_voltage(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_charge_current: Some(ok_value(
+            Varta::sdo_read_battery_charge_current(sdo_client).await,
+            |v| json!(v),
+        )),
+        battery_charge_temperature: Some(ok_value(
+            Varta::sdo_read_battery_charge_temperature(sdo_client).await,
+            |v| json!(v),
+        )),
+        master_battery_temperature: Some(ok_value(
+            Varta::sdo_read_master_battery_temperature(sdo_client).await,
+            |v| json!(v),
+        )),
+    }
+}
+
+fn sdo_data_to_json(node_id: u8, serial_number: u16, data: &SdoData) -> Value {
+    let mut map = Map::new();
+    map.insert("node_id".into(), json!(node_id));
+    map.insert("serial_number".into(), json!(serial_number));
+
+    if let Some(v) = &data.software_version {
+        map.insert("software_version".into(), v.clone());
+    }
+    if let Some(v) = &data.hardware_version {
+        map.insert("hardware_version".into(), v.clone());
+    }
+    if let Some(v) = &data.device_config_info {
+        map.insert("device_config_info".into(), v.clone());
+    }
+    if let Some(v) = &data.device_serial_number_info {
+        map.insert("device_serial_number_info".into(), v.clone());
+    }
+    if let Some(v) = &data.device_date_info {
+        map.insert("device_date_info".into(), v.clone());
+    }
+    if let Some(v) = &data.device_variant_info {
+        map.insert("device_variant_info".into(), v.clone());
+    }
+    if let Some(v) = &data.device_control_param {
+        map.insert("device_control_param".into(), v.clone());
+    }
+    if let Some(v) = &data.device_operation_time {
+        map.insert("device_operation_time".into(), v.clone());
+    }
+    if let Some(v) = &data.device_error_history {
+        map.insert("device_error_history".into(), v.clone());
+    }
+    if let Some(v) = &data.device_error_counter {
+        map.insert("device_error_counter".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_voltages {
+        map.insert("cell_voltages".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_voltage_min_max {
+        map.insert("cell_voltage_min_max".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_voltage_limit {
+        map.insert("cell_voltage_limit".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_voltage {
+        map.insert("battery_voltage".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_voltage_limit {
+        map.insert("battery_voltage_limit".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_current {
+        map.insert("battery_current".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_current_limit {
+        map.insert("battery_current_limit".into(), v.clone());
+    }
+    if let Some(v) = &data.fet_temperature {
+        map.insert("fet_temperature".into(), v.clone());
+    }
+    if let Some(v) = &data.fet_temperature_min_max {
+        map.insert("fet_temperature_min_max".into(), v.clone());
+    }
+    if let Some(v) = &data.fet_temperature_limit {
+        map.insert("fet_temperature_limit".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_temperature {
+        map.insert("cell_temperature".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_temperature_min_max {
+        map.insert("cell_temperature_min_max".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_temperature_limit {
+        map.insert("cell_temperature_limit".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_balance_status {
+        map.insert("cell_balance_status".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_balance_limit {
+        map.insert("cell_balance_limit".into(), v.clone());
+    }
+    if let Some(v) = &data.cell_impedance {
+        map.insert("cell_impedance".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_capacity {
+        map.insert("battery_capacity".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_capacity_param {
+        map.insert("battery_capacity_param".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_cycle_count {
+        map.insert("battery_cycle_count".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_charge_voltage {
+        map.insert("battery_charge_voltage".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_charge_current {
+        map.insert("battery_charge_current".into(), v.clone());
+    }
+    if let Some(v) = &data.battery_charge_temperature {
+        map.insert("battery_charge_temperature".into(), v.clone());
+    }
+    if let Some(v) = &data.master_battery_temperature {
+        map.insert("master_battery_temperature".into(), v.clone());
+    }
+
+    Value::Object(map)
+}
+
+async fn run_scan(can_interface: &str) {
+    let mut varta = match Varta::new(can_interface).await {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("Error opening CAN interface {}: {}", can_interface, e);
+            std::process::exit(1);
+        },
+    };
+
+    let scan_duration = Duration::from_secs(3);
+    let start = std::time::Instant::now();
+
+    while start.elapsed() < scan_duration {
+        let remaining = scan_duration.saturating_sub(start.elapsed());
+        match tokio::time::timeout(remaining, varta.process_socketcan_msg()).await {
+            Ok(Ok(_)) => {},
+            Ok(Err(e)) => {
+                eprintln!("Error reading CAN: {}", e);
+                break;
+            },
+            Err(_) => break,
+        }
+    }
+
+    let detected: Vec<u8> = varta
+        .easyblades
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, entry)| entry.as_ref().map(|_| idx as u8))
+        .collect();
+
+    if detected.is_empty() {
+        println!("No modules detected on CAN bus.");
+        return;
+    }
+
+    println!(
+        "Detected {} module(s), reading serial numbers...",
+        detected.len()
+    );
+
+    for node_id in detected {
+        let (tx, rx) = match zencan_client::open_socketcan(can_interface) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("  Node {}: cannot open CAN: {}", node_id, e);
+                continue;
+            },
+        };
+        let mut sdo_client = SdoClient::new_std(node_id, tx, rx);
+
+        match read_serial_number(&mut sdo_client).await {
+            Ok(sn) => println!("  Node {}: serial {}", node_id, sn),
+            Err(e) => eprintln!("  Node {}: error reading serial: {}", node_id, e),
+        }
+    }
+}
+
+async fn run_read(can_interface: &str, target_serial: u16, output: Option<String>) {
+    let mut varta = match Varta::new(can_interface).await {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("Error opening CAN interface {}: {}", can_interface, e);
+            std::process::exit(1);
+        },
+    };
+
+    println!("Scanning for module serial {}...", target_serial);
+    let scan_duration = Duration::from_secs(5);
+    let start = std::time::Instant::now();
+
+    let mut target_node: Option<u8> = None;
+
+    while start.elapsed() < scan_duration {
+        let remaining = scan_duration.saturating_sub(start.elapsed());
+        match tokio::time::timeout(remaining, varta.process_socketcan_msg()).await {
+            Ok(Ok(_)) => {},
+            Ok(Err(e)) => {
+                eprintln!("Error reading CAN: {}", e);
+                return;
+            },
+            Err(_) => break,
+        }
+
+        if target_node.is_none() {
+            for (idx, entry) in varta.easyblades.iter().enumerate() {
+                if let Some(eb) = entry
+                    && eb.serial_number == Some(target_serial)
+                {
+                    target_node = Some(idx as u8);
+                    break;
+                }
+            }
+        }
+
+        if target_node.is_none() {
+            for (idx, entry) in varta.easyblades.iter().enumerate() {
+                if entry.is_some() && target_node.is_none() {
+                    let node_id = idx as u8;
+                    let (tx, rx) = match zencan_client::open_socketcan(can_interface) {
+                        Ok(v) => v,
+                        Err(_) => continue,
+                    };
+                    let mut sdo_client = SdoClient::new_std(node_id, tx, rx);
+                    if let Ok(sn) = read_serial_number(&mut sdo_client).await
+                        && sn == target_serial
+                    {
+                        target_node = Some(node_id);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if target_node.is_some() {
+            break;
+        }
+    }
+
+    let node_id = match target_node {
+        Some(n) => n,
+        None => {
+            eprintln!(
+                "Module with serial number {} not found on CAN bus.",
+                target_serial
+            );
+            std::process::exit(1);
+        },
+    };
+
+    println!(
+        "Found module serial {} on node {}, reading all SDOs...",
+        target_serial, node_id
+    );
+
+    let (tx, rx) = match zencan_client::open_socketcan(can_interface) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("Error opening CAN for SDO read: {}", e);
+            std::process::exit(1);
+        },
+    };
+    let mut sdo_client = SdoClient::new_std(node_id, tx, rx);
+
+    let data = read_all_sdos(&mut sdo_client).await;
+    let json_value = sdo_data_to_json(node_id, target_serial, &data);
+    let json_string = serde_json::to_string_pretty(&json_value).unwrap();
+
+    match output {
+        Some(path) => {
+            let mut file = fs::File::create(&path).unwrap_or_else(|e| {
+                eprintln!("Error creating file {}: {}", path, e);
+                std::process::exit(1);
+            });
+            file.write_all(json_string.as_bytes()).unwrap_or_else(|e| {
+                eprintln!("Error writing to file {}: {}", path, e);
+                std::process::exit(1);
+            });
+            println!("Output written to {}", path);
+        },
+        None => {
+            println!("{}", json_string);
+        },
+    }
+}
+
+#[tokio::main]
+async fn main() {
+    let args = Args::parse();
+
+    match args.command {
+        Command::Scan => {
+            run_scan(&args.can_interface).await;
+        },
+        Command::Read { serial_number, output } => {
+            run_read(&args.can_interface, serial_number, output).await;
+        },
+    }
+}

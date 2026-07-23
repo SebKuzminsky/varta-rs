@@ -16,6 +16,7 @@ bitvec = "1.0.1"
 embedded-can = "0.4.1"
 num_enum = "0.7.6"
 socketcan = { version = "3.6.2", features = ["tokio"] }
+serde = { version = "1.0", features = ["derive"] }
 thiserror = "2.0.18"
 tokio = { version = "1.45.0", features = ["rt", "sync"] }
 zencan-client = { git = "https://github.com/mcbridejc/zencan.git", features = ["socketcan"] }

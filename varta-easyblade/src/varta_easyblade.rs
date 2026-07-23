@@ -1,27 +1,27 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceConfigInfo {
     pub config_1: String,
     pub config_2: String,
     pub config_3: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceSerialNumberInfo {
     pub serial_part_1: u32,
     pub serial_part_2: u32,
     pub serial_part_3: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceDateInfo {
     pub year: u16,
     pub month: u16,
     pub day: u16,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceVariantInfo {
     pub variant_1: u8,
     pub variant_2: u8,
@@ -32,7 +32,7 @@ pub struct DeviceVariantInfo {
     pub variant_7: u8,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceOperationTime {
     pub minutes_below_zero: u8,
     pub minutes_zero_to_40: u8,
@@ -46,30 +46,30 @@ pub struct DeviceOperationTime {
     pub hours_above_80: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CellVoltageMinMax {
     pub min_voltage_v: f32,
     pub max_voltage_v: f32,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct CellVoltageLimit {
     pub over_voltage_error_v: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryVoltage {
     pub sum_of_cell_voltage_v: f32,
     pub internal_connector_voltage_v: f32,
     pub external_connector_voltage_v: f32,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct BatteryVoltageLimit {
     pub internal_external_min_delta_v: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryCurrent {
     pub fast_current_a: f32,
     pub weighted_avg_current_a: f32,
@@ -78,29 +78,29 @@ pub struct BatteryCurrent {
     pub average_10s_current_a: f32,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct BatteryCurrentLimit {
     pub discharge_sc_error_a: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct FetTemperature {
     pub temperature_1_c: f32,
     pub temperature_2_c: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct FetTemperatureMinMax {
     pub min_temperature_c: f32,
     pub max_temperature_c: f32,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct FetTemperatureLimit {
     pub discharge_over_temp_c: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CellTemperature {
     pub temperature_1_c: f32,
     pub temperature_2_c: f32,
@@ -110,37 +110,37 @@ pub struct CellTemperature {
     pub temperature_6_c: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CellTemperatureMinMax {
     pub min_temperature_c: f32,
     pub max_temperature_c: f32,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct CellTemperatureLimit {
     pub discharge_over_temp_c: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CellBalanceStatus {
     pub balance_status_register: u16,
     pub balance_fet_active: u16,
     pub balance_fet_active_persistent: u16,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct CellBalanceLimit {
     pub balance_start_diff_voltage_v: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CellImpedance {
     pub cell_impedances_mohm: [u16; 16],
     pub low_temp_factor: u16,
     pub high_temp_factor: u16,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryCapacity {
     pub design_capacity_ah: f32,
     pub full_charge_capacity_ah: f32,
@@ -151,7 +151,7 @@ pub struct BatteryCapacity {
     pub total_charged_capacity_ah: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryCycleCount {
     pub discharge_cycles: u32,
     pub discharge_learning_cycles: u32,
@@ -164,14 +164,14 @@ pub struct BatteryCycleCount {
     pub charge_use_high_temperature: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryChargeVoltage {
     pub charge_voltage_valid_v: f32,
     pub charge_max_voltage_v: f32,
     pub charge_keep_power_voltage_v: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryChargeCurrent {
     pub charge_current_valid_a: f32,
     pub charge_max_current_n_a: f32,
@@ -185,7 +185,7 @@ pub struct BatteryChargeCurrent {
     pub charge_current_config: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryChargeTemperature {
     pub temp_min_low_c: f32,
     pub temp_min_normal_c: f32,
@@ -195,7 +195,7 @@ pub struct BatteryChargeTemperature {
     pub temp_6_c: f32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct MasterBatteryTemperature {
     pub max_fet_temperature_c: f32,
     pub max_cell_temperature_c: f32,
