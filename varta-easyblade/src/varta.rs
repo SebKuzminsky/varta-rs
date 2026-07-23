@@ -1,4 +1,5 @@
 use socketcan::{CanFilter, EmbeddedFrame, SocketOptions};
+use zencan_client::common::traits::{AsyncCanReceiver, AsyncCanSender};
 
 use crate::Error;
 use crate::MAX_MODULES;
@@ -736,575 +737,886 @@ impl Varta {
                     break;
                 }
                 request = sdo_request_rx.recv() => {
-                    match request {
+                    let response = match request {
                         Some(SdoRequest::SerialNumber) => {
-                            let value = async {
-                                let bytes = sdo_client.upload(0x2004, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                if bytes.len() < 2 {
-                                    return Err("Serial number data too short".to_string());
-                                }
-                                Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::SerialNumber { node_id, value });
+                            SdoResponse::SerialNumber {
+                                node_id,
+                                value: Self::sdo_read_serial_number(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::SoftwareVersion) => {
-                            let value = async {
-                                let sw = sdo_client.upload(0x2000, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let fw = sdo_client.upload(0x2000, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let sw_str = String::from_utf8_lossy(&sw).trim_matches('\0').to_string();
-                                let fw_str = String::from_utf8_lossy(&fw).trim_matches('\0').to_string();
-                                Ok(format!("{}{}", sw_str, fw_str))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::SoftwareVersion { node_id, value });
+                            SdoResponse::SoftwareVersion {
+                                node_id,
+                                value: Self::sdo_read_software_version(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::HardwareVersion) => {
-                            let value = async {
-                                let bytes = sdo_client.upload(0x2000, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(String::from_utf8_lossy(&bytes).trim_matches('\0').to_string())
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::HardwareVersion { node_id, value });
+                            SdoResponse::HardwareVersion {
+                                node_id,
+                                value: Self::sdo_read_hardware_version(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceErrorHistory) => {
-                            let value = async {
-                                let highest_subindex = sdo_client.read_u8(0x2018, 0x00)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                if highest_subindex != 16 {
-                                    return Err(format!("Expected 16 error entries, got {}", highest_subindex));
-                                }
-                                let mut errors = Vec::new();
-                                for sub_index in 1..=16u8 {
-                                    let val = sdo_client.read_u8(0x2018, sub_index)
-                                        .await
-                                        .map_err(|e| e.to_string())?;
-                                    let e: varta_easyblade::DeviceError =
-                                        match varta_easyblade::DeviceError::try_from(val) {
-                                            Ok(e) => e,
-                                            Err(_) => varta_easyblade::DeviceError::Unknown,
-                                        };
-                                    errors.push(e);
-                                }
-                                Ok(errors)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceErrorHistory { node_id, value });
+                            SdoResponse::DeviceErrorHistory {
+                                node_id,
+                                value: Self::sdo_read_device_error_history(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellVoltages) => {
-                            let value = async {
-                                let highest_subindex = sdo_client.read_u8(0x2100, 0x00)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                if highest_subindex != 16 {
-                                    return Err(format!("Expected 16 cell voltage entries, got {}", highest_subindex));
-                                }
-                                // 48V Easyblade is 14S, so only sub-indices 1..=14 are valid
-                                let mut cell_voltages: Vec<f32> = Vec::new();
-                                for sub_index in 1..=14u8 {
-                                    let val = sdo_client.read_u32(0x2100, sub_index)
-                                        .await
-                                        .map_err(|e| e.to_string())?;
-                                    cell_voltages.push((val as f32) / 1000.0);
-                                }
-                                Ok(cell_voltages)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellVoltages { node_id, value });
+                            SdoResponse::CellVoltages {
+                                node_id,
+                                value: Self::sdo_read_cell_voltages(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceConfigInfo) => {
-                            let value = async {
-                                let c1 = sdo_client.upload(0x2002, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c2 = sdo_client.upload(0x2002, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c3 = sdo_client.upload(0x2002, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((
-                                    String::from_utf8_lossy(&c1).trim_matches('\0').to_string(),
-                                    String::from_utf8_lossy(&c2).trim_matches('\0').to_string(),
-                                    String::from_utf8_lossy(&c3).trim_matches('\0').to_string(),
-                                ))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceConfigInfo { node_id, value });
+                            SdoResponse::DeviceConfigInfo {
+                                node_id,
+                                value: Self::sdo_read_device_config_info(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceSerialNumberInfo) => {
-                            let value = async {
-                                let s1 = sdo_client.read_u32(0x2004, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s2 = sdo_client.read_u32(0x2004, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s3 = sdo_client.read_u32(0x2004, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((s1, s2, s3))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceSerialNumberInfo { node_id, value });
+                            SdoResponse::DeviceSerialNumberInfo {
+                                node_id,
+                                value: Self::sdo_read_device_serial_number_info(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceDateInfo) => {
-                            let value = async {
-                                let d1 = sdo_client.read_u16(0x2006, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let d2 = sdo_client.read_u16(0x2006, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let d3 = sdo_client.read_u16(0x2006, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((d1, d2, d3))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceDateInfo { node_id, value });
+                            SdoResponse::DeviceDateInfo {
+                                node_id,
+                                value: Self::sdo_read_device_date_info(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceVariantInfo) => {
-                            let value = async {
-                                let s1 = sdo_client.read_u8(0x2008, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s2 = sdo_client.read_u8(0x2008, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s3 = sdo_client.read_u8(0x2008, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s4 = sdo_client.read_u16(0x2008, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s5 = sdo_client.read_u16(0x2008, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s6 = sdo_client.read_u16(0x2008, 0x06)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s7 = sdo_client.read_u8(0x2008, 0x07)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((s1, s2, s3, s4, s5, s6, s7))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceVariantInfo { node_id, value });
+                            SdoResponse::DeviceVariantInfo {
+                                node_id,
+                                value: Self::sdo_read_device_variant_info(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceControlParam) => {
-                            let value = async {
-                                let v = sdo_client.read_u16(0x2010, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceControlParam { node_id, value });
+                            SdoResponse::DeviceControlParam {
+                                node_id,
+                                value: Self::sdo_read_device_control_param(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceOperationTime) => {
-                            let value = async {
-                                let m1 = sdo_client.read_u8(0x2016, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let m2 = sdo_client.read_u8(0x2016, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let m3 = sdo_client.read_u8(0x2016, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let m4 = sdo_client.read_u8(0x2016, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let m5 = sdo_client.read_u8(0x2016, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let h1 = sdo_client.read_u32(0x2016, 0x06)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let h2 = sdo_client.read_u32(0x2016, 0x07)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let h3 = sdo_client.read_u32(0x2016, 0x08)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let h4 = sdo_client.read_u32(0x2016, 0x09)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let h5 = sdo_client.read_u32(0x2016, 0x0a)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((m1, m2, m3, m4, m5, h1, h2, h3, h4, h5))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceOperationTime { node_id, value });
+                            SdoResponse::DeviceOperationTime {
+                                node_id,
+                                value: Self::sdo_read_device_operation_time(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::DeviceErrorCounter) => {
-                            let value = async {
-                                let highest_subindex = sdo_client.read_u8(0x201a, 0x00)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let mut counters = Vec::new();
-                                for sub_index in 1..=highest_subindex {
-                                    let val = sdo_client.read_u16(0x201a, sub_index)
-                                        .await
-                                        .map_err(|e| e.to_string())?;
-                                    counters.push(val);
-                                }
-                                Ok(counters)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::DeviceErrorCounter { node_id, value });
+                            SdoResponse::DeviceErrorCounter {
+                                node_id,
+                                value: Self::sdo_read_device_error_counter(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellVoltageMinMax) => {
-                            let value = async {
-                                let min = sdo_client.read_u32(0x2102, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let max = sdo_client.read_u32(0x2102, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((min, max))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellVoltageMinMax { node_id, value });
+                            SdoResponse::CellVoltageMinMax {
+                                node_id,
+                                value: Self::sdo_read_cell_voltage_min_max(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellVoltageLimit) => {
-                            let value = async {
-                                let v = sdo_client.read_u32(0x2104, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellVoltageLimit { node_id, value });
+                            SdoResponse::CellVoltageLimit {
+                                node_id,
+                                value: Self::sdo_read_cell_voltage_limit(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryVoltage) => {
-                            let value = async {
-                                let v1 = sdo_client.read_u32(0x2200, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let v2 = sdo_client.read_u32(0x2200, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let v3 = sdo_client.read_u32(0x2200, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((v1, v2, v3))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryVoltage { node_id, value });
+                            SdoResponse::BatteryVoltage {
+                                node_id,
+                                value: Self::sdo_read_battery_voltage(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryVoltageLimit) => {
-                            let value = async {
-                                let v = sdo_client.read_u32(0x2204, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryVoltageLimit { node_id, value });
+                            SdoResponse::BatteryVoltageLimit {
+                                node_id,
+                                value: Self::sdo_read_battery_voltage_limit(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryCurrent) => {
-                            let value = async {
-                                let c1 = sdo_client.read_i32(0x2300, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c2 = sdo_client.read_i32(0x2300, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c3 = sdo_client.read_i32(0x2300, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c4 = sdo_client.read_i32(0x2300, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c5 = sdo_client.read_i32(0x2300, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((c1, c2, c3, c4, c5))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryCurrent { node_id, value });
+                            SdoResponse::BatteryCurrent {
+                                node_id,
+                                value: Self::sdo_read_battery_current(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryCurrentLimit) => {
-                            let value = async {
-                                let v = sdo_client.read_i32(0x2304, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryCurrentLimit { node_id, value });
+                            SdoResponse::BatteryCurrentLimit {
+                                node_id,
+                                value: Self::sdo_read_battery_current_limit(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::FetTemperature) => {
-                            let value = async {
-                                let t1 = sdo_client.read_i32(0x2400, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t2 = sdo_client.read_i32(0x2400, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((t1, t2))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::FetTemperature { node_id, value });
+                            SdoResponse::FetTemperature {
+                                node_id,
+                                value: Self::sdo_read_fet_temperature(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::FetTemperatureMinMax) => {
-                            let value = async {
-                                let min = sdo_client.read_i32(0x2402, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let max = sdo_client.read_i32(0x2402, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((min, max))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::FetTemperatureMinMax { node_id, value });
+                            SdoResponse::FetTemperatureMinMax {
+                                node_id,
+                                value: Self::sdo_read_fet_temperature_min_max(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::FetTemperatureLimit) => {
-                            let value = async {
-                                let v = sdo_client.read_i32(0x2404, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::FetTemperatureLimit { node_id, value });
+                            SdoResponse::FetTemperatureLimit {
+                                node_id,
+                                value: Self::sdo_read_fet_temperature_limit(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellTemperature) => {
-                            let value = async {
-                                let t1 = sdo_client.read_i32(0x2500, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t2 = sdo_client.read_i32(0x2500, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t3 = sdo_client.read_i32(0x2500, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t4 = sdo_client.read_i32(0x2500, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t5 = sdo_client.read_i32(0x2500, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t6 = sdo_client.read_i32(0x2500, 0x06)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((t1, t2, t3, t4, t5, t6))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellTemperature { node_id, value });
+                            SdoResponse::CellTemperature {
+                                node_id,
+                                value: Self::sdo_read_cell_temperature(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellTemperatureMinMax) => {
-                            let value = async {
-                                let min = sdo_client.read_i32(0x2502, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let max = sdo_client.read_i32(0x2502, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((min, max))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellTemperatureMinMax { node_id, value });
+                            SdoResponse::CellTemperatureMinMax {
+                                node_id,
+                                value: Self::sdo_read_cell_temperature_min_max(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellTemperatureLimit) => {
-                            let value = async {
-                                let v = sdo_client.read_i32(0x2504, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellTemperatureLimit { node_id, value });
+                            SdoResponse::CellTemperatureLimit {
+                                node_id,
+                                value: Self::sdo_read_cell_temperature_limit(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellBalanceStatus) => {
-                            let value = async {
-                                let s1 = sdo_client.read_u16(0x2600, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s2 = sdo_client.read_u16(0x2600, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let s3 = sdo_client.read_u16(0x2600, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((s1, s2, s3))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellBalanceStatus { node_id, value });
+                            SdoResponse::CellBalanceStatus {
+                                node_id,
+                                value: Self::sdo_read_cell_balance_status(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellBalanceLimit) => {
-                            let value = async {
-                                let v = sdo_client.read_u32(0x2604, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellBalanceLimit { node_id, value });
+                            SdoResponse::CellBalanceLimit {
+                                node_id,
+                                value: Self::sdo_read_cell_balance_limit(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::CellImpedance) => {
-                            let value = async {
-                                let mut vals = [0u16; 18];
-                                for i in 0..18u8 {
-                                    vals[i as usize] = sdo_client.read_u16(0x2700, i + 1)
-                                        .await
-                                        .map_err(|e| e.to_string())?;
-                                }
-                                Ok(vals)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::CellImpedance { node_id, value });
+                            SdoResponse::CellImpedance {
+                                node_id,
+                                value: Self::sdo_read_cell_impedance(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryCapacity) => {
-                            let value = async {
-                                let design = sdo_client.read_u32(0x2800, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let fcc = sdo_client.read_u32(0x2800, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let remain = sdo_client.read_u32(0x2800, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let soc = sdo_client.read_u8(0x2800, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let soh = sdo_client.read_u8(0x2800, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let discharged = sdo_client.read_u32(0x2800, 0x06)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let charged = sdo_client.read_u32(0x2800, 0x07)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((design, fcc, remain, soc, soh, discharged, charged))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryCapacity { node_id, value });
+                            SdoResponse::BatteryCapacity {
+                                node_id,
+                                value: Self::sdo_read_battery_capacity(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryCapacityParam) => {
-                            let value = async {
-                                let v = sdo_client.read_u8(0x2804, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok(v)
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryCapacityParam { node_id, value });
+                            SdoResponse::BatteryCapacityParam {
+                                node_id,
+                                value: Self::sdo_read_battery_capacity_param(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryCycleCount) => {
-                            let value = async {
-                                let c1 = sdo_client.read_u32(0x2900, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c2 = sdo_client.read_u32(0x2900, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c3 = sdo_client.read_u32(0x2900, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c4 = sdo_client.read_u32(0x2900, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c5 = sdo_client.read_u32(0x2900, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c6 = sdo_client.read_u32(0x2900, 0x06)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c7 = sdo_client.read_u32(0x2900, 0x07)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c8 = sdo_client.read_u32(0x2900, 0x08)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c9 = sdo_client.read_u32(0x2900, 0x09)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryCycleCount { node_id, value });
+                            SdoResponse::BatteryCycleCount {
+                                node_id,
+                                value: Self::sdo_read_battery_cycle_count(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryChargeVoltage) => {
-                            let value = async {
-                                let v1 = sdo_client.read_u32(0x3000, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let v2 = sdo_client.read_u32(0x3000, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let v3 = sdo_client.read_u32(0x3000, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((v1, v2, v3))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryChargeVoltage { node_id, value });
+                            SdoResponse::BatteryChargeVoltage {
+                                node_id,
+                                value: Self::sdo_read_battery_charge_voltage(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryChargeCurrent) => {
-                            let value = async {
-                                let c1 = sdo_client.read_u32(0x3100, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c2 = sdo_client.read_u32(0x3100, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c3 = sdo_client.read_u32(0x3100, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c4 = sdo_client.read_u32(0x3100, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c5 = sdo_client.read_u32(0x3100, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c6 = sdo_client.read_u16(0x3100, 0x06)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c7 = sdo_client.read_u16(0x3100, 0x07)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c8 = sdo_client.read_u16(0x3100, 0x08)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c9 = sdo_client.read_u16(0x3100, 0x09)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let c10 = sdo_client.read_u32(0x3100, 0x0a)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryChargeCurrent { node_id, value });
+                            SdoResponse::BatteryChargeCurrent {
+                                node_id,
+                                value: Self::sdo_read_battery_charge_current(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::BatteryChargeTemperature) => {
-                            let value = async {
-                                let t1 = sdo_client.read_i32(0x3200, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t2 = sdo_client.read_i32(0x3200, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t3 = sdo_client.read_i32(0x3200, 0x03)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t4 = sdo_client.read_i32(0x3200, 0x04)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t5 = sdo_client.read_i32(0x3200, 0x05)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t6 = sdo_client.read_i32(0x3200, 0x06)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((t1, t2, t3, t4, t5, t6))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::BatteryChargeTemperature { node_id, value });
+                            SdoResponse::BatteryChargeTemperature {
+                                node_id,
+                                value: Self::sdo_read_battery_charge_temperature(&mut sdo_client).await,
+                            }
                         },
                         Some(SdoRequest::MasterBatteryTemperature) => {
-                            let value = async {
-                                let t1 = sdo_client.read_i32(0x3700, 0x01)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                let t2 = sdo_client.read_i32(0x3700, 0x02)
-                                    .await
-                                    .map_err(|e| e.to_string())?;
-                                Ok((t1, t2))
-                            }.await;
-                            let _ = sdo_response_tx.send(SdoResponse::MasterBatteryTemperature { node_id, value });
+                            SdoResponse::MasterBatteryTemperature {
+                                node_id,
+                                value: Self::sdo_read_master_battery_temperature(&mut sdo_client).await,
+                            }
                         },
-                        None => {
-                            break;
-                        }
-                    }
+                        None => break,
+                    };
+                    let _ = sdo_response_tx.send(response);
                 }
             }
         }
+    }
+
+    // --- Reusable SDO read functions ---
+
+    pub async fn sdo_read_serial_number<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<u16, String> {
+        let bytes = sdo_client
+            .upload(0x2004, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        if bytes.len() < 2 {
+            return Err("Serial number data too short".to_string());
+        }
+        Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
+    }
+
+    pub async fn sdo_read_software_version<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<String, String> {
+        let sw = sdo_client
+            .upload(0x2000, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let fw = sdo_client
+            .upload(0x2000, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let sw_str = String::from_utf8_lossy(&sw).trim_matches('\0').to_string();
+        let fw_str = String::from_utf8_lossy(&fw).trim_matches('\0').to_string();
+        Ok(format!("{}{}", sw_str, fw_str))
+    }
+
+    pub async fn sdo_read_hardware_version<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<String, String> {
+        let bytes = sdo_client
+            .upload(0x2000, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(String::from_utf8_lossy(&bytes)
+            .trim_matches('\0')
+            .to_string())
+    }
+
+    pub async fn sdo_read_device_error_history<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<Vec<varta_easyblade::DeviceError>, String> {
+        let highest_subindex = sdo_client
+            .read_u8(0x2018, 0x00)
+            .await
+            .map_err(|e| e.to_string())?;
+        if highest_subindex != 16 {
+            return Err(format!(
+                "Expected 16 error entries, got {}",
+                highest_subindex
+            ));
+        }
+        let mut errors = Vec::new();
+        for sub_index in 1..=16u8 {
+            let val = sdo_client
+                .read_u8(0x2018, sub_index)
+                .await
+                .map_err(|e| e.to_string())?;
+            let e: varta_easyblade::DeviceError = match varta_easyblade::DeviceError::try_from(val)
+            {
+                Ok(e) => e,
+                Err(_) => varta_easyblade::DeviceError::Unknown,
+            };
+            errors.push(e);
+        }
+        Ok(errors)
+    }
+
+    pub async fn sdo_read_cell_voltages<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<Vec<f32>, String> {
+        let highest_subindex = sdo_client
+            .read_u8(0x2100, 0x00)
+            .await
+            .map_err(|e| e.to_string())?;
+        if highest_subindex != 16 {
+            return Err(format!(
+                "Expected 16 cell voltage entries, got {}",
+                highest_subindex
+            ));
+        }
+        let mut cell_voltages: Vec<f32> = Vec::new();
+        for sub_index in 1..=14u8 {
+            let val = sdo_client
+                .read_u32(0x2100, sub_index)
+                .await
+                .map_err(|e| e.to_string())?;
+            cell_voltages.push((val as f32) / 1000.0);
+        }
+        Ok(cell_voltages)
+    }
+
+    pub async fn sdo_read_device_config_info<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(String, String, String), String> {
+        let c1 = sdo_client
+            .upload(0x2002, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c2 = sdo_client
+            .upload(0x2002, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c3 = sdo_client
+            .upload(0x2002, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((
+            String::from_utf8_lossy(&c1).trim_matches('\0').to_string(),
+            String::from_utf8_lossy(&c2).trim_matches('\0').to_string(),
+            String::from_utf8_lossy(&c3).trim_matches('\0').to_string(),
+        ))
+    }
+
+    pub async fn sdo_read_device_serial_number_info<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u32, u32, u32), String> {
+        let s1 = sdo_client
+            .read_u32(0x2004, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s2 = sdo_client
+            .read_u32(0x2004, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s3 = sdo_client
+            .read_u32(0x2004, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((s1, s2, s3))
+    }
+
+    pub async fn sdo_read_device_date_info<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u16, u16, u16), String> {
+        let d1 = sdo_client
+            .read_u16(0x2006, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let d2 = sdo_client
+            .read_u16(0x2006, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let d3 = sdo_client
+            .read_u16(0x2006, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((d1, d2, d3))
+    }
+
+    pub async fn sdo_read_device_variant_info<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u8, u8, u8, u16, u16, u16, u8), String> {
+        let s1 = sdo_client
+            .read_u8(0x2008, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s2 = sdo_client
+            .read_u8(0x2008, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s3 = sdo_client
+            .read_u8(0x2008, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s4 = sdo_client
+            .read_u16(0x2008, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s5 = sdo_client
+            .read_u16(0x2008, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s6 = sdo_client
+            .read_u16(0x2008, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s7 = sdo_client
+            .read_u8(0x2008, 0x07)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((s1, s2, s3, s4, s5, s6, s7))
+    }
+
+    pub async fn sdo_read_device_control_param<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<u16, String> {
+        sdo_client
+            .read_u16(0x2010, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_device_operation_time<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u8, u8, u8, u8, u8, u32, u32, u32, u32, u32), String> {
+        let m1 = sdo_client
+            .read_u8(0x2016, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let m2 = sdo_client
+            .read_u8(0x2016, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let m3 = sdo_client
+            .read_u8(0x2016, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let m4 = sdo_client
+            .read_u8(0x2016, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let m5 = sdo_client
+            .read_u8(0x2016, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let h1 = sdo_client
+            .read_u32(0x2016, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        let h2 = sdo_client
+            .read_u32(0x2016, 0x07)
+            .await
+            .map_err(|e| e.to_string())?;
+        let h3 = sdo_client
+            .read_u32(0x2016, 0x08)
+            .await
+            .map_err(|e| e.to_string())?;
+        let h4 = sdo_client
+            .read_u32(0x2016, 0x09)
+            .await
+            .map_err(|e| e.to_string())?;
+        let h5 = sdo_client
+            .read_u32(0x2016, 0x0a)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((m1, m2, m3, m4, m5, h1, h2, h3, h4, h5))
+    }
+
+    pub async fn sdo_read_device_error_counter<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<Vec<u16>, String> {
+        let highest_subindex = sdo_client
+            .read_u8(0x201a, 0x00)
+            .await
+            .map_err(|e| e.to_string())?;
+        let mut counters = Vec::new();
+        for sub_index in 1..=highest_subindex {
+            let val = sdo_client
+                .read_u16(0x201a, sub_index)
+                .await
+                .map_err(|e| e.to_string())?;
+            counters.push(val);
+        }
+        Ok(counters)
+    }
+
+    pub async fn sdo_read_cell_voltage_min_max<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u32, u32), String> {
+        let min = sdo_client
+            .read_u32(0x2102, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let max = sdo_client
+            .read_u32(0x2102, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((min, max))
+    }
+
+    pub async fn sdo_read_cell_voltage_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<u32, String> {
+        sdo_client
+            .read_u32(0x2104, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_battery_voltage<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u32, u32, u32), String> {
+        let v1 = sdo_client
+            .read_u32(0x2200, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let v2 = sdo_client
+            .read_u32(0x2200, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let v3 = sdo_client
+            .read_u32(0x2200, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((v1, v2, v3))
+    }
+
+    pub async fn sdo_read_battery_voltage_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<u32, String> {
+        sdo_client
+            .read_u32(0x2204, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_battery_current<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(i32, i32, i32, i32, i32), String> {
+        let c1 = sdo_client
+            .read_i32(0x2300, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c2 = sdo_client
+            .read_i32(0x2300, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c3 = sdo_client
+            .read_i32(0x2300, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c4 = sdo_client
+            .read_i32(0x2300, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c5 = sdo_client
+            .read_i32(0x2300, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((c1, c2, c3, c4, c5))
+    }
+
+    pub async fn sdo_read_battery_current_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<i32, String> {
+        sdo_client
+            .read_i32(0x2304, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_fet_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(i32, i32), String> {
+        let t1 = sdo_client
+            .read_i32(0x2400, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t2 = sdo_client
+            .read_i32(0x2400, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((t1, t2))
+    }
+
+    pub async fn sdo_read_fet_temperature_min_max<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(i32, i32), String> {
+        let min = sdo_client
+            .read_i32(0x2402, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let max = sdo_client
+            .read_i32(0x2402, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((min, max))
+    }
+
+    pub async fn sdo_read_fet_temperature_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<i32, String> {
+        sdo_client
+            .read_i32(0x2404, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_cell_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(i32, i32, i32, i32, i32, i32), String> {
+        let t1 = sdo_client
+            .read_i32(0x2500, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t2 = sdo_client
+            .read_i32(0x2500, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t3 = sdo_client
+            .read_i32(0x2500, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t4 = sdo_client
+            .read_i32(0x2500, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t5 = sdo_client
+            .read_i32(0x2500, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t6 = sdo_client
+            .read_i32(0x2500, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((t1, t2, t3, t4, t5, t6))
+    }
+
+    pub async fn sdo_read_cell_temperature_min_max<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(i32, i32), String> {
+        let min = sdo_client
+            .read_i32(0x2502, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let max = sdo_client
+            .read_i32(0x2502, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((min, max))
+    }
+
+    pub async fn sdo_read_cell_temperature_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<i32, String> {
+        sdo_client
+            .read_i32(0x2504, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_cell_balance_status<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u16, u16, u16), String> {
+        let s1 = sdo_client
+            .read_u16(0x2600, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s2 = sdo_client
+            .read_u16(0x2600, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let s3 = sdo_client
+            .read_u16(0x2600, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((s1, s2, s3))
+    }
+
+    pub async fn sdo_read_cell_balance_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<u32, String> {
+        sdo_client
+            .read_u32(0x2604, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_cell_impedance<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<[u16; 18], String> {
+        let mut vals = [0u16; 18];
+        for i in 0..18u8 {
+            vals[i as usize] = sdo_client
+                .read_u16(0x2700, i + 1)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        Ok(vals)
+    }
+
+    pub async fn sdo_read_battery_capacity<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u32, u32, u32, u8, u8, u32, u32), String> {
+        let design = sdo_client
+            .read_u32(0x2800, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let fcc = sdo_client
+            .read_u32(0x2800, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let remain = sdo_client
+            .read_u32(0x2800, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let soc = sdo_client
+            .read_u8(0x2800, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let soh = sdo_client
+            .read_u8(0x2800, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let discharged = sdo_client
+            .read_u32(0x2800, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        let charged = sdo_client
+            .read_u32(0x2800, 0x07)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((design, fcc, remain, soc, soh, discharged, charged))
+    }
+
+    pub async fn sdo_read_battery_capacity_param<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<u8, String> {
+        sdo_client
+            .read_u8(0x2804, 0x01)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn sdo_read_battery_cycle_count<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u32, u32, u32, u32, u32, u32, u32, u32, u32), String> {
+        let c1 = sdo_client
+            .read_u32(0x2900, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c2 = sdo_client
+            .read_u32(0x2900, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c3 = sdo_client
+            .read_u32(0x2900, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c4 = sdo_client
+            .read_u32(0x2900, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c5 = sdo_client
+            .read_u32(0x2900, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c6 = sdo_client
+            .read_u32(0x2900, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c7 = sdo_client
+            .read_u32(0x2900, 0x07)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c8 = sdo_client
+            .read_u32(0x2900, 0x08)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c9 = sdo_client
+            .read_u32(0x2900, 0x09)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9))
+    }
+
+    pub async fn sdo_read_battery_charge_voltage<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u32, u32, u32), String> {
+        let v1 = sdo_client
+            .read_u32(0x3000, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let v2 = sdo_client
+            .read_u32(0x3000, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let v3 = sdo_client
+            .read_u32(0x3000, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((v1, v2, v3))
+    }
+
+    pub async fn sdo_read_battery_charge_current<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(u32, u32, u32, u32, u32, u16, u16, u16, u16, u32), String> {
+        let c1 = sdo_client
+            .read_u32(0x3100, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c2 = sdo_client
+            .read_u32(0x3100, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c3 = sdo_client
+            .read_u32(0x3100, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c4 = sdo_client
+            .read_u32(0x3100, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c5 = sdo_client
+            .read_u32(0x3100, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c6 = sdo_client
+            .read_u16(0x3100, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c7 = sdo_client
+            .read_u16(0x3100, 0x07)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c8 = sdo_client
+            .read_u16(0x3100, 0x08)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c9 = sdo_client
+            .read_u16(0x3100, 0x09)
+            .await
+            .map_err(|e| e.to_string())?;
+        let c10 = sdo_client
+            .read_u32(0x3100, 0x0a)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10))
+    }
+
+    pub async fn sdo_read_battery_charge_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(i32, i32, i32, i32, i32, i32), String> {
+        let t1 = sdo_client
+            .read_i32(0x3200, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t2 = sdo_client
+            .read_i32(0x3200, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t3 = sdo_client
+            .read_i32(0x3200, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t4 = sdo_client
+            .read_i32(0x3200, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t5 = sdo_client
+            .read_i32(0x3200, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t6 = sdo_client
+            .read_i32(0x3200, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((t1, t2, t3, t4, t5, t6))
+    }
+
+    pub async fn sdo_read_master_battery_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
+        sdo_client: &mut zencan_client::SdoClient<S, R>,
+    ) -> Result<(i32, i32), String> {
+        let t1 = sdo_client
+            .read_i32(0x3700, 0x01)
+            .await
+            .map_err(|e| e.to_string())?;
+        let t2 = sdo_client
+            .read_i32(0x3700, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok((t1, t2))
     }
 
     /// Returns the easyblade at the given index (0-based) among active modules.
