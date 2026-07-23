@@ -9,6 +9,32 @@ use crate::SdoResponse;
 use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
+use varta_easyblade::BatteryCapacity;
+use varta_easyblade::BatteryChargeCurrent;
+use varta_easyblade::BatteryChargeTemperature;
+use varta_easyblade::BatteryChargeVoltage;
+use varta_easyblade::BatteryCurrent;
+use varta_easyblade::BatteryCurrentLimit;
+use varta_easyblade::BatteryCycleCount;
+use varta_easyblade::BatteryVoltage;
+use varta_easyblade::BatteryVoltageLimit;
+use varta_easyblade::CellBalanceLimit;
+use varta_easyblade::CellBalanceStatus;
+use varta_easyblade::CellImpedance;
+use varta_easyblade::CellTemperature;
+use varta_easyblade::CellTemperatureLimit;
+use varta_easyblade::CellTemperatureMinMax;
+use varta_easyblade::CellVoltageLimit;
+use varta_easyblade::CellVoltageMinMax;
+use varta_easyblade::DeviceConfigInfo;
+use varta_easyblade::DeviceDateInfo;
+use varta_easyblade::DeviceOperationTime;
+use varta_easyblade::DeviceSerialNumberInfo;
+use varta_easyblade::DeviceVariantInfo;
+use varta_easyblade::FetTemperature;
+use varta_easyblade::FetTemperatureLimit;
+use varta_easyblade::FetTemperatureMinMax;
+use varta_easyblade::MasterBatteryTemperature;
 
 fn get_node_id_from_can_message(msg: &varta_easyblade_can_messages::Messages) -> Option<u8> {
     match msg {
@@ -1048,7 +1074,7 @@ impl Varta {
 
     pub async fn sdo_read_device_config_info<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(String, String, String), String> {
+    ) -> Result<DeviceConfigInfo, String> {
         let c1 = sdo_client
             .upload(0x2002, 0x01)
             .await
@@ -1061,16 +1087,16 @@ impl Varta {
             .upload(0x2002, 0x03)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((
-            String::from_utf8_lossy(&c1).trim_matches('\0').to_string(),
-            String::from_utf8_lossy(&c2).trim_matches('\0').to_string(),
-            String::from_utf8_lossy(&c3).trim_matches('\0').to_string(),
-        ))
+        Ok(DeviceConfigInfo {
+            config_1: String::from_utf8_lossy(&c1).trim_matches('\0').to_string(),
+            config_2: String::from_utf8_lossy(&c2).trim_matches('\0').to_string(),
+            config_3: String::from_utf8_lossy(&c3).trim_matches('\0').to_string(),
+        })
     }
 
     pub async fn sdo_read_device_serial_number_info<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u32, u32, u32), String> {
+    ) -> Result<DeviceSerialNumberInfo, String> {
         let s1 = sdo_client
             .read_u32(0x2004, 0x01)
             .await
@@ -1083,12 +1109,16 @@ impl Varta {
             .read_u32(0x2004, 0x03)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((s1, s2, s3))
+        Ok(DeviceSerialNumberInfo {
+            serial_part_1: s1,
+            serial_part_2: s2,
+            serial_part_3: s3,
+        })
     }
 
     pub async fn sdo_read_device_date_info<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u16, u16, u16), String> {
+    ) -> Result<DeviceDateInfo, String> {
         let d1 = sdo_client
             .read_u16(0x2006, 0x01)
             .await
@@ -1101,12 +1131,12 @@ impl Varta {
             .read_u16(0x2006, 0x03)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((d1, d2, d3))
+        Ok(DeviceDateInfo { year: d1, month: d2, day: d3 })
     }
 
     pub async fn sdo_read_device_variant_info<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u8, u8, u8, u16, u16, u16, u8), String> {
+    ) -> Result<DeviceVariantInfo, String> {
         let s1 = sdo_client
             .read_u8(0x2008, 0x01)
             .await
@@ -1135,7 +1165,15 @@ impl Varta {
             .read_u8(0x2008, 0x07)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((s1, s2, s3, s4, s5, s6, s7))
+        Ok(DeviceVariantInfo {
+            variant_1: s1,
+            variant_2: s2,
+            variant_3: s3,
+            variant_4: s4,
+            variant_5: s5,
+            variant_6: s6,
+            variant_7: s7,
+        })
     }
 
     pub async fn sdo_read_device_control_param<S: AsyncCanSender, R: AsyncCanReceiver>(
@@ -1149,7 +1187,7 @@ impl Varta {
 
     pub async fn sdo_read_device_operation_time<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u8, u8, u8, u8, u8, u32, u32, u32, u32, u32), String> {
+    ) -> Result<DeviceOperationTime, String> {
         let m1 = sdo_client
             .read_u8(0x2016, 0x01)
             .await
@@ -1190,7 +1228,18 @@ impl Varta {
             .read_u32(0x2016, 0x0a)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((m1, m2, m3, m4, m5, h1, h2, h3, h4, h5))
+        Ok(DeviceOperationTime {
+            minutes_below_zero: m1,
+            minutes_zero_to_40: m2,
+            minutes_40_to_60: m3,
+            minutes_60_to_80: m4,
+            minutes_above_80: m5,
+            hours_below_zero: h1,
+            hours_zero_to_40: h2,
+            hours_40_to_60: h3,
+            hours_60_to_80: h4,
+            hours_above_80: h5,
+        })
     }
 
     pub async fn sdo_read_device_error_counter<S: AsyncCanSender, R: AsyncCanReceiver>(
@@ -1213,7 +1262,7 @@ impl Varta {
 
     pub async fn sdo_read_cell_voltage_min_max<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u32, u32), String> {
+    ) -> Result<CellVoltageMinMax, String> {
         let min = sdo_client
             .read_u32(0x2102, 0x01)
             .await
@@ -1222,21 +1271,27 @@ impl Varta {
             .read_u32(0x2102, 0x02)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((min, max))
+        Ok(CellVoltageMinMax {
+            min_voltage_v: min as f32 / 1000.0,
+            max_voltage_v: max as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_cell_voltage_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<u32, String> {
-        sdo_client
+    ) -> Result<CellVoltageLimit, String> {
+        let raw = sdo_client
             .read_u32(0x2104, 0x01)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(CellVoltageLimit {
+            over_voltage_error_v: raw as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_battery_voltage<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u32, u32, u32), String> {
+    ) -> Result<BatteryVoltage, String> {
         let v1 = sdo_client
             .read_u32(0x2200, 0x01)
             .await
@@ -1249,21 +1304,28 @@ impl Varta {
             .read_u32(0x2200, 0x03)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((v1, v2, v3))
+        Ok(BatteryVoltage {
+            sum_of_cell_voltage_v: v1 as f32 / 1000.0,
+            internal_connector_voltage_v: v2 as f32 / 1000.0,
+            external_connector_voltage_v: v3 as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_battery_voltage_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<u32, String> {
-        sdo_client
+    ) -> Result<BatteryVoltageLimit, String> {
+        let raw = sdo_client
             .read_u32(0x2204, 0x01)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(BatteryVoltageLimit {
+            internal_external_min_delta_v: raw as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_battery_current<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(i32, i32, i32, i32, i32), String> {
+    ) -> Result<BatteryCurrent, String> {
         let c1 = sdo_client
             .read_i32(0x2300, 0x01)
             .await
@@ -1284,21 +1346,30 @@ impl Varta {
             .read_i32(0x2300, 0x05)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((c1, c2, c3, c4, c5))
+        Ok(BatteryCurrent {
+            fast_current_a: c1 as f32 / 1000.0,
+            weighted_avg_current_a: c2 as f32 / 1000.0,
+            integrated_current_a: c3 as f32 / 1000.0,
+            average_1s_current_a: c4 as f32 / 1000.0,
+            average_10s_current_a: c5 as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_battery_current_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<i32, String> {
-        sdo_client
+    ) -> Result<BatteryCurrentLimit, String> {
+        let raw = sdo_client
             .read_i32(0x2304, 0x01)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(BatteryCurrentLimit {
+            discharge_sc_error_a: raw as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_fet_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(i32, i32), String> {
+    ) -> Result<FetTemperature, String> {
         let t1 = sdo_client
             .read_i32(0x2400, 0x01)
             .await
@@ -1307,12 +1378,15 @@ impl Varta {
             .read_i32(0x2400, 0x02)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((t1, t2))
+        Ok(FetTemperature {
+            temperature_1_c: t1 as f32 / 10.0,
+            temperature_2_c: t2 as f32 / 10.0,
+        })
     }
 
     pub async fn sdo_read_fet_temperature_min_max<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(i32, i32), String> {
+    ) -> Result<FetTemperatureMinMax, String> {
         let min = sdo_client
             .read_i32(0x2402, 0x01)
             .await
@@ -1321,21 +1395,25 @@ impl Varta {
             .read_i32(0x2402, 0x02)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((min, max))
+        Ok(FetTemperatureMinMax {
+            min_temperature_c: min as f32 / 10.0,
+            max_temperature_c: max as f32 / 10.0,
+        })
     }
 
     pub async fn sdo_read_fet_temperature_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<i32, String> {
-        sdo_client
+    ) -> Result<FetTemperatureLimit, String> {
+        let raw = sdo_client
             .read_i32(0x2404, 0x01)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(FetTemperatureLimit { discharge_over_temp_c: raw as f32 / 10.0 })
     }
 
     pub async fn sdo_read_cell_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(i32, i32, i32, i32, i32, i32), String> {
+    ) -> Result<CellTemperature, String> {
         let t1 = sdo_client
             .read_i32(0x2500, 0x01)
             .await
@@ -1360,12 +1438,19 @@ impl Varta {
             .read_i32(0x2500, 0x06)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((t1, t2, t3, t4, t5, t6))
+        Ok(CellTemperature {
+            temperature_1_c: t1 as f32 / 10.0,
+            temperature_2_c: t2 as f32 / 10.0,
+            temperature_3_c: t3 as f32 / 10.0,
+            temperature_4_c: t4 as f32 / 10.0,
+            temperature_5_c: t5 as f32 / 10.0,
+            temperature_6_c: t6 as f32 / 10.0,
+        })
     }
 
     pub async fn sdo_read_cell_temperature_min_max<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(i32, i32), String> {
+    ) -> Result<CellTemperatureMinMax, String> {
         let min = sdo_client
             .read_i32(0x2502, 0x01)
             .await
@@ -1374,21 +1459,25 @@ impl Varta {
             .read_i32(0x2502, 0x02)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((min, max))
+        Ok(CellTemperatureMinMax {
+            min_temperature_c: min as f32 / 10.0,
+            max_temperature_c: max as f32 / 10.0,
+        })
     }
 
     pub async fn sdo_read_cell_temperature_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<i32, String> {
-        sdo_client
+    ) -> Result<CellTemperatureLimit, String> {
+        let raw = sdo_client
             .read_i32(0x2504, 0x01)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(CellTemperatureLimit { discharge_over_temp_c: raw as f32 / 10.0 })
     }
 
     pub async fn sdo_read_cell_balance_status<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u16, u16, u16), String> {
+    ) -> Result<CellBalanceStatus, String> {
         let s1 = sdo_client
             .read_u16(0x2600, 0x01)
             .await
@@ -1401,34 +1490,47 @@ impl Varta {
             .read_u16(0x2600, 0x03)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((s1, s2, s3))
+        Ok(CellBalanceStatus {
+            balance_status_register: s1,
+            balance_fet_active: s2,
+            balance_fet_active_persistent: s3,
+        })
     }
 
     pub async fn sdo_read_cell_balance_limit<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<u32, String> {
-        sdo_client
+    ) -> Result<CellBalanceLimit, String> {
+        let raw = sdo_client
             .read_u32(0x2604, 0x01)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(CellBalanceLimit {
+            balance_start_diff_voltage_v: raw as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_cell_impedance<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<[u16; 18], String> {
-        let mut vals = [0u16; 18];
+    ) -> Result<CellImpedance, String> {
+        let mut raw = [0u16; 18];
         for i in 0..18u8 {
-            vals[i as usize] = sdo_client
+            raw[i as usize] = sdo_client
                 .read_u16(0x2700, i + 1)
                 .await
                 .map_err(|e| e.to_string())?;
         }
-        Ok(vals)
+        let mut cell_impedances_mohm = [0u16; 16];
+        cell_impedances_mohm.copy_from_slice(&raw[..16]);
+        Ok(CellImpedance {
+            cell_impedances_mohm,
+            low_temp_factor: raw[16],
+            high_temp_factor: raw[17],
+        })
     }
 
     pub async fn sdo_read_battery_capacity<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u32, u32, u32, u8, u8, u32, u32), String> {
+    ) -> Result<BatteryCapacity, String> {
         let design = sdo_client
             .read_u32(0x2800, 0x01)
             .await
@@ -1457,7 +1559,15 @@ impl Varta {
             .read_u32(0x2800, 0x07)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((design, fcc, remain, soc, soh, discharged, charged))
+        Ok(BatteryCapacity {
+            design_capacity_ah: design as f32 / 1000.0,
+            full_charge_capacity_ah: fcc as f32 / 1000.0,
+            remaining_capacity_ah: remain as f32 / 1000.0,
+            soc_percent: soc as f32,
+            soh_percent: soh as f32,
+            total_discharged_capacity_ah: discharged as f32 / 1000.0,
+            total_charged_capacity_ah: charged as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_battery_capacity_param<S: AsyncCanSender, R: AsyncCanReceiver>(
@@ -1471,7 +1581,7 @@ impl Varta {
 
     pub async fn sdo_read_battery_cycle_count<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u32, u32, u32, u32, u32, u32, u32, u32, u32), String> {
+    ) -> Result<BatteryCycleCount, String> {
         let c1 = sdo_client
             .read_u32(0x2900, 0x01)
             .await
@@ -1508,12 +1618,22 @@ impl Varta {
             .read_u32(0x2900, 0x09)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9))
+        Ok(BatteryCycleCount {
+            discharge_cycles: c1,
+            discharge_learning_cycles: c2,
+            discharge_cycles_after_learning: c3,
+            charge_cycles_completed: c4,
+            charge_cycles_started: c5,
+            discharge_use_detect: c6,
+            charge_use_low_temperature: c7,
+            charge_use_normal_temperature: c8,
+            charge_use_high_temperature: c9,
+        })
     }
 
     pub async fn sdo_read_battery_charge_voltage<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u32, u32, u32), String> {
+    ) -> Result<BatteryChargeVoltage, String> {
         let v1 = sdo_client
             .read_u32(0x3000, 0x01)
             .await
@@ -1526,12 +1646,16 @@ impl Varta {
             .read_u32(0x3000, 0x03)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((v1, v2, v3))
+        Ok(BatteryChargeVoltage {
+            charge_voltage_valid_v: v1 as f32 / 1000.0,
+            charge_max_voltage_v: v2 as f32 / 1000.0,
+            charge_keep_power_voltage_v: v3 as f32 / 1000.0,
+        })
     }
 
     pub async fn sdo_read_battery_charge_current<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(u32, u32, u32, u32, u32, u16, u16, u16, u16, u32), String> {
+    ) -> Result<BatteryChargeCurrent, String> {
         let c1 = sdo_client
             .read_u32(0x3100, 0x01)
             .await
@@ -1552,19 +1676,19 @@ impl Varta {
             .read_u32(0x3100, 0x05)
             .await
             .map_err(|e| e.to_string())?;
-        let c6 = sdo_client
+        let t1 = sdo_client
             .read_u16(0x3100, 0x06)
             .await
             .map_err(|e| e.to_string())?;
-        let c7 = sdo_client
+        let t2 = sdo_client
             .read_u16(0x3100, 0x07)
             .await
             .map_err(|e| e.to_string())?;
-        let c8 = sdo_client
+        let t3 = sdo_client
             .read_u16(0x3100, 0x08)
             .await
             .map_err(|e| e.to_string())?;
-        let c9 = sdo_client
+        let t4 = sdo_client
             .read_u16(0x3100, 0x09)
             .await
             .map_err(|e| e.to_string())?;
@@ -1572,12 +1696,23 @@ impl Varta {
             .read_u32(0x3100, 0x0a)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((c1, c2, c3, c4, c5, c6, c7, c8, c9, c10))
+        Ok(BatteryChargeCurrent {
+            charge_current_valid_a: c1 as f32 / 1000.0,
+            charge_max_current_n_a: c2 as f32 / 1000.0,
+            charge_max_current_low_a: c3 as f32 / 1000.0,
+            charge_max_current_high_a: c4 as f32 / 1000.0,
+            charge_keep_power_current_a: c5 as f32 / 1000.0,
+            charge_temp_min_low_c: t1 as f32 / 10.0,
+            charge_temp_min_normal_c: t2 as f32 / 10.0,
+            charge_temp_max_normal_c: t3 as f32 / 10.0,
+            charge_temp_max_high_c: t4 as f32 / 10.0,
+            charge_current_config: c10,
+        })
     }
 
     pub async fn sdo_read_battery_charge_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(i32, i32, i32, i32, i32, i32), String> {
+    ) -> Result<BatteryChargeTemperature, String> {
         let t1 = sdo_client
             .read_i32(0x3200, 0x01)
             .await
@@ -1602,12 +1737,19 @@ impl Varta {
             .read_i32(0x3200, 0x06)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((t1, t2, t3, t4, t5, t6))
+        Ok(BatteryChargeTemperature {
+            temp_min_low_c: t1 as f32 / 10.0,
+            temp_min_normal_c: t2 as f32 / 10.0,
+            temp_max_normal_c: t3 as f32 / 10.0,
+            temp_max_high_c: t4 as f32 / 10.0,
+            temp_5_c: t5 as f32 / 10.0,
+            temp_6_c: t6 as f32 / 10.0,
+        })
     }
 
     pub async fn sdo_read_master_battery_temperature<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<(i32, i32), String> {
+    ) -> Result<MasterBatteryTemperature, String> {
         let t1 = sdo_client
             .read_i32(0x3700, 0x01)
             .await
@@ -1616,7 +1758,10 @@ impl Varta {
             .read_i32(0x3700, 0x02)
             .await
             .map_err(|e| e.to_string())?;
-        Ok((t1, t2))
+        Ok(MasterBatteryTemperature {
+            max_fet_temperature_c: t1 as f32 / 10.0,
+            max_cell_temperature_c: t2 as f32 / 10.0,
+        })
     }
 
     /// Returns the easyblade at the given index (0-based) among active modules.

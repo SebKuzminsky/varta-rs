@@ -426,43 +426,43 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      60-80°C:    {:>10} h\n\
                      >80°C:      {:>10} h\n",
                     match eb.device_operation_time {
-                        Some(ref v) => v.0,
+                        Some(ref v) => v.minutes_below_zero,
                         _ => 0,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.1,
+                        Some(ref v) => v.minutes_zero_to_40,
                         _ => 0,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.2,
+                        Some(ref v) => v.minutes_40_to_60,
                         _ => 0,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.3,
+                        Some(ref v) => v.minutes_60_to_80,
                         _ => 0,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.4,
+                        Some(ref v) => v.minutes_above_80,
                         _ => 0,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.5,
+                        Some(ref v) => v.hours_below_zero,
                         _ => 0u32,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.6,
+                        Some(ref v) => v.hours_zero_to_40,
                         _ => 0u32,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.7,
+                        Some(ref v) => v.hours_40_to_60,
                         _ => 0u32,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.8,
+                        Some(ref v) => v.hours_60_to_80,
                         _ => 0u32,
                     },
                     match eb.device_operation_time {
-                        Some(ref v) => v.9,
+                        Some(ref v) => v.hours_above_80,
                         _ => 0u32,
                     },
                 );
@@ -501,15 +501,15 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Max Cell Voltage:   {:.3} V\n\
                      Over Voltage Error: {:.3} V\n",
                     match eb.cell_voltage_min_max {
-                        Some(v) => v.0 as f32 / 1000.0,
+                        Some(ref v) => v.min_voltage_v,
                         _ => 0.0,
                     },
                     match eb.cell_voltage_min_max {
-                        Some(v) => v.1 as f32 / 1000.0,
+                        Some(ref v) => v.max_voltage_v,
                         _ => 0.0,
                     },
                     match eb.cell_voltage_limit {
-                        Some(v) => v as f32 / 1000.0,
+                        Some(ref v) => v.over_voltage_error_v,
                         _ => 0.0,
                     },
                 );
@@ -529,19 +529,19 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      External Connector:      {:.3} V\n\
                      Internal-External MinΔ:  {:.3} V\n",
                     match eb.battery_voltage {
-                        Some(v) => v.0 as f32 / 1000.0,
+                        Some(ref v) => v.sum_of_cell_voltage_v,
                         _ => 0.0,
                     },
                     match eb.battery_voltage {
-                        Some(v) => v.1 as f32 / 1000.0,
+                        Some(ref v) => v.internal_connector_voltage_v,
                         _ => 0.0,
                     },
                     match eb.battery_voltage {
-                        Some(v) => v.2 as f32 / 1000.0,
+                        Some(ref v) => v.external_connector_voltage_v,
                         _ => 0.0,
                     },
                     match eb.battery_voltage_limit {
-                        Some(v) => v as f32 / 1000.0,
+                        Some(ref v) => v.internal_external_min_delta_v,
                         _ => 0.0,
                     },
                 );
@@ -563,27 +563,27 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Average 10s Current:    {:>10.2} A\n\
                      Discharge SC Error:     {:>10.2} A\n",
                     match eb.battery_current {
-                        Some(v) => v.0 as f32 / 1000.0,
+                        Some(ref v) => v.fast_current_a,
                         _ => 0.0,
                     },
                     match eb.battery_current {
-                        Some(v) => v.1 as f32 / 1000.0,
+                        Some(ref v) => v.weighted_avg_current_a,
                         _ => 0.0,
                     },
                     match eb.battery_current {
-                        Some(v) => v.2 as f32 / 1000.0,
+                        Some(ref v) => v.integrated_current_a,
                         _ => 0.0,
                     },
                     match eb.battery_current {
-                        Some(v) => v.3 as f32 / 1000.0,
+                        Some(ref v) => v.average_1s_current_a,
                         _ => 0.0,
                     },
                     match eb.battery_current {
-                        Some(v) => v.4 as f32 / 1000.0,
+                        Some(ref v) => v.average_10s_current_a,
                         _ => 0.0,
                     },
                     match eb.battery_current_limit {
-                        Some(v) => v as f32 / 1000.0,
+                        Some(ref v) => v.discharge_sc_error_a,
                         _ => 0.0,
                     },
                 );
@@ -604,23 +604,23 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Max FET Temperature:  {:>7.1} °C\n\
                      Discharge Over Temp:  {:>7.1} °C\n",
                     match eb.fet_temperature {
-                        Some(v) => v.0 as f32 / 10.0,
+                        Some(ref v) => v.temperature_1_c,
                         _ => 0.0,
                     },
                     match eb.fet_temperature {
-                        Some(v) => v.1 as f32 / 10.0,
+                        Some(ref v) => v.temperature_2_c,
                         _ => 0.0,
                     },
                     match eb.fet_temperature_min_max {
-                        Some(v) => v.0 as f32 / 10.0,
+                        Some(ref v) => v.min_temperature_c,
                         _ => 0.0,
                     },
                     match eb.fet_temperature_min_max {
-                        Some(v) => v.1 as f32 / 10.0,
+                        Some(ref v) => v.max_temperature_c,
                         _ => 0.0,
                     },
                     match eb.fet_temperature_limit {
-                        Some(v) => v as f32 / 10.0,
+                        Some(ref v) => v.discharge_over_temp_c,
                         _ => 0.0,
                     },
                 );
@@ -645,39 +645,39 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Max Cell Temperature: {:>7.1} °C\n\
                      Discharge Over Temp:  {:>7.1} °C\n",
                     match eb.cell_temperature {
-                        Some(v) => v.0 as f32 / 10.0,
+                        Some(ref v) => v.temperature_1_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature {
-                        Some(v) => v.1 as f32 / 10.0,
+                        Some(ref v) => v.temperature_2_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature {
-                        Some(v) => v.2 as f32 / 10.0,
+                        Some(ref v) => v.temperature_3_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature {
-                        Some(v) => v.3 as f32 / 10.0,
+                        Some(ref v) => v.temperature_4_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature {
-                        Some(v) => v.4 as f32 / 10.0,
+                        Some(ref v) => v.temperature_5_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature {
-                        Some(v) => v.5 as f32 / 10.0,
+                        Some(ref v) => v.temperature_6_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature_min_max {
-                        Some(v) => v.0 as f32 / 10.0,
+                        Some(ref v) => v.min_temperature_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature_min_max {
-                        Some(v) => v.1 as f32 / 10.0,
+                        Some(ref v) => v.max_temperature_c,
                         _ => 0.0,
                     },
                     match eb.cell_temperature_limit {
-                        Some(v) => v as f32 / 10.0,
+                        Some(ref v) => v.discharge_over_temp_c,
                         _ => 0.0,
                     },
                 );
@@ -697,19 +697,19 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Balance FET Active Persistent:{:#05x}\n\
                      Balance Start Diff Voltage:   {:.3} V\n",
                     match eb.cell_balance_status {
-                        Some(v) => v.0,
+                        Some(ref v) => v.balance_status_register,
                         _ => 0u16,
                     },
                     match eb.cell_balance_status {
-                        Some(v) => v.1,
+                        Some(ref v) => v.balance_fet_active,
                         _ => 0u16,
                     },
                     match eb.cell_balance_status {
-                        Some(v) => v.2,
+                        Some(ref v) => v.balance_fet_active_persistent,
                         _ => 0u16,
                     },
                     match eb.cell_balance_limit {
-                        Some(v) => v as f32 / 1000.0,
+                        Some(ref v) => v.balance_start_diff_voltage_v,
                         _ => 0.0,
                     },
                 );
@@ -724,19 +724,12 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
         SelectedTab::Impedance => {
             if let Some(eb) = eb {
                 if let Some(ref imp) = eb.cell_impedance {
-                    let lines: String = imp
-                        .iter()
-                        .enumerate()
-                        .map(|(i, v)| {
-                            if i < 16 {
-                                format!("Cell {:>2} Impedance: {:>6} mΩ\n", i + 1, v)
-                            } else if i == 16 {
-                                format!("Low Temp Factor:  {:>6}\n", v)
-                            } else {
-                                format!("High Temp Factor: {:>6}\n", v)
-                            }
-                        })
-                        .collect();
+                    let mut lines = String::new();
+                    for (i, v) in imp.cell_impedances_mohm.iter().enumerate() {
+                        lines.push_str(&format!("Cell {:>2} Impedance: {:>6} mΩ\n", i + 1, v));
+                    }
+                    lines.push_str(&format!("Low Temp Factor:  {:>6}\n", imp.low_temp_factor));
+                    lines.push_str(&format!("High Temp Factor: {:>6}\n", imp.high_temp_factor));
                     let text = Paragraph::new(lines).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 } else {
@@ -760,31 +753,31 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Total Discharged Capacity: {:>10.2} Ah\n\
                      Total Charged Capacity:    {:>10.2} Ah\n",
                     match eb.battery_capacity {
-                        Some(v) => v.0 as f32 / 1000.0,
+                        Some(ref v) => v.design_capacity_ah,
                         _ => 0.0,
                     },
                     match eb.battery_capacity {
-                        Some(v) => v.1 as f32 / 1000.0,
+                        Some(ref v) => v.full_charge_capacity_ah,
                         _ => 0.0,
                     },
                     match eb.battery_capacity {
-                        Some(v) => v.2 as f32 / 1000.0,
+                        Some(ref v) => v.remaining_capacity_ah,
                         _ => 0.0,
                     },
                     match eb.battery_capacity {
-                        Some(v) => format!("{:.1}", v.3 as f32),
+                        Some(ref v) => format!("{:.1}", v.soc_percent),
                         _ => String::from("----"),
                     },
                     match eb.battery_capacity {
-                        Some(v) => format!("{:.1}", v.4 as f32),
+                        Some(ref v) => format!("{:.1}", v.soh_percent),
                         _ => String::from("----"),
                     },
                     match eb.battery_capacity {
-                        Some(v) => v.5 as f32 / 1000.0,
+                        Some(ref v) => v.total_discharged_capacity_ah,
                         _ => 0.0,
                     },
                     match eb.battery_capacity {
-                        Some(v) => v.6 as f32 / 1000.0,
+                        Some(ref v) => v.total_charged_capacity_ah,
                         _ => 0.0,
                     },
                 );
@@ -809,39 +802,39 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Charge Use Normal Temperature:       {:>10}\n\
                      Charge Use High Temperature:         {:>10}\n",
                     match eb.battery_cycle_count {
-                        Some(v) => v.0,
+                        Some(ref v) => v.discharge_cycles,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.1,
+                        Some(ref v) => v.discharge_learning_cycles,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.2,
+                        Some(ref v) => v.discharge_cycles_after_learning,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.3,
+                        Some(ref v) => v.charge_cycles_completed,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.4,
+                        Some(ref v) => v.charge_cycles_started,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.5,
+                        Some(ref v) => v.discharge_use_detect,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.6,
+                        Some(ref v) => v.charge_use_low_temperature,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.7,
+                        Some(ref v) => v.charge_use_normal_temperature,
                         _ => 0u32,
                     },
                     match eb.battery_cycle_count {
-                        Some(v) => v.8,
+                        Some(ref v) => v.charge_use_high_temperature,
                         _ => 0u32,
                     },
                 );
@@ -869,51 +862,51 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                      Charge Temp Max Normal:  {:>7.1} °C\n\
                      Charge Temp Max High:    {:>7.1} °C\n",
                     match eb.battery_charge_voltage {
-                        Some(v) => v.0 as f32 / 1000.0,
+                        Some(ref v) => v.charge_voltage_valid_v,
                         _ => 0.0,
                     },
                     match eb.battery_charge_voltage {
-                        Some(v) => v.1 as f32 / 1000.0,
+                        Some(ref v) => v.charge_max_voltage_v,
                         _ => 0.0,
                     },
                     match eb.battery_charge_voltage {
-                        Some(v) => v.2 as f32 / 1000.0,
+                        Some(ref v) => v.charge_keep_power_voltage_v,
                         _ => 0.0,
                     },
                     match eb.battery_charge_current {
-                        Some(v) => v.0 as f32 / 1000.0,
+                        Some(ref v) => v.charge_current_valid_a,
                         _ => 0.0,
                     },
                     match eb.battery_charge_current {
-                        Some(v) => v.1 as f32 / 1000.0,
+                        Some(ref v) => v.charge_max_current_n_a,
                         _ => 0.0,
                     },
                     match eb.battery_charge_current {
-                        Some(v) => v.2 as f32 / 1000.0,
+                        Some(ref v) => v.charge_max_current_low_a,
                         _ => 0.0,
                     },
                     match eb.battery_charge_current {
-                        Some(v) => v.3 as f32 / 1000.0,
+                        Some(ref v) => v.charge_max_current_high_a,
                         _ => 0.0,
                     },
                     match eb.battery_charge_current {
-                        Some(v) => v.4 as f32 / 1000.0,
+                        Some(ref v) => v.charge_keep_power_current_a,
                         _ => 0.0,
                     },
                     match eb.battery_charge_temperature {
-                        Some(v) => v.0 as f32 / 10.0,
+                        Some(ref v) => v.temp_min_low_c,
                         _ => 0.0,
                     },
                     match eb.battery_charge_temperature {
-                        Some(v) => v.1 as f32 / 10.0,
+                        Some(ref v) => v.temp_min_normal_c,
                         _ => 0.0,
                     },
                     match eb.battery_charge_temperature {
-                        Some(v) => v.2 as f32 / 10.0,
+                        Some(ref v) => v.temp_max_normal_c,
                         _ => 0.0,
                     },
                     match eb.battery_charge_temperature {
-                        Some(v) => v.3 as f32 / 10.0,
+                        Some(ref v) => v.temp_max_high_c,
                         _ => 0.0,
                     },
                 );
@@ -931,11 +924,11 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
                     "Master Max FET Temperature:  {:>7.1} °C\n\
                      Master Max Cell Temperature: {:>7.1} °C\n",
                     match eb.master_battery_temperature {
-                        Some(v) => v.0 as f32 / 10.0,
+                        Some(ref v) => v.max_fet_temperature_c,
                         _ => 0.0,
                     },
                     match eb.master_battery_temperature {
-                        Some(v) => v.1 as f32 / 10.0,
+                        Some(ref v) => v.max_cell_temperature_c,
                         _ => 0.0,
                     },
                 );
