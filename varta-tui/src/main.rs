@@ -1,5 +1,5 @@
 use clap::Parser;
-use crossterm::event::{Event, KeyCode, KeyEventKind};
+use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
@@ -45,6 +45,58 @@ enum SelectedTab {
     CycleCount,
     ChargeParameters,
     MasterTemperature,
+}
+
+fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
+    match tab {
+        SelectedTab::ModuleInfo => vec![
+            SdoRequest::SerialNumber,
+            SdoRequest::SoftwareVersion,
+            SdoRequest::HardwareVersion,
+            SdoRequest::DeviceConfigInfo,
+            SdoRequest::DeviceSerialNumberInfo,
+            SdoRequest::DeviceDateInfo,
+            SdoRequest::DeviceVariantInfo,
+            SdoRequest::DeviceControlParam,
+        ],
+        SelectedTab::CellVoltages => vec![SdoRequest::CellVoltages],
+        SelectedTab::ErrorHistory => vec![SdoRequest::DeviceErrorHistory],
+        SelectedTab::DeviceOperation => vec![SdoRequest::DeviceOperationTime],
+        SelectedTab::ErrorCounters => vec![SdoRequest::DeviceErrorCounter],
+        SelectedTab::CellVoltageLimits => {
+            vec![SdoRequest::CellVoltageMinMax, SdoRequest::CellVoltageLimit]
+        },
+        SelectedTab::BatteryVoltage => {
+            vec![SdoRequest::BatteryVoltage, SdoRequest::BatteryVoltageLimit]
+        },
+        SelectedTab::BatteryCurrent => {
+            vec![SdoRequest::BatteryCurrent, SdoRequest::BatteryCurrentLimit]
+        },
+        SelectedTab::FetTemperature => vec![
+            SdoRequest::FetTemperature,
+            SdoRequest::FetTemperatureMinMax,
+            SdoRequest::FetTemperatureLimit,
+        ],
+        SelectedTab::CellTemperature => vec![
+            SdoRequest::CellTemperature,
+            SdoRequest::CellTemperatureMinMax,
+            SdoRequest::CellTemperatureLimit,
+        ],
+        SelectedTab::CellBalance => {
+            vec![SdoRequest::CellBalanceStatus, SdoRequest::CellBalanceLimit]
+        },
+        SelectedTab::Impedance => vec![SdoRequest::CellImpedance],
+        SelectedTab::Capacity => {
+            vec![SdoRequest::BatteryCapacity, SdoRequest::BatteryCapacityParam]
+        },
+        SelectedTab::CycleCount => vec![SdoRequest::BatteryCycleCount],
+        SelectedTab::ChargeParameters => vec![
+            SdoRequest::BatteryChargeVoltage,
+            SdoRequest::BatteryChargeCurrent,
+            SdoRequest::BatteryChargeTemperature,
+        ],
+        SelectedTab::MasterTemperature => vec![SdoRequest::MasterBatteryTemperature],
+    }
 }
 
 impl SelectedTab {
@@ -1843,6 +1895,27 @@ async fn main() -> anyhow::Result<()> {
                         }
                         KeyCode::Right if !save_state.is_active() => {
                             selected_tab = selected_tab.cycle(true);
+                        }
+                        KeyCode::Char('r') | KeyCode::Char('R') if !save_state.is_active() && count > 0 => {
+                            let eb = varta.get_easyblade_by_index(selected);
+                            if let Some(eb) = eb {
+                                let node_id = eb.node_id;
+                                if let Some(task) = module_tasks.get(&node_id) {
+                                    let sdos = sdos_for_tab(selected_tab);
+                                    for sdo in sdos {
+                                        let _ = task.sdo_request_tx.send(sdo);
+                                    }
+                                }
+                            }
+                        }
+                        KeyCode::Char('r') if !save_state.is_active() && count > 0 && key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            let eb = varta.get_easyblade_by_index(selected);
+                            if let Some(eb) = eb {
+                                let node_id = eb.node_id;
+                                if let Some(task) = module_tasks.get(&node_id) {
+                                    burst_initial_sdos(&task.sdo_request_tx);
+                                }
+                            }
                         }
                         _ => {}
                     }
