@@ -1450,7 +1450,6 @@ dependencies = [
  "socketcan",
  "thiserror",
  "tokio",
- "tokio-util",
  "zencan-client",
 ]
 
@@ -1464,6 +1463,7 @@ dependencies = [
  "crossterm",
  "ratatui",
  "tokio",
+ "tokio-util",
  "varta-easyblade",
  "zencan-client",
 ]

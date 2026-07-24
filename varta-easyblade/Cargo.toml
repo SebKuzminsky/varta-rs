@@ -18,5 +18,4 @@ num_enum = "0.7.6"
 socketcan = { version = "3.6.2", features = ["tokio"] }
 thiserror = "2.0.18"
 tokio = { version = "1.45.0", features = ["rt", "sync"] }
-tokio-util = "0.7"
 zencan-client = { git = "https://github.com/mcbridejc/zencan.git", features = ["socketcan"] }

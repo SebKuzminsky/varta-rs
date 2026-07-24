@@ -10,6 +10,7 @@ clap = { version = "4.5.37", features = ["derive"] }
 crossterm = "0.28"
 ratatui = { version = "0.29", features = ["crossterm"] }
 tokio = { version = "1.45.0", features = ["net", "macros", "rt-multi-thread", "sync", "time"] }
+tokio-util = "0.7"
 zencan-client = { git = "https://github.com/mcbridejc/zencan.git" }
 
 varta-easyblade = { path = "../varta-easyblade" }

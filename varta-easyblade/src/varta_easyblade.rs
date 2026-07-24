@@ -335,9 +335,6 @@ pub struct VartaEasyblade {
     pub battery_charge_current: Option<BatteryChargeCurrent>,
     pub battery_charge_temperature: Option<BatteryChargeTemperature>,
     pub master_battery_temperature: Option<MasterBatteryTemperature>,
-    pub sdo_request_tx: tokio::sync::mpsc::UnboundedSender<SdoRequest>,
-    pub task_handle: tokio::task::JoinHandle<()>,
-    pub cancellation_token: tokio_util::sync::CancellationToken,
 }
 
 /// Device Error values logged by the Varta Easyblade module in SDO 0x2018

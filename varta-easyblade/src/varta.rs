@@ -4,8 +4,6 @@ use zencan_client::common::traits::{AsyncCanReceiver, AsyncCanSender};
 use crate::Error;
 use crate::MAX_MODULES;
 use crate::MasterInfo;
-use crate::SdoRequest;
-use crate::SdoResponse;
 use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
@@ -109,14 +107,11 @@ pub struct Varta {
     pub canbus_interface: String,
     pub master: MasterInfo,
     pub easyblades: [Option<VartaEasyblade>; MAX_MODULES],
-    pub sdo_response_tx: tokio::sync::mpsc::UnboundedSender<SdoResponse>,
 }
 
 // Public API
 impl Varta {
-    pub async fn new(
-        canbus_interface: &str,
-    ) -> Result<(Self, tokio::sync::mpsc::UnboundedReceiver<SdoResponse>), Error> {
+    pub async fn new(canbus_interface: &str) -> Result<Self, Error> {
         let socketcan_interface =
             socketcan::tokio::CanSocket::open(canbus_interface).map_err(|e| Error::Io {
                 can_interface: String::from(canbus_interface),
@@ -139,25 +134,16 @@ impl Varta {
                 e,
             })?;
 
-        let (sdo_response_tx, sdo_response_rx) = tokio::sync::mpsc::unbounded_channel();
-
         let varta = Self {
             socketcan_interface,
             canbus_interface: String::from(canbus_interface),
             master: MasterInfo::default(),
             easyblades: [const { None }; MAX_MODULES],
-            sdo_response_tx,
         };
-        Ok((varta, sdo_response_rx))
+        Ok(varta)
     }
 
-    pub fn send_sdo_request(&self, node_id: u8, request: SdoRequest) {
-        if let Some(Some(eb)) = self.easyblades.get(node_id as usize) {
-            let _ = eb.sdo_request_tx.send(request);
-        }
-    }
-
-    pub async fn process_socketcan_msg(&mut self) -> Result<(), Error> {
+    pub async fn process_socketcan_msg(&mut self) -> Result<Option<u8>, Error> {
         let can_frame = self
             .socketcan_interface
             .read_frame()
@@ -174,140 +160,13 @@ impl Varta {
 
         let node_id = get_node_id_from_can_message(&msg);
 
+        let mut new_module: Option<u8> = None;
+
         if let Some(node_id) = node_id {
             let was_new = self.easyblades[node_id as usize].is_none();
             let easyblade = self.get_or_init_easyblade(node_id);
             if was_new {
-                easyblade.sdo_request_tx.send(SdoRequest::SerialNumber).ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::SoftwareVersion)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::HardwareVersion)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceErrorHistory)
-                    .ok();
-                easyblade.sdo_request_tx.send(SdoRequest::CellVoltages).ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceConfigInfo)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceSerialNumberInfo)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceDateInfo)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceVariantInfo)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceControlParam)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceOperationTime)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::DeviceErrorCounter)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellVoltageMinMax)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellVoltageLimit)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryVoltage)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryVoltageLimit)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryCurrent)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryCurrentLimit)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::FetTemperature)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::FetTemperatureMinMax)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::FetTemperatureLimit)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellTemperature)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellTemperatureMinMax)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellTemperatureLimit)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellBalanceStatus)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellBalanceLimit)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::CellImpedance)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryCapacity)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryCapacityParam)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryCycleCount)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryChargeVoltage)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryChargeCurrent)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::BatteryChargeTemperature)
-                    .ok();
-                easyblade
-                    .sdo_request_tx
-                    .send(SdoRequest::MasterBatteryTemperature)
-                    .ok();
+                new_module = Some(node_id);
             }
             match msg {
                 varta_easyblade_can_messages::Messages::Pack01PackInfo1(m) => {
@@ -634,7 +493,7 @@ impl Varta {
 
         self.expire_missing_modules();
 
-        Ok(())
+        Ok(new_module)
     }
 
     /// Expire any modules that have not reported in the last 10 seconds.
@@ -646,9 +505,8 @@ impl Varta {
                 .and_then(|eb| now.duration_since(eb.last_seen).ok())
                 .map(|d| d.as_secs() > 10)
                 .unwrap_or(false)
-                && let Some(eb) = entry.take()
             {
-                eb.cancellation_token.cancel();
+                entry.take();
             }
         }
     }
@@ -679,25 +537,6 @@ impl Varta {
 
     pub fn get_or_init_easyblade(&mut self, node_id: u8) -> &mut VartaEasyblade {
         if self.easyblades[node_id as usize].is_none() {
-            let (sdo_request_tx, sdo_request_rx) = tokio::sync::mpsc::unbounded_channel();
-            let (socketcan_tx, socketcan_rx) =
-                zencan_client::open_socketcan(&self.canbus_interface).unwrap();
-            let sdo_response_tx = self.sdo_response_tx.clone();
-            let cancellation_token = tokio_util::sync::CancellationToken::new();
-            let cancellation_token_clone = cancellation_token.clone();
-
-            let task_handle = tokio::spawn(async move {
-                Self::easyblade_task(
-                    node_id,
-                    socketcan_tx,
-                    socketcan_rx,
-                    sdo_request_rx,
-                    sdo_response_tx,
-                    cancellation_token_clone,
-                )
-                .await;
-            });
-
             self.easyblades[node_id as usize] = Some(VartaEasyblade {
                 node_id,
                 serial_number: None,
@@ -740,240 +579,9 @@ impl Varta {
                 battery_charge_current: None,
                 battery_charge_temperature: None,
                 master_battery_temperature: None,
-                sdo_request_tx,
-                task_handle,
-                cancellation_token,
             });
         }
         self.easyblades[node_id as usize].as_mut().unwrap()
-    }
-
-    async fn easyblade_task(
-        node_id: u8,
-        socketcan_tx: zencan_client::common::SocketCanSender,
-        socketcan_rx: zencan_client::common::SocketCanReceiver,
-        mut sdo_request_rx: tokio::sync::mpsc::UnboundedReceiver<SdoRequest>,
-        sdo_response_tx: tokio::sync::mpsc::UnboundedSender<SdoResponse>,
-        cancellation_token: tokio_util::sync::CancellationToken,
-    ) {
-        let mut sdo_client = zencan_client::SdoClient::new_std(node_id, socketcan_tx, socketcan_rx);
-        loop {
-            tokio::select! {
-                _ = cancellation_token.cancelled() => {
-                    break;
-                }
-                request = sdo_request_rx.recv() => {
-                    let response = match request {
-                        Some(SdoRequest::SerialNumber) => {
-                            SdoResponse::SerialNumber {
-                                node_id,
-                                value: Self::sdo_read_serial_number(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::SoftwareVersion) => {
-                            SdoResponse::SoftwareVersion {
-                                node_id,
-                                value: Self::sdo_read_software_version(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::HardwareVersion) => {
-                            SdoResponse::HardwareVersion {
-                                node_id,
-                                value: Self::sdo_read_hardware_version(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceErrorHistory) => {
-                            SdoResponse::DeviceErrorHistory {
-                                node_id,
-                                value: Self::sdo_read_device_error_history(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellVoltages) => {
-                            SdoResponse::CellVoltages {
-                                node_id,
-                                value: Self::sdo_read_cell_voltages(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceConfigInfo) => {
-                            SdoResponse::DeviceConfigInfo {
-                                node_id,
-                                value: Self::sdo_read_device_config_info(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceSerialNumberInfo) => {
-                            SdoResponse::DeviceSerialNumberInfo {
-                                node_id,
-                                value: Self::sdo_read_device_serial_number_info(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceDateInfo) => {
-                            SdoResponse::DeviceDateInfo {
-                                node_id,
-                                value: Self::sdo_read_device_date_info(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceVariantInfo) => {
-                            SdoResponse::DeviceVariantInfo {
-                                node_id,
-                                value: Self::sdo_read_device_variant_info(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceControlParam) => {
-                            SdoResponse::DeviceControlParam {
-                                node_id,
-                                value: Self::sdo_read_device_control_param(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceOperationTime) => {
-                            SdoResponse::DeviceOperationTime {
-                                node_id,
-                                value: Self::sdo_read_device_operation_time(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::DeviceErrorCounter) => {
-                            SdoResponse::DeviceErrorCounter {
-                                node_id,
-                                value: Self::sdo_read_device_error_counter(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellVoltageMinMax) => {
-                            SdoResponse::CellVoltageMinMax {
-                                node_id,
-                                value: Self::sdo_read_cell_voltage_min_max(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellVoltageLimit) => {
-                            SdoResponse::CellVoltageLimit {
-                                node_id,
-                                value: Self::sdo_read_cell_voltage_limit(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryVoltage) => {
-                            SdoResponse::BatteryVoltage {
-                                node_id,
-                                value: Self::sdo_read_battery_voltage(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryVoltageLimit) => {
-                            SdoResponse::BatteryVoltageLimit {
-                                node_id,
-                                value: Self::sdo_read_battery_voltage_limit(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryCurrent) => {
-                            SdoResponse::BatteryCurrent {
-                                node_id,
-                                value: Self::sdo_read_battery_current(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryCurrentLimit) => {
-                            SdoResponse::BatteryCurrentLimit {
-                                node_id,
-                                value: Self::sdo_read_battery_current_limit(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::FetTemperature) => {
-                            SdoResponse::FetTemperature {
-                                node_id,
-                                value: Self::sdo_read_fet_temperature(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::FetTemperatureMinMax) => {
-                            SdoResponse::FetTemperatureMinMax {
-                                node_id,
-                                value: Self::sdo_read_fet_temperature_min_max(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::FetTemperatureLimit) => {
-                            SdoResponse::FetTemperatureLimit {
-                                node_id,
-                                value: Self::sdo_read_fet_temperature_limit(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellTemperature) => {
-                            SdoResponse::CellTemperature {
-                                node_id,
-                                value: Self::sdo_read_cell_temperature(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellTemperatureMinMax) => {
-                            SdoResponse::CellTemperatureMinMax {
-                                node_id,
-                                value: Self::sdo_read_cell_temperature_min_max(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellTemperatureLimit) => {
-                            SdoResponse::CellTemperatureLimit {
-                                node_id,
-                                value: Self::sdo_read_cell_temperature_limit(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellBalanceStatus) => {
-                            SdoResponse::CellBalanceStatus {
-                                node_id,
-                                value: Self::sdo_read_cell_balance_status(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellBalanceLimit) => {
-                            SdoResponse::CellBalanceLimit {
-                                node_id,
-                                value: Self::sdo_read_cell_balance_limit(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::CellImpedance) => {
-                            SdoResponse::CellImpedance {
-                                node_id,
-                                value: Self::sdo_read_cell_impedance(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryCapacity) => {
-                            SdoResponse::BatteryCapacity {
-                                node_id,
-                                value: Self::sdo_read_battery_capacity(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryCapacityParam) => {
-                            SdoResponse::BatteryCapacityParam {
-                                node_id,
-                                value: Self::sdo_read_battery_capacity_param(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryCycleCount) => {
-                            SdoResponse::BatteryCycleCount {
-                                node_id,
-                                value: Self::sdo_read_battery_cycle_count(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryChargeVoltage) => {
-                            SdoResponse::BatteryChargeVoltage {
-                                node_id,
-                                value: Self::sdo_read_battery_charge_voltage(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryChargeCurrent) => {
-                            SdoResponse::BatteryChargeCurrent {
-                                node_id,
-                                value: Self::sdo_read_battery_charge_current(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::BatteryChargeTemperature) => {
-                            SdoResponse::BatteryChargeTemperature {
-                                node_id,
-                                value: Self::sdo_read_battery_charge_temperature(&mut sdo_client).await,
-                            }
-                        },
-                        Some(SdoRequest::MasterBatteryTemperature) => {
-                            SdoResponse::MasterBatteryTemperature {
-                                node_id,
-                                value: Self::sdo_read_master_battery_temperature(&mut sdo_client).await,
-                            }
-                        },
-                        None => break,
-                    };
-                    let _ = sdo_response_tx.send(response);
-                }
-            }
-        }
     }
 
     // --- Reusable SDO read functions ---
