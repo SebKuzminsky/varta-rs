@@ -408,7 +408,7 @@ fn draw_popup(f: &mut Frame, area: Rect, save_state: &SaveState, completion: f64
                 "█".repeat(filled),
                 " ".repeat(bar_width.saturating_sub(filled))
             );
-            let bar = format!("[{}] {}", bar_str, clamped_percentage);
+            let bar = format!("[{}] {}%", bar_str, clamped_percentage);
             vec![
                 Line::from(""),
                 Line::from(bar).style(Style::new().fg(Color::Green)),
