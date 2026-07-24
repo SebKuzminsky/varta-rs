@@ -13,4 +13,6 @@ tokio = { version = "1.45.0", features = ["net", "macros", "rt-multi-thread", "s
 tokio-util = "0.7"
 zencan-client = { git = "https://github.com/mcbridejc/zencan.git" }
 
+serde_json = "1.0"
+strum = "0.27"
 varta-easyblade = { path = "../varta-easyblade" }

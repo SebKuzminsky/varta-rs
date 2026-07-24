@@ -6,13 +6,17 @@ use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
 
 use ratatui::prelude::*;
 use ratatui::text::Text;
-use ratatui::widgets::{Block, Paragraph, Row, Table, Wrap};
+use ratatui::widgets::{Block, Clear, Paragraph, Row, Table, Wrap};
+use serde_json::json;
 use std::collections::HashMap;
+use std::fs;
+use std::io::Write;
 use std::io::stdout;
 use std::time::Duration;
 use std::time::SystemTime;
 use tokio::sync::mpsc;
 
+use strum::EnumCount;
 use varta_easyblade::SdoRequest;
 use varta_easyblade::SdoResponse;
 
@@ -125,7 +129,332 @@ fn format_fet_status(fet: Option<(bool, bool, bool)>) -> String {
     }
 }
 
-fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, tab: SelectedTab) {
+#[derive(Default, Clone)]
+enum SaveState {
+    #[default]
+    Idle,
+    Saving {
+        file_path: String,
+    },
+    Saved(String),
+}
+
+impl SaveState {
+    fn is_active(&self) -> bool {
+        !matches!(self, SaveState::Idle)
+    }
+}
+
+const TOTAL_SDOS: f64 = SdoRequest::COUNT as f64;
+
+fn sdo_completion(eb: &varta_easyblade::VartaEasyblade) -> f64 {
+    let mut count = 0.0;
+    if eb.serial_number.is_some() {
+        count += 1.0;
+    }
+    if eb.software_version.is_some() {
+        count += 1.0;
+    }
+    if eb.hardware_version.is_some() {
+        count += 1.0;
+    }
+    if eb.device_config_info.is_some() {
+        count += 1.0;
+    }
+    if eb.device_serial_number_info.is_some() {
+        count += 1.0;
+    }
+    if eb.device_date_info.is_some() {
+        count += 1.0;
+    }
+    if eb.device_variant_info.is_some() {
+        count += 1.0;
+    }
+    if eb.device_control_param.is_some() {
+        count += 1.0;
+    }
+    if eb.device_operation_time.is_some() {
+        count += 1.0;
+    }
+    if eb.device_errors.is_some() {
+        count += 1.0;
+    }
+    if eb.device_error_counter.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_voltages.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_voltage_min_max.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_voltage_limit.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_voltage.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_voltage_limit.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_current.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_current_limit.is_some() {
+        count += 1.0;
+    }
+    if eb.fet_temperature.is_some() {
+        count += 1.0;
+    }
+    if eb.fet_temperature_min_max.is_some() {
+        count += 1.0;
+    }
+    if eb.fet_temperature_limit.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_temperature.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_temperature_min_max.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_temperature_limit.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_balance_status.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_balance_limit.is_some() {
+        count += 1.0;
+    }
+    if eb.cell_impedance.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_capacity.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_capacity_param.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_cycle_count.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_charge_voltage.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_charge_current.is_some() {
+        count += 1.0;
+    }
+    if eb.battery_charge_temperature.is_some() {
+        count += 1.0;
+    }
+    if eb.master_battery_temperature.is_some() {
+        count += 1.0;
+    }
+    count
+}
+
+fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value {
+    let mut map = serde_json::Map::new();
+    map.insert("node_id".into(), json!(eb.node_id));
+    map.insert("serial_number".into(), json!(eb.serial_number));
+
+    if let Some(ref v) = eb.software_version {
+        map.insert("software_version".into(), json!(v));
+    }
+    if let Some(ref v) = eb.hardware_version {
+        map.insert("hardware_version".into(), json!(v));
+    }
+    if let Some(ref v) = eb.device_config_info {
+        map.insert("device_config_info".into(), json!(v));
+    }
+    if let Some(ref v) = eb.device_serial_number_info {
+        map.insert("device_serial_number_info".into(), json!(v));
+    }
+    if let Some(ref v) = eb.device_date_info {
+        map.insert("device_date_info".into(), json!(v));
+    }
+    if let Some(ref v) = eb.device_variant_info {
+        map.insert("device_variant_info".into(), json!(v));
+    }
+    if let Some(ref v) = eb.device_control_param {
+        map.insert("device_control_param".into(), json!(v));
+    }
+    if let Some(ref v) = eb.device_operation_time {
+        map.insert("device_operation_time".into(), json!(v));
+    }
+    if let Some(ref v) = eb.device_errors {
+        map.insert(
+            "device_error_history".into(),
+            json!(v.iter().map(|e| format!("{:?}", e)).collect::<Vec<_>>()),
+        );
+    }
+    if let Some(ref v) = eb.device_error_counter {
+        map.insert("device_error_counter".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_voltages {
+        map.insert("cell_voltages".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_voltage_min_max {
+        map.insert("cell_voltage_min_max".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_voltage_limit {
+        map.insert("cell_voltage_limit".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_voltage {
+        map.insert("battery_voltage".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_voltage_limit {
+        map.insert("battery_voltage_limit".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_current {
+        map.insert("battery_current".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_current_limit {
+        map.insert("battery_current_limit".into(), json!(v));
+    }
+    if let Some(ref v) = eb.fet_temperature {
+        map.insert("fet_temperature".into(), json!(v));
+    }
+    if let Some(ref v) = eb.fet_temperature_min_max {
+        map.insert("fet_temperature_min_max".into(), json!(v));
+    }
+    if let Some(ref v) = eb.fet_temperature_limit {
+        map.insert("fet_temperature_limit".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_temperature {
+        map.insert("cell_temperature".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_temperature_min_max {
+        map.insert("cell_temperature_min_max".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_temperature_limit {
+        map.insert("cell_temperature_limit".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_balance_status {
+        map.insert("cell_balance_status".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_balance_limit {
+        map.insert("cell_balance_limit".into(), json!(v));
+    }
+    if let Some(ref v) = eb.cell_impedance {
+        map.insert("cell_impedance".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_capacity {
+        map.insert("battery_capacity".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_capacity_param {
+        map.insert("battery_capacity_param".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_cycle_count {
+        map.insert("battery_cycle_count".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_charge_voltage {
+        map.insert("battery_charge_voltage".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_charge_current {
+        map.insert("battery_charge_current".into(), json!(v));
+    }
+    if let Some(ref v) = eb.battery_charge_temperature {
+        map.insert("battery_charge_temperature".into(), json!(v));
+    }
+    if let Some(ref v) = eb.master_battery_temperature {
+        map.insert("master_battery_temperature".into(), json!(v));
+    }
+
+    serde_json::Value::Object(map)
+}
+
+fn try_complete_save(
+    varta: &varta_easyblade::Varta,
+    selected: usize,
+    save_state: &mut SaveState,
+) {
+    if let SaveState::Saving { ref file_path } = *save_state {
+        let eb = varta.get_easyblade_by_index(selected);
+        if let Some(data) = eb {
+            if sdo_completion(data) >= TOTAL_SDOS {
+                let json_value = easyblade_to_json(data);
+                let json_string = serde_json::to_string_pretty(&json_value).unwrap();
+                let path = file_path.clone();
+                if let Ok(mut file) = fs::File::create(&path) {
+                    if let Err(e) = file.write_all(json_string.as_bytes()) {
+                        eprintln!("Error writing file: {}", e);
+                    }
+                } else {
+                    eprintln!("Error creating file: {}", path);
+                }
+                *save_state = SaveState::Saved(path);
+            }
+        } else {
+            *save_state = SaveState::Idle;
+        }
+    }
+}
+
+fn draw_popup(f: &mut Frame, area: Rect, save_state: &SaveState, completion: f64) {
+    f.render_widget(Clear, area);
+
+    let popup_block = Block::bordered()
+        .title(" Save Module Data ")
+        .style(Style::new().bg(Color::Rgb(50, 50, 50)));
+    f.render_widget(&popup_block, area);
+    let inner = popup_block.inner(area);
+
+    let lines: Vec<Line> = match save_state {
+        SaveState::Saving { .. } => {
+            let percentage = (completion / TOTAL_SDOS * 100.0).round() as u16;
+            let clamped_percentage = percentage.min(100);
+            let bar_width: usize = 40;
+            let filled = (clamped_percentage as f64 / 100.0 * bar_width as f64).round() as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                " ".repeat(bar_width.saturating_sub(filled))
+            );
+            let bar = format!("[{}] {}", bar_str, clamped_percentage);
+            vec![
+                Line::from(""),
+                Line::from(bar).style(Style::new().fg(Color::Green)),
+                Line::from(format!(
+                    "Reading SDOs: {}/{}",
+                    completion.min(TOTAL_SDOS) as u32,
+                    TOTAL_SDOS as u32
+                )),
+                Line::from("Press 'q' to cancel"),
+                Line::from(""),
+            ]
+        },
+        SaveState::Saved(path) => {
+            vec![
+                Line::from(""),
+                Line::from("Data saved successfully!"),
+                Line::from(""),
+                Line::from(format!("  {}", path)),
+                Line::from(""),
+                Line::from("Press Enter to dismiss"),
+            ]
+        },
+        SaveState::Idle => vec![],
+    };
+
+    let text_area = Rect {
+        x: inner.x,
+        y: inner.y,
+        width: inner.width,
+        height: inner.height,
+    };
+    let text = Paragraph::new(lines).wrap(Wrap { trim: true });
+    f.render_widget(text, text_area);
+}
+
+fn draw_frame(
+    f: &mut Frame,
+    varta: &varta_easyblade::Varta,
+    selected: usize,
+    tab: SelectedTab,
+    save_state: &SaveState,
+) {
     let area = f.area();
 
     let layout = Layout::default()
@@ -944,6 +1273,20 @@ fn draw_frame(f: &mut Frame, varta: &varta_easyblade::Varta, selected: usize, ta
             }
         },
     }
+
+    if save_state.is_active() {
+        let popup_width = 60;
+        let popup_height = 10;
+        let popup_area = Rect::new(
+            area.width / 2 - popup_width / 2,
+            area.height / 2 - popup_height / 2,
+            popup_width,
+            popup_height,
+        );
+        let eb_ref = varta.get_easyblade_by_index(selected);
+        let completion = eb_ref.map(sdo_completion).unwrap_or(TOTAL_SDOS);
+        draw_popup(f, popup_area, save_state, completion);
+    }
 }
 
 struct ModuleSdoTask {
@@ -1266,6 +1609,7 @@ async fn main() -> anyhow::Result<()> {
     let mut selected_tab = SelectedTab::ModuleInfo;
     let mut expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
     let mut module_tasks: HashMap<u8, ModuleSdoTask> = HashMap::new();
+    let mut save_state = SaveState::Idle;
 
     loop {
         let count = varta.easyblade_count();
@@ -1274,7 +1618,8 @@ async fn main() -> anyhow::Result<()> {
         }
 
         let current_tab = selected_tab;
-        terminal.draw(|f| draw_frame(f, &varta, selected, current_tab))?;
+        let current_save_state = save_state.clone();
+        terminal.draw(|f| draw_frame(f, &varta, selected, current_tab, &current_save_state))?;
 
         tokio::select! {
             result = varta.process_socketcan_msg() => {
@@ -1481,23 +1826,42 @@ async fn main() -> anyhow::Result<()> {
                         },
                     }
                 }
+                try_complete_save(&varta, selected, &mut save_state);
             }
             event = rx.recv() => {
                 if let Some(Event::Key(key)) = event
                     && key.kind == KeyEventKind::Press
                 {
                     match key.code {
-                        KeyCode::Char('q') => break,
-                        KeyCode::Up if count > 0 => {
+                        KeyCode::Char('q') => {
+                            if save_state.is_active() {
+                                save_state = SaveState::Idle;
+                            } else {
+                                break;
+                            }
+                        },
+                        KeyCode::Enter if save_state.is_active() => {
+                            save_state = SaveState::Idle;
+                        },
+                        KeyCode::Char('s') if !save_state.is_active() && count > 0 => {
+                            let eb = varta.get_easyblade_by_index(selected);
+                            if let Some(eb) = eb {
+                                let serial = eb.serial_number.unwrap_or(0);
+                                let file_path = format!("/tmp/varta-easyblade-{}.json", serial);
+                                save_state = SaveState::Saving { file_path };
+                                try_complete_save(&varta, selected, &mut save_state);
+                            }
+                        },
+                        KeyCode::Up if count > 0 && !save_state.is_active() => {
                             selected = selected.saturating_sub(1);
                         }
-                        KeyCode::Down if selected + 1 < count => {
+                        KeyCode::Down if selected + 1 < count && !save_state.is_active() => {
                             selected += 1;
                         }
-                        KeyCode::Left => {
+                        KeyCode::Left if !save_state.is_active() => {
                             selected_tab = selected_tab.cycle(false);
                         }
-                        KeyCode::Right => {
+                        KeyCode::Right if !save_state.is_active() => {
                             selected_tab = selected_tab.cycle(true);
                         }
                         _ => {}

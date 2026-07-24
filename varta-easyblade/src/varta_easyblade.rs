@@ -202,6 +202,7 @@ pub struct MasterBatteryTemperature {
 }
 
 #[allow(clippy::type_complexity)]
+#[derive(strum::EnumCount)]
 pub enum SdoRequest {
     SerialNumber,
     SoftwareVersion,
