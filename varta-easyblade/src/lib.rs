@@ -22,6 +22,7 @@ pub use varta_easyblade::CellVoltageMinMax;
 pub use varta_easyblade::DeviceConfigInfo;
 pub use varta_easyblade::DeviceDateInfo;
 pub use varta_easyblade::DeviceError;
+pub use varta_easyblade::DeviceErrorCounterInfo;
 pub use varta_easyblade::DeviceOperationTime;
 pub use varta_easyblade::DeviceSerialNumberInfo;
 pub use varta_easyblade::DeviceVariantInfo;

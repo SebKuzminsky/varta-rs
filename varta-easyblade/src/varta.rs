@@ -26,6 +26,7 @@ use varta_easyblade::CellVoltageLimit;
 use varta_easyblade::CellVoltageMinMax;
 use varta_easyblade::DeviceConfigInfo;
 use varta_easyblade::DeviceDateInfo;
+use varta_easyblade::DeviceErrorCounterInfo;
 use varta_easyblade::DeviceOperationTime;
 use varta_easyblade::DeviceSerialNumberInfo;
 use varta_easyblade::DeviceVariantInfo;
@@ -852,20 +853,404 @@ impl Varta {
 
     pub async fn sdo_read_device_error_counter<S: AsyncCanSender, R: AsyncCanReceiver>(
         sdo_client: &mut zencan_client::SdoClient<S, R>,
-    ) -> Result<Vec<u16>, String> {
-        let highest_subindex = sdo_client
-            .read_u8(0x201a, 0x00)
+    ) -> Result<DeviceErrorCounterInfo, String> {
+        let over_temp_laden_zellen = sdo_client
+            .read_u16(0x201a, 0x01)
             .await
             .map_err(|e| e.to_string())?;
-        let mut counters = Vec::new();
-        for sub_index in 1..=highest_subindex {
-            let val = sdo_client
-                .read_u16(0x201a, sub_index)
-                .await
-                .map_err(|e| e.to_string())?;
-            counters.push(val);
-        }
-        Ok(counters)
+        let under_temp_laden_zellen = sdo_client
+            .read_u16(0x201a, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let over_temp_laden_fet = sdo_client
+            .read_u16(0x201a, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let over_temp_entladen_zellen = sdo_client
+            .read_u16(0x201a, 0x04)
+            .await
+            .map_err(|e| e.to_string())?;
+        let under_temp_entladen_zellen = sdo_client
+            .read_u16(0x201a, 0x05)
+            .await
+            .map_err(|e| e.to_string())?;
+        let over_temp_entladen_fet = sdo_client
+            .read_u16(0x201a, 0x06)
+            .await
+            .map_err(|e| e.to_string())?;
+        let over_temp_clamp = sdo_client
+            .read_u16(0x201a, 0x07)
+            .await
+            .map_err(|e| e.to_string())?;
+        let over_voltage = sdo_client
+            .read_u16(0x201a, 0x08)
+            .await
+            .map_err(|e| e.to_string())?;
+        let under_voltage = sdo_client
+            .read_u16(0x201a, 0x09)
+            .await
+            .map_err(|e| e.to_string())?;
+        let deep_low_voltage = sdo_client
+            .read_u16(0x201a, 0x0a)
+            .await
+            .map_err(|e| e.to_string())?;
+        let cell_disbalance = sdo_client
+            .read_u16(0x201a, 0x0b)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_pack_spn_min_error = sdo_client
+            .read_u16(0x201a, 0x0c)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_pack_spn_max_alarm = sdo_client
+            .read_u16(0x201a, 0x0d)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_pack_fused_spn_diff_error = sdo_client
+            .read_u16(0x201a, 0x0e)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_pwr_spn_diff_error = sdo_client
+            .read_u16(0x201a, 0x0f)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_pwr_spn_min_error = sdo_client
+            .read_u16(0x201a, 0x10)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_pwr_spn_max_error = sdo_client
+            .read_u16(0x201a, 0x11)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_netz_spn_min_error = sdo_client
+            .read_u16(0x201a, 0x12)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_netz_spn_max_alarm = sdo_client
+            .read_u16(0x201a, 0x13)
+            .await
+            .map_err(|e| e.to_string())?;
+        let akku_rekuperation_spn_max_alarm = sdo_client
+            .read_u16(0x201a, 0x14)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_charge_sc = sdo_client
+            .read_u16(0x201a, 0x15)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_charge_occ_1 = sdo_client
+            .read_u16(0x201a, 0x16)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_charge_occ_2 = sdo_client
+            .read_u16(0x201a, 0x17)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_charge_occ_3 = sdo_client
+            .read_u16(0x201a, 0x18)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_discharge_sc = sdo_client
+            .read_u16(0x201a, 0x19)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_discharge_ocd_1 = sdo_client
+            .read_u16(0x201a, 0x1a)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_discharge_ocd_2 = sdo_client
+            .read_u16(0x201a, 0x1b)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_discharge_ocd_3 = sdo_client
+            .read_u16(0x201a, 0x1c)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_akku_diff_error = sdo_client
+            .read_u16(0x201a, 0x1d)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_spn_min_error = sdo_client
+            .read_u16(0x201a, 0x1e)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_spn_max_error = sdo_client
+            .read_u16(0x201a, 0x1f)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_uc_fet_enable = sdo_client
+            .read_u16(0x201a, 0x20)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_current_sense_ein = sdo_client
+            .read_u16(0x201a, 0x21)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_voltage_sense_ein = sdo_client
+            .read_u16(0x201a, 0x22)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_temp_cell_sense_ein = sdo_client
+            .read_u16(0x201a, 0x23)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_temp_fet_sense_ein = sdo_client
+            .read_u16(0x201a, 0x24)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_pyro_fuse_eject_sense_ein = sdo_client
+            .read_u16(0x201a, 0x25)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_i_discharge_fet_error = sdo_client
+            .read_u16(0x201a, 0x26)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_i_charge_fet_error = sdo_client
+            .read_u16(0x201a, 0x27)
+            .await
+            .map_err(|e| e.to_string())?;
+        let scnd_voltage_error = sdo_client
+            .read_u16(0x201a, 0x28)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_spn_min_scale = sdo_client
+            .read_u16(0x201a, 0x29)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_spn_max_scale = sdo_client
+            .read_u16(0x201a, 0x2a)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_temp_zellen_min_scale = sdo_client
+            .read_u16(0x201a, 0x2b)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_temp_zellen_max_scale = sdo_client
+            .read_u16(0x201a, 0x2c)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_temp_fet_min_scale = sdo_client
+            .read_u16(0x201a, 0x2d)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_temp_fet_max_scale = sdo_client
+            .read_u16(0x201a, 0x2e)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_temp_clamp_min_scale = sdo_client
+            .read_u16(0x201a, 0x2f)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_temp_clamp_max_scale = sdo_client
+            .read_u16(0x201a, 0x30)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_i_charge_min_scale = sdo_client
+            .read_u16(0x201a, 0x31)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_i_charge_max_scale = sdo_client
+            .read_u16(0x201a, 0x32)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_i_discharge_min_scale = sdo_client
+            .read_u16(0x201a, 0x33)
+            .await
+            .map_err(|e| e.to_string())?;
+        let adc_i_discharge_max_scale = sdo_client
+            .read_u16(0x201a, 0x34)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_discharge_fet_error = sdo_client
+            .read_u16(0x201a, 0x35)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_charge_fet_error = sdo_client
+            .read_u16(0x201a, 0x36)
+            .await
+            .map_err(|e| e.to_string())?;
+        let i_discharge_charge_fet_error = sdo_client
+            .read_u16(0x201a, 0x37)
+            .await
+            .map_err(|e| e.to_string())?;
+        let temp_discharge_error_lock = sdo_client
+            .read_u16(0x201a, 0x38)
+            .await
+            .map_err(|e| e.to_string())?;
+        let temp_charge_error_lock = sdo_client
+            .read_u16(0x201a, 0x39)
+            .await
+            .map_err(|e| e.to_string())?;
+        let over_charge_current_alarm_recuperation = sdo_client
+            .read_u16(0x201a, 0x3a)
+            .await
+            .map_err(|e| e.to_string())?;
+        let over_charge_cell_voltage_alarm_recuperation = sdo_client
+            .read_u16(0x201a, 0x3b)
+            .await
+            .map_err(|e| e.to_string())?;
+        let v24_spn_min_error = sdo_client
+            .read_u16(0x201a, 0x3c)
+            .await
+            .map_err(|e| e.to_string())?;
+        let v24_spn_max_error = sdo_client
+            .read_u16(0x201a, 0x3d)
+            .await
+            .map_err(|e| e.to_string())?;
+        let can_network_not_conf_node_id = sdo_client
+            .read_u16(0x201a, 0x3e)
+            .await
+            .map_err(|e| e.to_string())?;
+        let can_network_double_node_id = sdo_client
+            .read_u16(0x201a, 0x3f)
+            .await
+            .map_err(|e| e.to_string())?;
+        let parameter_configuration_error = sdo_client
+            .read_u16(0x201a, 0x40)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_01 = sdo_client
+            .read_u16(0x201a, 0x41)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_02 = sdo_client
+            .read_u16(0x201a, 0x42)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_03 = sdo_client
+            .read_u16(0x201a, 0x43)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_04 = sdo_client
+            .read_u16(0x201a, 0x44)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_05 = sdo_client
+            .read_u16(0x201a, 0x45)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_06 = sdo_client
+            .read_u16(0x201a, 0x46)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_07 = sdo_client
+            .read_u16(0x201a, 0x47)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_08 = sdo_client
+            .read_u16(0x201a, 0x48)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_09 = sdo_client
+            .read_u16(0x201a, 0x49)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_0a = sdo_client
+            .read_u16(0x201a, 0x4a)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_0b = sdo_client
+            .read_u16(0x201a, 0x4b)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_0c = sdo_client
+            .read_u16(0x201a, 0x4c)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_0d = sdo_client
+            .read_u16(0x201a, 0x4d)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_0e = sdo_client
+            .read_u16(0x201a, 0x4e)
+            .await
+            .map_err(|e| e.to_string())?;
+        let reserved_0f = sdo_client
+            .read_u16(0x201a, 0x4f)
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(DeviceErrorCounterInfo {
+            over_temp_laden_zellen,
+            under_temp_laden_zellen,
+            over_temp_laden_fet,
+            over_temp_entladen_zellen,
+            under_temp_entladen_zellen,
+            over_temp_entladen_fet,
+            over_temp_clamp,
+            over_voltage,
+            under_voltage,
+            deep_low_voltage,
+            cell_disbalance,
+            akku_pack_spn_min_error,
+            akku_pack_spn_max_alarm,
+            akku_pack_fused_spn_diff_error,
+            akku_pwr_spn_diff_error,
+            akku_pwr_spn_min_error,
+            akku_pwr_spn_max_error,
+            akku_netz_spn_min_error,
+            akku_netz_spn_max_alarm,
+            akku_rekuperation_spn_max_alarm,
+            i_charge_sc,
+            i_charge_occ_1,
+            i_charge_occ_2,
+            i_charge_occ_3,
+            i_discharge_sc,
+            i_discharge_ocd_1,
+            i_discharge_ocd_2,
+            i_discharge_ocd_3,
+            i_akku_diff_error,
+            scnd_spn_min_error,
+            scnd_spn_max_error,
+            scnd_uc_fet_enable,
+            scnd_current_sense_ein,
+            scnd_voltage_sense_ein,
+            scnd_temp_cell_sense_ein,
+            scnd_temp_fet_sense_ein,
+            scnd_pyro_fuse_eject_sense_ein,
+            scnd_i_discharge_fet_error,
+            scnd_i_charge_fet_error,
+            scnd_voltage_error,
+            adc_spn_min_scale,
+            adc_spn_max_scale,
+            adc_temp_zellen_min_scale,
+            adc_temp_zellen_max_scale,
+            adc_temp_fet_min_scale,
+            adc_temp_fet_max_scale,
+            adc_temp_clamp_min_scale,
+            adc_temp_clamp_max_scale,
+            adc_i_charge_min_scale,
+            adc_i_charge_max_scale,
+            adc_i_discharge_min_scale,
+            adc_i_discharge_max_scale,
+            i_discharge_fet_error,
+            i_charge_fet_error,
+            i_discharge_charge_fet_error,
+            temp_discharge_error_lock,
+            temp_charge_error_lock,
+            over_charge_current_alarm_recuperation,
+            over_charge_cell_voltage_alarm_recuperation,
+            v24_spn_min_error,
+            v24_spn_max_error,
+            can_network_not_conf_node_id,
+            can_network_double_node_id,
+            parameter_configuration_error,
+            reserved_01,
+            reserved_02,
+            reserved_03,
+            reserved_04,
+            reserved_05,
+            reserved_06,
+            reserved_07,
+            reserved_08,
+            reserved_09,
+            reserved_0a,
+            reserved_0b,
+            reserved_0c,
+            reserved_0d,
+            reserved_0e,
+            reserved_0f,
+        })
     }
 
     pub async fn sdo_read_cell_voltage_min_max<S: AsyncCanSender, R: AsyncCanReceiver>(

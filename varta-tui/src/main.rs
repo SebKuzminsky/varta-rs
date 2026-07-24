@@ -365,11 +365,7 @@ fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value 
     serde_json::Value::Object(map)
 }
 
-fn try_complete_save(
-    varta: &varta_easyblade::Varta,
-    selected: usize,
-    save_state: &mut SaveState,
-) {
+fn try_complete_save(varta: &varta_easyblade::Varta, selected: usize, save_state: &mut SaveState) {
     if let SaveState::Saving { ref file_path } = *save_state {
         let eb = varta.get_easyblade_by_index(selected);
         if let Some(data) = eb {
@@ -810,11 +806,136 @@ fn draw_frame(
         SelectedTab::ErrorCounters => {
             if let Some(eb) = eb {
                 if let Some(ref counters) = eb.device_error_counter {
-                    let lines: String = counters
-                        .iter()
-                        .enumerate()
-                        .map(|(i, v)| format!("Error {:>2}: {:>6}\n", i + 1, v))
-                        .collect();
+                    let lines = format!(
+                        "over_temp_laden_zellen:                          {:>6}\n\
+                         under_temp_laden_zellen:                         {:>6}\n\
+                         over_temp_laden_fet:                             {:>6}\n\
+                         over_temp_entladen_zellen:                       {:>6}\n\
+                         under_temp_entladen_zellen:                      {:>6}\n\
+                         over_temp_entladen_fet:                          {:>6}\n\
+                         over_temp_clamp:                                 {:>6}\n\
+                         over_voltage:                                    {:>6}\n\
+                         under_voltage:                                   {:>6}\n\
+                         deep_low_voltage:                                {:>6}\n\
+                         cell_disbalance:                                 {:>6}\n\
+                         akku_pack_spn_min_error:                         {:>6}\n\
+                         akku_pack_spn_max_alarm:                         {:>6}\n\
+                         akku_pack_fused_spn_diff_error:                  {:>6}\n\
+                         akku_pwr_spn_diff_error:                         {:>6}\n\
+                         akku_pwr_spn_min_error:                          {:>6}\n\
+                         akku_pwr_spn_max_error:                          {:>6}\n\
+                         akku_netz_spn_min_error:                         {:>6}\n\
+                         akku_netz_spn_max_alarm:                         {:>6}\n\
+                         akku_rekuperation_spn_max_alarm:                 {:>6}\n\
+                         i_charge_sc:                                     {:>6}\n\
+                         i_charge_occ_1:                                  {:>6}\n\
+                         i_charge_occ_2:                                  {:>6}\n\
+                         i_charge_occ_3:                                  {:>6}\n\
+                         i_discharge_sc:                                  {:>6}\n\
+                         i_discharge_ocd_1:                               {:>6}\n\
+                         i_discharge_ocd_2:                               {:>6}\n\
+                         i_discharge_ocd_3:                               {:>6}\n\
+                         i_akku_diff_error:                               {:>6}\n\
+                         scnd_spn_min_error:                              {:>6}\n\
+                         scnd_spn_max_error:                              {:>6}\n\
+                         scnd_uc_fet_enable:                              {:>6}\n\
+                         scnd_current_sense_ein:                          {:>6}\n\
+                         scnd_voltage_sense_ein:                          {:>6}\n\
+                         scnd_temp_cell_sense_ein:                        {:>6}\n\
+                         scnd_temp_fet_sense_ein:                         {:>6}\n\
+                         scnd_pyro_fuse_eject_sense_ein:                  {:>6}\n\
+                         scnd_i_discharge_fet_error:                      {:>6}\n\
+                         scnd_i_charge_fet_error:                         {:>6}\n\
+                         scnd_voltage_error:                              {:>6}\n\
+                         adc_spn_min_scale:                               {:>6}\n\
+                         adc_spn_max_scale:                               {:>6}\n\
+                         adc_temp_zellen_min_scale:                       {:>6}\n\
+                         adc_temp_zellen_max_scale:                       {:>6}\n\
+                         adc_temp_fet_min_scale:                          {:>6}\n\
+                         adc_temp_fet_max_scale:                          {:>6}\n\
+                         adc_temp_clamp_min_scale:                        {:>6}\n\
+                         adc_temp_clamp_max_scale:                        {:>6}\n\
+                         adc_i_charge_min_scale:                          {:>6}\n\
+                         adc_i_charge_max_scale:                          {:>6}\n\
+                         adc_i_discharge_min_scale:                       {:>6}\n\
+                         adc_i_discharge_max_scale:                       {:>6}\n\
+                         i_discharge_fet_error:                           {:>6}\n\
+                         i_charge_fet_error:                              {:>6}\n\
+                         i_discharge_charge_fet_error:                    {:>6}\n\
+                         temp_discharge_error_lock:                       {:>6}\n\
+                         temp_charge_error_lock:                          {:>6}\n\
+                         over_charge_current_alarm_recuperation:          {:>6}\n\
+                         over_charge_cell_voltage_alarm_recuperation:     {:>6}\n\
+                         v24_spn_min_error:                               {:>6}\n\
+                         v24_spn_max_error:                               {:>6}\n\
+                         can_network_not_conf_node_id:                    {:>6}\n\
+                         can_network_double_node_id:                      {:>6}\n\
+                         parameter_configuration_error:                   {:>6}\n",
+                        counters.over_temp_laden_zellen,
+                        counters.under_temp_laden_zellen,
+                        counters.over_temp_laden_fet,
+                        counters.over_temp_entladen_zellen,
+                        counters.under_temp_entladen_zellen,
+                        counters.over_temp_entladen_fet,
+                        counters.over_temp_clamp,
+                        counters.over_voltage,
+                        counters.under_voltage,
+                        counters.deep_low_voltage,
+                        counters.cell_disbalance,
+                        counters.akku_pack_spn_min_error,
+                        counters.akku_pack_spn_max_alarm,
+                        counters.akku_pack_fused_spn_diff_error,
+                        counters.akku_pwr_spn_diff_error,
+                        counters.akku_pwr_spn_min_error,
+                        counters.akku_pwr_spn_max_error,
+                        counters.akku_netz_spn_min_error,
+                        counters.akku_netz_spn_max_alarm,
+                        counters.akku_rekuperation_spn_max_alarm,
+                        counters.i_charge_sc,
+                        counters.i_charge_occ_1,
+                        counters.i_charge_occ_2,
+                        counters.i_charge_occ_3,
+                        counters.i_discharge_sc,
+                        counters.i_discharge_ocd_1,
+                        counters.i_discharge_ocd_2,
+                        counters.i_discharge_ocd_3,
+                        counters.i_akku_diff_error,
+                        counters.scnd_spn_min_error,
+                        counters.scnd_spn_max_error,
+                        counters.scnd_uc_fet_enable,
+                        counters.scnd_current_sense_ein,
+                        counters.scnd_voltage_sense_ein,
+                        counters.scnd_temp_cell_sense_ein,
+                        counters.scnd_temp_fet_sense_ein,
+                        counters.scnd_pyro_fuse_eject_sense_ein,
+                        counters.scnd_i_discharge_fet_error,
+                        counters.scnd_i_charge_fet_error,
+                        counters.scnd_voltage_error,
+                        counters.adc_spn_min_scale,
+                        counters.adc_spn_max_scale,
+                        counters.adc_temp_zellen_min_scale,
+                        counters.adc_temp_zellen_max_scale,
+                        counters.adc_temp_fet_min_scale,
+                        counters.adc_temp_fet_max_scale,
+                        counters.adc_temp_clamp_min_scale,
+                        counters.adc_temp_clamp_max_scale,
+                        counters.adc_i_charge_min_scale,
+                        counters.adc_i_charge_max_scale,
+                        counters.adc_i_discharge_min_scale,
+                        counters.adc_i_discharge_max_scale,
+                        counters.i_discharge_fet_error,
+                        counters.i_charge_fet_error,
+                        counters.i_discharge_charge_fet_error,
+                        counters.temp_discharge_error_lock,
+                        counters.temp_charge_error_lock,
+                        counters.over_charge_current_alarm_recuperation,
+                        counters.over_charge_cell_voltage_alarm_recuperation,
+                        counters.v24_spn_min_error,
+                        counters.v24_spn_max_error,
+                        counters.can_network_not_conf_node_id,
+                        counters.can_network_double_node_id,
+                        counters.parameter_configuration_error,
+                    );
                     let text = Paragraph::new(lines).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 } else {
