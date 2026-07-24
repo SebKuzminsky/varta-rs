@@ -711,7 +711,7 @@ fn draw_frame(
                     let text = Paragraph::new(lines).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 } else {
-                    let text = Paragraph::new("N/A (not yet read)").wrap(Wrap { trim: true });
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 }
             } else {
@@ -741,62 +741,37 @@ fn draw_frame(
 
         SelectedTab::DeviceOperation => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Operation Minutes (by temp range):\n\
-                     <0°C:       {:>3} min\n\
-                     0-40°C:     {:>3} min\n\
-                     40-60°C:    {:>3} min\n\
-                     60-80°C:    {:>3} min\n\
-                     >80°C:      {:>3} min\n\
-                     Operation Hours (by temp range):\n\
-                     <0°C:       {:>10} h\n\
-                     0-40°C:     {:>10} h\n\
-                     40-60°C:    {:>10} h\n\
-                     60-80°C:    {:>10} h\n\
-                     >80°C:      {:>10} h\n",
-                    match eb.device_operation_time {
-                        Some(ref v) => v.minutes_below_zero,
-                        _ => 0,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.minutes_zero_to_40,
-                        _ => 0,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.minutes_40_to_60,
-                        _ => 0,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.minutes_60_to_80,
-                        _ => 0,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.minutes_above_80,
-                        _ => 0,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.hours_below_zero,
-                        _ => 0u32,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.hours_zero_to_40,
-                        _ => 0u32,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.hours_40_to_60,
-                        _ => 0u32,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.hours_60_to_80,
-                        _ => 0u32,
-                    },
-                    match eb.device_operation_time {
-                        Some(ref v) => v.hours_above_80,
-                        _ => 0u32,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let Some(v) = &eb.device_operation_time {
+                    let info = format!(
+                        "Operation Minutes (by temp range):\n\
+                         <0°C:       {:>3} min\n\
+                         0-40°C:     {:>3} min\n\
+                         40-60°C:    {:>3} min\n\
+                         60-80°C:    {:>3} min\n\
+                         >80°C:      {:>3} min\n\
+                         Operation Hours (by temp range):\n\
+                         <0°C:       {:>10} h\n\
+                         0-40°C:     {:>10} h\n\
+                         40-60°C:    {:>10} h\n\
+                         60-80°C:    {:>10} h\n\
+                         >80°C:      {:>10} h\n",
+                        v.minutes_below_zero,
+                        v.minutes_zero_to_40,
+                        v.minutes_40_to_60,
+                        v.minutes_60_to_80,
+                        v.minutes_above_80,
+                        v.hours_below_zero,
+                        v.hours_zero_to_40,
+                        v.hours_40_to_60,
+                        v.hours_60_to_80,
+                        v.hours_above_80,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -939,7 +914,7 @@ fn draw_frame(
                     let text = Paragraph::new(lines).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 } else {
-                    let text = Paragraph::new("N/A (not yet read)").wrap(Wrap { trim: true });
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 }
             } else {
@@ -950,25 +925,21 @@ fn draw_frame(
 
         SelectedTab::CellVoltageLimits => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Min Cell Voltage:   {:.3} V\n\
-                     Max Cell Voltage:   {:.3} V\n\
-                     Over Voltage Error: {:.3} V\n",
-                    match eb.cell_voltage_min_max {
-                        Some(ref v) => v.min_voltage_v,
-                        _ => 0.0,
-                    },
-                    match eb.cell_voltage_min_max {
-                        Some(ref v) => v.max_voltage_v,
-                        _ => 0.0,
-                    },
-                    match eb.cell_voltage_limit {
-                        Some(ref v) => v.over_voltage_error_v,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let (Some(min_max), Some(limit)) =
+                    (&eb.cell_voltage_min_max, &eb.cell_voltage_limit)
+                {
+                    let info = format!(
+                        "Min Cell Voltage:   {:.3} V\n\
+                         Max Cell Voltage:   {:.3} V\n\
+                         Over Voltage Error: {:.3} V\n",
+                        min_max.min_voltage_v, min_max.max_voltage_v, limit.over_voltage_error_v,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -977,30 +948,25 @@ fn draw_frame(
 
         SelectedTab::BatteryVoltage => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "SumOfCell Voltage:       {:.3} V\n\
-                     Internal Connector:      {:.3} V\n\
-                     External Connector:      {:.3} V\n\
-                     Internal-External MinΔ:  {:.3} V\n",
-                    match eb.battery_voltage {
-                        Some(ref v) => v.sum_of_cell_voltage_v,
-                        _ => 0.0,
-                    },
-                    match eb.battery_voltage {
-                        Some(ref v) => v.internal_connector_voltage_v,
-                        _ => 0.0,
-                    },
-                    match eb.battery_voltage {
-                        Some(ref v) => v.external_connector_voltage_v,
-                        _ => 0.0,
-                    },
-                    match eb.battery_voltage_limit {
-                        Some(ref v) => v.internal_external_min_delta_v,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let (Some(voltage), Some(limit)) =
+                    (&eb.battery_voltage, &eb.battery_voltage_limit)
+                {
+                    let info = format!(
+                        "SumOfCell Voltage:       {:.3} V\n\
+                         Internal Connector:      {:.3} V\n\
+                         External Connector:      {:.3} V\n\
+                         Internal-External MinΔ:  {:.3} V\n",
+                        voltage.sum_of_cell_voltage_v,
+                        voltage.internal_connector_voltage_v,
+                        voltage.external_connector_voltage_v,
+                        limit.internal_external_min_delta_v,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1009,40 +975,29 @@ fn draw_frame(
 
         SelectedTab::BatteryCurrent => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Fast Current:           {:>10.2} A\n\
-                     Weighted Avg Current:   {:>10.2} A\n\
-                     Integrated Current:     {:>10.2} A\n\
-                     Average 1s Current:     {:>10.2} A\n\
-                     Average 10s Current:    {:>10.2} A\n\
-                     Discharge SC Error:     {:>10.2} A\n",
-                    match eb.battery_current {
-                        Some(ref v) => v.fast_current_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_current {
-                        Some(ref v) => v.weighted_avg_current_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_current {
-                        Some(ref v) => v.integrated_current_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_current {
-                        Some(ref v) => v.average_1s_current_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_current {
-                        Some(ref v) => v.average_10s_current_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_current_limit {
-                        Some(ref v) => v.discharge_sc_error_a,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let (Some(current), Some(limit)) =
+                    (&eb.battery_current, &eb.battery_current_limit)
+                {
+                    let info = format!(
+                        "Fast Current:           {:>10.2} A\n\
+                         Weighted Avg Current:   {:>10.2} A\n\
+                         Integrated Current:     {:>10.2} A\n\
+                         Average 1s Current:     {:>10.2} A\n\
+                         Average 10s Current:    {:>10.2} A\n\
+                         Discharge SC Error:     {:>10.2} A\n",
+                        current.fast_current_a,
+                        current.weighted_avg_current_a,
+                        current.integrated_current_a,
+                        current.average_1s_current_a,
+                        current.average_10s_current_a,
+                        limit.discharge_sc_error_a,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1051,35 +1006,29 @@ fn draw_frame(
 
         SelectedTab::FetTemperature => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "FET Temperature 1:    {:>7.1} °C\n\
-                     FET Temperature 2:    {:>7.1} °C\n\
-                     Min FET Temperature:  {:>7.1} °C\n\
-                     Max FET Temperature:  {:>7.1} °C\n\
-                     Discharge Over Temp:  {:>7.1} °C\n",
-                    match eb.fet_temperature {
-                        Some(ref v) => v.temperature_1_c,
-                        _ => 0.0,
-                    },
-                    match eb.fet_temperature {
-                        Some(ref v) => v.temperature_2_c,
-                        _ => 0.0,
-                    },
-                    match eb.fet_temperature_min_max {
-                        Some(ref v) => v.min_temperature_c,
-                        _ => 0.0,
-                    },
-                    match eb.fet_temperature_min_max {
-                        Some(ref v) => v.max_temperature_c,
-                        _ => 0.0,
-                    },
-                    match eb.fet_temperature_limit {
-                        Some(ref v) => v.discharge_over_temp_c,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let (Some(temp), Some(min_max), Some(limit)) = (
+                    &eb.fet_temperature,
+                    &eb.fet_temperature_min_max,
+                    &eb.fet_temperature_limit,
+                ) {
+                    let info = format!(
+                        "FET Temperature 1:    {:>7.1} °C\n\
+                         FET Temperature 2:    {:>7.1} °C\n\
+                         Min FET Temperature:  {:>7.1} °C\n\
+                         Max FET Temperature:  {:>7.1} °C\n\
+                         Discharge Over Temp:  {:>7.1} °C\n",
+                        temp.temperature_1_c,
+                        temp.temperature_2_c,
+                        min_max.min_temperature_c,
+                        min_max.max_temperature_c,
+                        limit.discharge_over_temp_c,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1088,55 +1037,37 @@ fn draw_frame(
 
         SelectedTab::CellTemperature => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Cell Temperature 1:   {:>7.1} °C\n\
-                     Cell Temperature 2:   {:>7.1} °C\n\
-                     Cell Temperature 3:   {:>7.1} °C\n\
-                     Cell Temperature 4:   {:>7.1} °C\n\
-                     Cell Temperature 5:   {:>7.1} °C\n\
-                     Cell Temperature 6:   {:>7.1} °C\n\
-                     Min Cell Temperature: {:>7.1} °C\n\
-                     Max Cell Temperature: {:>7.1} °C\n\
-                     Discharge Over Temp:  {:>7.1} °C\n",
-                    match eb.cell_temperature {
-                        Some(ref v) => v.temperature_1_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature {
-                        Some(ref v) => v.temperature_2_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature {
-                        Some(ref v) => v.temperature_3_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature {
-                        Some(ref v) => v.temperature_4_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature {
-                        Some(ref v) => v.temperature_5_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature {
-                        Some(ref v) => v.temperature_6_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature_min_max {
-                        Some(ref v) => v.min_temperature_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature_min_max {
-                        Some(ref v) => v.max_temperature_c,
-                        _ => 0.0,
-                    },
-                    match eb.cell_temperature_limit {
-                        Some(ref v) => v.discharge_over_temp_c,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let (Some(temp), Some(min_max), Some(limit)) = (
+                    &eb.cell_temperature,
+                    &eb.cell_temperature_min_max,
+                    &eb.cell_temperature_limit,
+                ) {
+                    let info = format!(
+                        "Cell Temperature 1:   {:>7.1} °C\n\
+                         Cell Temperature 2:   {:>7.1} °C\n\
+                         Cell Temperature 3:   {:>7.1} °C\n\
+                         Cell Temperature 4:   {:>7.1} °C\n\
+                         Cell Temperature 5:   {:>7.1} °C\n\
+                         Cell Temperature 6:   {:>7.1} °C\n\
+                         Min Cell Temperature: {:>7.1} °C\n\
+                         Max Cell Temperature: {:>7.1} °C\n\
+                         Discharge Over Temp:  {:>7.1} °C\n",
+                        temp.temperature_1_c,
+                        temp.temperature_2_c,
+                        temp.temperature_3_c,
+                        temp.temperature_4_c,
+                        temp.temperature_5_c,
+                        temp.temperature_6_c,
+                        min_max.min_temperature_c,
+                        min_max.max_temperature_c,
+                        limit.discharge_over_temp_c,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1145,30 +1076,25 @@ fn draw_frame(
 
         SelectedTab::CellBalance => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Balance Status Register:      {:#05x}\n\
-                     Balance FET Active:           {:#05x}\n\
-                     Balance FET Active Persistent:{:#05x}\n\
-                     Balance Start Diff Voltage:   {:.3} V\n",
-                    match eb.cell_balance_status {
-                        Some(ref v) => v.balance_status_register,
-                        _ => 0u16,
-                    },
-                    match eb.cell_balance_status {
-                        Some(ref v) => v.balance_fet_active,
-                        _ => 0u16,
-                    },
-                    match eb.cell_balance_status {
-                        Some(ref v) => v.balance_fet_active_persistent,
-                        _ => 0u16,
-                    },
-                    match eb.cell_balance_limit {
-                        Some(ref v) => v.balance_start_diff_voltage_v,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let (Some(status), Some(limit)) =
+                    (&eb.cell_balance_status, &eb.cell_balance_limit)
+                {
+                    let info = format!(
+                        "Balance Status Register:      {:#05x}\n\
+                         Balance FET Active:           {:#05x}\n\
+                         Balance FET Active Persistent:{:#05x}\n\
+                         Balance Start Diff Voltage:   {:.3} V\n",
+                        status.balance_status_register,
+                        status.balance_fet_active,
+                        status.balance_fet_active_persistent,
+                        limit.balance_start_diff_voltage_v,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1187,7 +1113,7 @@ fn draw_frame(
                     let text = Paragraph::new(lines).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 } else {
-                    let text = Paragraph::new("N/A (not yet read)").wrap(Wrap { trim: true });
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 }
             } else {
@@ -1198,45 +1124,29 @@ fn draw_frame(
 
         SelectedTab::Capacity => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Design Capacity:           {:>10.2} Ah\n\
-                     Full Charge Capacity:      {:>10.2} Ah\n\
-                     Remaining Capacity:        {:>10.2} Ah\n\
-                     SOC:                       {:>10} %\n\
-                     SOH:                       {:>10} %\n\
-                     Total Discharged Capacity: {:>10.2} Ah\n\
-                     Total Charged Capacity:    {:>10.2} Ah\n",
-                    match eb.battery_capacity {
-                        Some(ref v) => v.design_capacity_ah,
-                        _ => 0.0,
-                    },
-                    match eb.battery_capacity {
-                        Some(ref v) => v.full_charge_capacity_ah,
-                        _ => 0.0,
-                    },
-                    match eb.battery_capacity {
-                        Some(ref v) => v.remaining_capacity_ah,
-                        _ => 0.0,
-                    },
-                    match eb.battery_capacity {
-                        Some(ref v) => format!("{:.1}", v.soc_percent),
-                        _ => String::from("----"),
-                    },
-                    match eb.battery_capacity {
-                        Some(ref v) => format!("{:.1}", v.soh_percent),
-                        _ => String::from("----"),
-                    },
-                    match eb.battery_capacity {
-                        Some(ref v) => v.total_discharged_capacity_ah,
-                        _ => 0.0,
-                    },
-                    match eb.battery_capacity {
-                        Some(ref v) => v.total_charged_capacity_ah,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let Some(v) = &eb.battery_capacity {
+                    let info = format!(
+                        "Design Capacity:           {:>10.2} Ah\n\
+                         Full Charge Capacity:      {:>10.2} Ah\n\
+                         Remaining Capacity:        {:>10.2} Ah\n\
+                         SOC:                       {:>10} %\n\
+                         SOH:                       {:>10} %\n\
+                         Total Discharged Capacity: {:>10.2} Ah\n\
+                         Total Charged Capacity:    {:>10.2} Ah\n",
+                        v.design_capacity_ah,
+                        v.full_charge_capacity_ah,
+                        v.remaining_capacity_ah,
+                        format!("{:.1}", v.soc_percent),
+                        format!("{:.1}", v.soh_percent),
+                        v.total_discharged_capacity_ah,
+                        v.total_charged_capacity_ah,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1245,55 +1155,33 @@ fn draw_frame(
 
         SelectedTab::CycleCount => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Discharge Cycles:                    {:>10}\n\
-                     Discharge Learning Cycles:           {:>10}\n\
-                     Discharge Cycles After Learning:     {:>10}\n\
-                     Charge Cycles Completed:             {:>10}\n\
-                     Charge Cycles Started:               {:>10}\n\
-                     Discharge Use Detect:                {:>10}\n\
-                     Charge Use Low Temperature:          {:>10}\n\
-                     Charge Use Normal Temperature:       {:>10}\n\
-                     Charge Use High Temperature:         {:>10}\n",
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.discharge_cycles,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.discharge_learning_cycles,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.discharge_cycles_after_learning,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.charge_cycles_completed,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.charge_cycles_started,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.discharge_use_detect,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.charge_use_low_temperature,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.charge_use_normal_temperature,
-                        _ => 0u32,
-                    },
-                    match eb.battery_cycle_count {
-                        Some(ref v) => v.charge_use_high_temperature,
-                        _ => 0u32,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let Some(v) = &eb.battery_cycle_count {
+                    let info = format!(
+                        "Discharge Cycles:                    {:>10}\n\
+                         Discharge Learning Cycles:           {:>10}\n\
+                         Discharge Cycles After Learning:     {:>10}\n\
+                         Charge Cycles Completed:             {:>10}\n\
+                         Charge Cycles Started:               {:>10}\n\
+                         Discharge Use Detect:                {:>10}\n\
+                         Charge Use Low Temperature:          {:>10}\n\
+                         Charge Use Normal Temperature:       {:>10}\n\
+                         Charge Use High Temperature:         {:>10}\n",
+                        v.discharge_cycles,
+                        v.discharge_learning_cycles,
+                        v.discharge_cycles_after_learning,
+                        v.charge_cycles_completed,
+                        v.charge_cycles_started,
+                        v.discharge_use_detect,
+                        v.charge_use_low_temperature,
+                        v.charge_use_normal_temperature,
+                        v.charge_use_high_temperature,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1302,70 +1190,43 @@ fn draw_frame(
 
         SelectedTab::ChargeParameters => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Charge Voltage Valid:    {:.3} V\n\
-                     Charge Max Voltage:      {:.3} V\n\
-                     Charge Keep Power Volt:  {:.3} V\n\
-                     Charge Current Valid:    {:.3} A\n\
-                     Charge Max Current N:    {:.3} A\n\
-                     Charge Max Current Low:  {:.3} A\n\
-                     Charge Max Current High: {:.3} A\n\
-                     Charge Keep Power Curr:  {:.3} A\n\
-                     Charge Temp Min Low:     {:>7.1} °C\n\
-                     Charge Temp Min Normal:  {:>7.1} °C\n\
-                     Charge Temp Max Normal:  {:>7.1} °C\n\
-                     Charge Temp Max High:    {:>7.1} °C\n",
-                    match eb.battery_charge_voltage {
-                        Some(ref v) => v.charge_voltage_valid_v,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_voltage {
-                        Some(ref v) => v.charge_max_voltage_v,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_voltage {
-                        Some(ref v) => v.charge_keep_power_voltage_v,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_current {
-                        Some(ref v) => v.charge_current_valid_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_current {
-                        Some(ref v) => v.charge_max_current_n_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_current {
-                        Some(ref v) => v.charge_max_current_low_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_current {
-                        Some(ref v) => v.charge_max_current_high_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_current {
-                        Some(ref v) => v.charge_keep_power_current_a,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_temperature {
-                        Some(ref v) => v.temp_min_low_c,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_temperature {
-                        Some(ref v) => v.temp_min_normal_c,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_temperature {
-                        Some(ref v) => v.temp_max_normal_c,
-                        _ => 0.0,
-                    },
-                    match eb.battery_charge_temperature {
-                        Some(ref v) => v.temp_max_high_c,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let (Some(voltage), Some(current), Some(temp)) = (
+                    &eb.battery_charge_voltage,
+                    &eb.battery_charge_current,
+                    &eb.battery_charge_temperature,
+                ) {
+                    let info = format!(
+                        "Charge Voltage Valid:    {:.3} V\n\
+                         Charge Max Voltage:      {:.3} V\n\
+                         Charge Keep Power Volt:  {:.3} V\n\
+                         Charge Current Valid:    {:.3} A\n\
+                         Charge Max Current N:    {:.3} A\n\
+                         Charge Max Current Low:  {:.3} A\n\
+                         Charge Max Current High: {:.3} A\n\
+                         Charge Keep Power Curr:  {:.3} A\n\
+                         Charge Temp Min Low:     {:>7.1} °C\n\
+                         Charge Temp Min Normal:  {:>7.1} °C\n\
+                         Charge Temp Max Normal:  {:>7.1} °C\n\
+                         Charge Temp Max High:    {:>7.1} °C\n",
+                        voltage.charge_voltage_valid_v,
+                        voltage.charge_max_voltage_v,
+                        voltage.charge_keep_power_voltage_v,
+                        current.charge_current_valid_a,
+                        current.charge_max_current_n_a,
+                        current.charge_max_current_low_a,
+                        current.charge_max_current_high_a,
+                        current.charge_keep_power_current_a,
+                        temp.temp_min_low_c,
+                        temp.temp_min_normal_c,
+                        temp.temp_max_normal_c,
+                        temp.temp_max_high_c,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
@@ -1374,20 +1235,18 @@ fn draw_frame(
 
         SelectedTab::MasterTemperature => {
             if let Some(eb) = eb {
-                let info = format!(
-                    "Master Max FET Temperature:  {:>7.1} °C\n\
-                     Master Max Cell Temperature: {:>7.1} °C\n",
-                    match eb.master_battery_temperature {
-                        Some(ref v) => v.max_fet_temperature_c,
-                        _ => 0.0,
-                    },
-                    match eb.master_battery_temperature {
-                        Some(ref v) => v.max_cell_temperature_c,
-                        _ => 0.0,
-                    },
-                );
-                let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                f.render_widget(text, content_area);
+                if let Some(v) = &eb.master_battery_temperature {
+                    let info = format!(
+                        "Master Max FET Temperature:  {:>7.1} °C\n\
+                         Master Max Cell Temperature: {:>7.1} °C\n",
+                        v.max_fet_temperature_c, v.max_cell_temperature_c,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
             } else {
                 let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
