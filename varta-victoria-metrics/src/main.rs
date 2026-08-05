@@ -19,7 +19,6 @@ struct Args {
 struct MetricPoint {
     metric: String,
     value: f64,
-    labels: Vec<(&'static str, String)>,
     timestamp: i64,
 }
 
@@ -41,28 +40,17 @@ async fn send_metrics(client: &Client, vm_url: &str, points: &[MetricPoint]) -> 
         );
         obj.insert("metric".into(), serde_json::Value::Object(metric_obj));
 
-        let mut values = Vec::new();
-        values.push(serde_json::Value::Number(
-            serde_json::Number::from_f64(p.value).unwrap(),
-        ));
+        let values =
+            vec![serde_json::Value::Number(serde_json::Number::from_f64(p.value).unwrap())];
         obj.insert("values".into(), values.into());
 
-        let mut timestamps = Vec::new();
-        timestamps.push(serde_json::Number::from(p.timestamp));
+        let timestamps = vec![serde_json::Number::from(p.timestamp)];
         obj.insert("timestamps".into(), timestamps.into());
 
         obj.insert(
             "timestamp".into(),
             serde_json::Value::Number(serde_json::Number::from(p.timestamp)),
         );
-
-        // if !p.labels.is_empty() {
-        //     let mut labels_map = serde_json::Map::new();
-        //     for (k, v) in &p.labels {
-        //         labels_map.insert(k.to_string(), serde_json::Value::String(v.clone()));
-        //     }
-        //     obj.insert("__labels__".into(), serde_json::Value::Object(labels_map));
-        // }
 
         let import_body = serde_json::to_vec(&obj).map_err(|e| e.to_string())?;
 
@@ -88,7 +76,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_voltage".to_string(),
             value: voltage as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -97,7 +84,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_current".to_string(),
             value: current as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -106,7 +92,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_soc".to_string(),
             value: soc as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -115,7 +100,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_charge_voltage_request".to_string(),
             value: charge_voltage_request as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -124,7 +108,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_charge_current_request".to_string(),
             value: charge_current_request as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -133,7 +116,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_max_fet_temp".to_string(),
             value: max_fet_temp as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -142,7 +124,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_max_cell_temp".to_string(),
             value: max_cell_temp as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -151,7 +132,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_full_charge_capacity".to_string(),
             value: full_cap as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
@@ -160,21 +140,19 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         points.push(MetricPoint {
             metric: "varta_master_remaining_capacity".to_string(),
             value: remaining_cap as f64,
-            labels: Vec::new(),
             timestamp: ts,
         });
     }
 
-    for (idx, entry) in varta.easyblades.iter().enumerate() {
-        let node_id = idx as u8;
-        let node_label = vec![("node_id", node_id.to_string())];
+    for (_idx, entry) in varta.easyblades.iter().enumerate() {
+        // let node_id = idx as u8;
+        // let node_label = vec![("node_id", node_id.to_string())];
 
         if let Some(eb) = entry {
             if let Some(voltage) = eb.voltage {
                 points.push(MetricPoint {
                     metric: "varta_module_voltage".to_string(),
                     value: voltage as f64,
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
             }
@@ -183,7 +161,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
                 points.push(MetricPoint {
                     metric: "varta_module_current".to_string(),
                     value: current as f64,
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
             }
@@ -192,7 +169,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
                 points.push(MetricPoint {
                     metric: "varta_module_soc".to_string(),
                     value: soc as f64,
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
             }
@@ -201,7 +177,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
                 points.push(MetricPoint {
                     metric: "varta_module_soh".to_string(),
                     value: soh as f64,
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
             }
@@ -210,19 +185,16 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
                 points.push(MetricPoint {
                     metric: "varta_module_charge_fet".to_string(),
                     value: if charge_fet { 1.0 } else { 0.0 },
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
                 points.push(MetricPoint {
                     metric: "varta_module_discharge_fet".to_string(),
                     value: if discharge_fet { 1.0 } else { 0.0 },
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
                 points.push(MetricPoint {
                     metric: "varta_module_bypass_fet".to_string(),
                     value: if bypass_fet { 1.0 } else { 0.0 },
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
             }
@@ -231,7 +203,6 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
                 points.push(MetricPoint {
                     metric: "varta_module_serial".to_string(),
                     value: serial as f64,
-                    labels: node_label.clone(),
                     timestamp: ts,
                 });
             }
