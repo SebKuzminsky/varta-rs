@@ -8,17 +8,34 @@ use ratatui::prelude::*;
 use ratatui::text::Text;
 use ratatui::widgets::{Block, Clear, Paragraph, Row, Table, Wrap};
 use serde_json::json;
-use std::collections::HashMap;
-use std::fs;
-use std::io::Write;
-use std::io::stdout;
-use std::time::Duration;
-use std::time::SystemTime;
+use std::fs::{self, OpenOptions};
+use std::io::{Write, stdout};
+use std::sync::Mutex;
+use std::time::{Duration, SystemTime};
 use tokio::sync::mpsc;
 
 use strum::EnumCount;
 use varta_easyblade::SdoRequest;
 use varta_easyblade::SdoResponse;
+
+static DEBUG_LOG: Mutex<Option<std::fs::File>> = Mutex::new(None);
+
+fn init_debug_log() {
+    let path = "/tmp/varta-tui-debug.log";
+    let _ = std::fs::remove_file(path);
+    if let Ok(file) = OpenOptions::new().create(true).append(true).open(path) {
+        let mut guard = DEBUG_LOG.lock().unwrap();
+        *guard = Some(file);
+    }
+}
+
+fn debug_log(msg: &str) {
+    if let Some(ref mut file) = *DEBUG_LOG.lock().unwrap() {
+        let timestamp = chrono::Local::now().format("%H:%M:%S.%3f");
+        let _ = writeln!(file, "[{}] {}", timestamp, msg);
+        let _ = file.flush();
+    }
+}
 
 #[derive(Debug, Parser)]
 struct Args {
@@ -1321,255 +1338,368 @@ fn draw_frame(
     }
 }
 
-struct ModuleSdoTask {
-    sdo_request_tx: tokio::sync::mpsc::UnboundedSender<SdoRequest>,
+struct VartaSdoTask {
+    sdo_request_tx: tokio::sync::mpsc::UnboundedSender<(u8, SdoRequest)>,
     cancellation_token: tokio_util::sync::CancellationToken,
 }
 
-async fn easyblade_task(
-    node_id: u8,
-    mut sdo_client: zencan_client::SdoClient<
-        zencan_client::common::SocketCanSender,
-        zencan_client::common::SocketCanReceiver,
-    >,
-    mut sdo_request_rx: tokio::sync::mpsc::UnboundedReceiver<SdoRequest>,
+async fn varta_sdo_task(
+    can_interface: &str,
+    mut sdo_request_rx: tokio::sync::mpsc::UnboundedReceiver<(u8, SdoRequest)>,
     sdo_response_tx: tokio::sync::mpsc::UnboundedSender<SdoResponse>,
     cancellation_token: tokio_util::sync::CancellationToken,
 ) {
+    debug_log("[SDO] Varta SDO task started");
     loop {
         tokio::select! {
+            biased;
             _ = cancellation_token.cancelled() => {
+                debug_log("[SDO] Varta SDO task cancelled");
                 break;
             }
             request = sdo_request_rx.recv() => {
-                let response = match request {
-                    Some(SdoRequest::SerialNumber) => {
-                        SdoResponse::SerialNumber {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_serial_number(&mut sdo_client).await,
-                        }
+                let (node_id, sdo_request) = match request {
+                    Some(r) => r,
+                    None => {
+                        debug_log("[SDO] Request channel closed");
+                        break;
                     },
-                    Some(SdoRequest::SoftwareVersion) => {
-                        SdoResponse::SoftwareVersion {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_software_version(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::HardwareVersion) => {
-                        SdoResponse::HardwareVersion {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_hardware_version(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceErrorHistory) => {
-                        SdoResponse::DeviceErrorHistory {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_error_history(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellVoltages) => {
-                        SdoResponse::CellVoltages {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_voltages(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceConfigInfo) => {
-                        SdoResponse::DeviceConfigInfo {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_config_info(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceSerialNumberInfo) => {
-                        SdoResponse::DeviceSerialNumberInfo {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_serial_number_info(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceDateInfo) => {
-                        SdoResponse::DeviceDateInfo {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_date_info(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceVariantInfo) => {
-                        SdoResponse::DeviceVariantInfo {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_variant_info(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceControlParam) => {
-                        SdoResponse::DeviceControlParam {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_control_param(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceOperationTime) => {
-                        SdoResponse::DeviceOperationTime {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_operation_time(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::DeviceErrorCounter) => {
-                        SdoResponse::DeviceErrorCounter {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_device_error_counter(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellVoltageMinMax) => {
-                        SdoResponse::CellVoltageMinMax {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_voltage_min_max(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellVoltageLimit) => {
-                        SdoResponse::CellVoltageLimit {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_voltage_limit(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryVoltage) => {
-                        SdoResponse::BatteryVoltage {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_voltage(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryVoltageLimit) => {
-                        SdoResponse::BatteryVoltageLimit {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_voltage_limit(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryCurrent) => {
-                        SdoResponse::BatteryCurrent {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_current(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryCurrentLimit) => {
-                        SdoResponse::BatteryCurrentLimit {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_current_limit(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::FetTemperature) => {
-                        SdoResponse::FetTemperature {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_fet_temperature(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::FetTemperatureMinMax) => {
-                        SdoResponse::FetTemperatureMinMax {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_fet_temperature_min_max(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::FetTemperatureLimit) => {
-                        SdoResponse::FetTemperatureLimit {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_fet_temperature_limit(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellTemperature) => {
-                        SdoResponse::CellTemperature {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_temperature(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellTemperatureMinMax) => {
-                        SdoResponse::CellTemperatureMinMax {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_temperature_min_max(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellTemperatureLimit) => {
-                        SdoResponse::CellTemperatureLimit {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_temperature_limit(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellBalanceStatus) => {
-                        SdoResponse::CellBalanceStatus {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_balance_status(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellBalanceLimit) => {
-                        SdoResponse::CellBalanceLimit {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_balance_limit(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::CellImpedance) => {
-                        SdoResponse::CellImpedance {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_cell_impedance(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryCapacity) => {
-                        SdoResponse::BatteryCapacity {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_capacity(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryCapacityParam) => {
-                        SdoResponse::BatteryCapacityParam {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_capacity_param(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryCycleCount) => {
-                        SdoResponse::BatteryCycleCount {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_cycle_count(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryChargeVoltage) => {
-                        SdoResponse::BatteryChargeVoltage {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_charge_voltage(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryChargeCurrent) => {
-                        SdoResponse::BatteryChargeCurrent {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_charge_current(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::BatteryChargeTemperature) => {
-                        SdoResponse::BatteryChargeTemperature {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_battery_charge_temperature(&mut sdo_client).await,
-                        }
-                    },
-                    Some(SdoRequest::MasterBatteryTemperature) => {
-                        SdoResponse::MasterBatteryTemperature {
-                            node_id,
-                            value: varta_easyblade::Varta::sdo_read_master_battery_temperature(&mut sdo_client).await,
-                        }
-                    },
-                    None => break,
                 };
+
+                let (socketcan_tx, socketcan_rx) = match zencan_client::open_socketcan(can_interface) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        debug_log(&format!("[SDO:{}] Failed to open socket: {}", node_id, e));
+                        continue;
+                    },
+                };
+                let mut sdo_client =
+                    zencan_client::SdoClient::new_std(node_id, socketcan_tx, socketcan_rx);
+
+                let response = match sdo_request {
+                    SdoRequest::SerialNumber => {
+                        debug_log(&format!("[SDO:{}] Requesting: SerialNumber", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_serial_number(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "SerialNumber", &value, elapsed);
+                        SdoResponse::SerialNumber { node_id, value }
+                    },
+                    SdoRequest::SoftwareVersion => {
+                        debug_log(&format!("[SDO:{}] Requesting: SoftwareVersion", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_software_version(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "SoftwareVersion", &value, elapsed);
+                        SdoResponse::SoftwareVersion { node_id, value }
+                    },
+                    SdoRequest::HardwareVersion => {
+                        debug_log(&format!("[SDO:{}] Requesting: HardwareVersion", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_hardware_version(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "HardwareVersion", &value, elapsed);
+                        SdoResponse::HardwareVersion { node_id, value }
+                    },
+                    SdoRequest::DeviceErrorHistory => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceErrorHistory", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_error_history(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceErrorHistory", &value, elapsed);
+                        SdoResponse::DeviceErrorHistory { node_id, value }
+                    },
+                    SdoRequest::CellVoltages => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellVoltages", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_voltages(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellVoltages", &value, elapsed);
+                        SdoResponse::CellVoltages { node_id, value }
+                    },
+                    SdoRequest::DeviceConfigInfo => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceConfigInfo", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_config_info(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceConfigInfo", &value, elapsed);
+                        SdoResponse::DeviceConfigInfo { node_id, value }
+                    },
+                    SdoRequest::DeviceSerialNumberInfo => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceSerialNumberInfo", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_serial_number_info(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceSerialNumberInfo", &value, elapsed);
+                        SdoResponse::DeviceSerialNumberInfo { node_id, value }
+                    },
+                    SdoRequest::DeviceDateInfo => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceDateInfo", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_date_info(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceDateInfo", &value, elapsed);
+                        SdoResponse::DeviceDateInfo { node_id, value }
+                    },
+                    SdoRequest::DeviceVariantInfo => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceVariantInfo", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_variant_info(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceVariantInfo", &value, elapsed);
+                        SdoResponse::DeviceVariantInfo { node_id, value }
+                    },
+                    SdoRequest::DeviceControlParam => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceControlParam", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_control_param(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceControlParam", &value, elapsed);
+                        SdoResponse::DeviceControlParam { node_id, value }
+                    },
+                    SdoRequest::DeviceOperationTime => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceOperationTime", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_operation_time(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceOperationTime", &value, elapsed);
+                        SdoResponse::DeviceOperationTime { node_id, value }
+                    },
+                    SdoRequest::DeviceErrorCounter => {
+                        debug_log(&format!("[SDO:{}] Requesting: DeviceErrorCounter", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_device_error_counter(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "DeviceErrorCounter", &value, elapsed);
+                        SdoResponse::DeviceErrorCounter { node_id, value }
+                    },
+                    SdoRequest::CellVoltageMinMax => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellVoltageMinMax", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_voltage_min_max(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellVoltageMinMax", &value, elapsed);
+                        SdoResponse::CellVoltageMinMax { node_id, value }
+                    },
+                    SdoRequest::CellVoltageLimit => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellVoltageLimit", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_voltage_limit(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellVoltageLimit", &value, elapsed);
+                        SdoResponse::CellVoltageLimit { node_id, value }
+                    },
+                    SdoRequest::BatteryVoltage => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryVoltage", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_voltage(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryVoltage", &value, elapsed);
+                        SdoResponse::BatteryVoltage { node_id, value }
+                    },
+                    SdoRequest::BatteryVoltageLimit => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryVoltageLimit", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_voltage_limit(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryVoltageLimit", &value, elapsed);
+                        SdoResponse::BatteryVoltageLimit { node_id, value }
+                    },
+                    SdoRequest::BatteryCurrent => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryCurrent", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_current(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryCurrent", &value, elapsed);
+                        SdoResponse::BatteryCurrent { node_id, value }
+                    },
+                    SdoRequest::BatteryCurrentLimit => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryCurrentLimit", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_current_limit(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryCurrentLimit", &value, elapsed);
+                        SdoResponse::BatteryCurrentLimit { node_id, value }
+                    },
+                    SdoRequest::FetTemperature => {
+                        debug_log(&format!("[SDO:{}] Requesting: FetTemperature", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_fet_temperature(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "FetTemperature", &value, elapsed);
+                        SdoResponse::FetTemperature { node_id, value }
+                    },
+                    SdoRequest::FetTemperatureMinMax => {
+                        debug_log(&format!("[SDO:{}] Requesting: FetTemperatureMinMax", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_fet_temperature_min_max(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "FetTemperatureMinMax", &value, elapsed);
+                        SdoResponse::FetTemperatureMinMax { node_id, value }
+                    },
+                    SdoRequest::FetTemperatureLimit => {
+                        debug_log(&format!("[SDO:{}] Requesting: FetTemperatureLimit", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_fet_temperature_limit(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "FetTemperatureLimit", &value, elapsed);
+                        SdoResponse::FetTemperatureLimit { node_id, value }
+                    },
+                    SdoRequest::CellTemperature => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellTemperature", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_temperature(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellTemperature", &value, elapsed);
+                        SdoResponse::CellTemperature { node_id, value }
+                    },
+                    SdoRequest::CellTemperatureMinMax => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellTemperatureMinMax", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_temperature_min_max(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellTemperatureMinMax", &value, elapsed);
+                        SdoResponse::CellTemperatureMinMax { node_id, value }
+                    },
+                    SdoRequest::CellTemperatureLimit => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellTemperatureLimit", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_temperature_limit(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellTemperatureLimit", &value, elapsed);
+                        SdoResponse::CellTemperatureLimit { node_id, value }
+                    },
+                    SdoRequest::CellBalanceStatus => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellBalanceStatus", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_balance_status(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellBalanceStatus", &value, elapsed);
+                        SdoResponse::CellBalanceStatus { node_id, value }
+                    },
+                    SdoRequest::CellBalanceLimit => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellBalanceLimit", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_balance_limit(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellBalanceLimit", &value, elapsed);
+                        SdoResponse::CellBalanceLimit { node_id, value }
+                    },
+                    SdoRequest::CellImpedance => {
+                        debug_log(&format!("[SDO:{}] Requesting: CellImpedance", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_cell_impedance(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "CellImpedance", &value, elapsed);
+                        SdoResponse::CellImpedance { node_id, value }
+                    },
+                    SdoRequest::BatteryCapacity => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryCapacity", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_capacity(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryCapacity", &value, elapsed);
+                        SdoResponse::BatteryCapacity { node_id, value }
+                    },
+                    SdoRequest::BatteryCapacityParam => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryCapacityParam", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_capacity_param(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryCapacityParam", &value, elapsed);
+                        SdoResponse::BatteryCapacityParam { node_id, value }
+                    },
+                    SdoRequest::BatteryCycleCount => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryCycleCount", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_cycle_count(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryCycleCount", &value, elapsed);
+                        SdoResponse::BatteryCycleCount { node_id, value }
+                    },
+                    SdoRequest::BatteryChargeVoltage => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryChargeVoltage", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_charge_voltage(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryChargeVoltage", &value, elapsed);
+                        SdoResponse::BatteryChargeVoltage { node_id, value }
+                    },
+                    SdoRequest::BatteryChargeCurrent => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryChargeCurrent", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_charge_current(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryChargeCurrent", &value, elapsed);
+                        SdoResponse::BatteryChargeCurrent { node_id, value }
+                    },
+                    SdoRequest::BatteryChargeTemperature => {
+                        debug_log(&format!("[SDO:{}] Requesting: BatteryChargeTemperature", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_battery_charge_temperature(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "BatteryChargeTemperature", &value, elapsed);
+                        SdoResponse::BatteryChargeTemperature { node_id, value }
+                    },
+                    SdoRequest::MasterBatteryTemperature => {
+                        debug_log(&format!("[SDO:{}] Requesting: MasterBatteryTemperature", node_id));
+                        let start = std::time::Instant::now();
+                        let value = varta_easyblade::Varta::sdo_read_master_battery_temperature(&mut sdo_client).await;
+                        let elapsed = start.elapsed();
+                        log_sdo_result(node_id, "MasterBatteryTemperature", &value, elapsed);
+                        SdoResponse::MasterBatteryTemperature { node_id, value }
+                    },
+                };
+
                 let _ = sdo_response_tx.send(response);
+                tokio::time::sleep(Duration::from_millis(100)).await;
             }
         }
     }
 }
 
-fn spawn_module_task(
+fn log_sdo_result<T>(node_id: u8, name: &str, value: &Result<T, String>, elapsed: Duration)
+where
+    T: std::fmt::Debug,
+{
+    match value {
+        Ok(v) => {
+            debug_log(&format!(
+                "[SDO:{}] {:<30} OK  in {:>6}ms - {:?}",
+                node_id,
+                name,
+                elapsed.as_millis(),
+                v
+            ));
+        },
+        Err(e) => {
+            debug_log(&format!(
+                "[SDO:{}] {:<30} ERR in {:>6}ms - {}",
+                node_id,
+                name,
+                elapsed.as_millis(),
+                e
+            ));
+        },
+    }
+}
+
+fn spawn_varta_sdo_task(
     can_interface: &str,
-    node_id: u8,
     sdo_response_tx: tokio::sync::mpsc::UnboundedSender<SdoResponse>,
-) -> ModuleSdoTask {
+) -> VartaSdoTask {
+    debug_log(&format!(
+        "[SDO] Spawning Varta SDO task on {}",
+        can_interface
+    ));
     let (sdo_request_tx, sdo_request_rx) = tokio::sync::mpsc::unbounded_channel();
-    let (socketcan_tx, socketcan_rx) = zencan_client::open_socketcan(can_interface).unwrap();
-    let sdo_client = zencan_client::SdoClient::new_std(node_id, socketcan_tx, socketcan_rx);
     let cancellation_token = tokio_util::sync::CancellationToken::new();
     let cancellation_token_clone = cancellation_token.clone();
+    let can_interface = can_interface.to_string();
 
     tokio::spawn(async move {
-        easyblade_task(
-            node_id,
-            sdo_client,
+        varta_sdo_task(
+            &can_interface,
             sdo_request_rx,
             sdo_response_tx,
             cancellation_token_clone,
@@ -1577,49 +1707,62 @@ fn spawn_module_task(
         .await;
     });
 
-    ModuleSdoTask { sdo_request_tx, cancellation_token }
+    VartaSdoTask { sdo_request_tx, cancellation_token }
 }
 
-fn burst_initial_sdos(tx: &tokio::sync::mpsc::UnboundedSender<SdoRequest>) {
-    tx.send(SdoRequest::SerialNumber).ok();
-    tx.send(SdoRequest::SoftwareVersion).ok();
-    tx.send(SdoRequest::HardwareVersion).ok();
-    tx.send(SdoRequest::DeviceErrorHistory).ok();
-    tx.send(SdoRequest::CellVoltages).ok();
-    tx.send(SdoRequest::DeviceConfigInfo).ok();
-    tx.send(SdoRequest::DeviceSerialNumberInfo).ok();
-    tx.send(SdoRequest::DeviceDateInfo).ok();
-    tx.send(SdoRequest::DeviceVariantInfo).ok();
-    tx.send(SdoRequest::DeviceControlParam).ok();
-    tx.send(SdoRequest::DeviceOperationTime).ok();
-    tx.send(SdoRequest::DeviceErrorCounter).ok();
-    tx.send(SdoRequest::CellVoltageMinMax).ok();
-    tx.send(SdoRequest::CellVoltageLimit).ok();
-    tx.send(SdoRequest::BatteryVoltage).ok();
-    tx.send(SdoRequest::BatteryVoltageLimit).ok();
-    tx.send(SdoRequest::BatteryCurrent).ok();
-    tx.send(SdoRequest::BatteryCurrentLimit).ok();
-    tx.send(SdoRequest::FetTemperature).ok();
-    tx.send(SdoRequest::FetTemperatureMinMax).ok();
-    tx.send(SdoRequest::FetTemperatureLimit).ok();
-    tx.send(SdoRequest::CellTemperature).ok();
-    tx.send(SdoRequest::CellTemperatureMinMax).ok();
-    tx.send(SdoRequest::CellTemperatureLimit).ok();
-    tx.send(SdoRequest::CellBalanceStatus).ok();
-    tx.send(SdoRequest::CellBalanceLimit).ok();
-    tx.send(SdoRequest::CellImpedance).ok();
-    tx.send(SdoRequest::BatteryCapacity).ok();
-    tx.send(SdoRequest::BatteryCapacityParam).ok();
-    tx.send(SdoRequest::BatteryCycleCount).ok();
-    tx.send(SdoRequest::BatteryChargeVoltage).ok();
-    tx.send(SdoRequest::BatteryChargeCurrent).ok();
-    tx.send(SdoRequest::BatteryChargeTemperature).ok();
-    tx.send(SdoRequest::MasterBatteryTemperature).ok();
+fn burst_initial_sdos(node_id: u8, tx: &tokio::sync::mpsc::UnboundedSender<(u8, SdoRequest)>) {
+    debug_log(&format!(
+        "[BURST:{}] Sending {} SDO requests",
+        node_id,
+        SdoRequest::COUNT
+    ));
+    tx.send((node_id, SdoRequest::SerialNumber)).ok();
+    tx.send((node_id, SdoRequest::SoftwareVersion)).ok();
+    tx.send((node_id, SdoRequest::HardwareVersion)).ok();
+    tx.send((node_id, SdoRequest::DeviceErrorHistory)).ok();
+    tx.send((node_id, SdoRequest::CellVoltages)).ok();
+    tx.send((node_id, SdoRequest::DeviceConfigInfo)).ok();
+    tx.send((node_id, SdoRequest::DeviceSerialNumberInfo)).ok();
+    tx.send((node_id, SdoRequest::DeviceDateInfo)).ok();
+    tx.send((node_id, SdoRequest::DeviceVariantInfo)).ok();
+    tx.send((node_id, SdoRequest::DeviceControlParam)).ok();
+    tx.send((node_id, SdoRequest::DeviceOperationTime)).ok();
+    tx.send((node_id, SdoRequest::DeviceErrorCounter)).ok();
+    tx.send((node_id, SdoRequest::CellVoltageMinMax)).ok();
+    tx.send((node_id, SdoRequest::CellVoltageLimit)).ok();
+    tx.send((node_id, SdoRequest::BatteryVoltage)).ok();
+    tx.send((node_id, SdoRequest::BatteryVoltageLimit)).ok();
+    tx.send((node_id, SdoRequest::BatteryCurrent)).ok();
+    tx.send((node_id, SdoRequest::BatteryCurrentLimit)).ok();
+    tx.send((node_id, SdoRequest::FetTemperature)).ok();
+    tx.send((node_id, SdoRequest::FetTemperatureMinMax)).ok();
+    tx.send((node_id, SdoRequest::FetTemperatureLimit)).ok();
+    tx.send((node_id, SdoRequest::CellTemperature)).ok();
+    tx.send((node_id, SdoRequest::CellTemperatureMinMax)).ok();
+    tx.send((node_id, SdoRequest::CellTemperatureLimit)).ok();
+    tx.send((node_id, SdoRequest::CellBalanceStatus)).ok();
+    tx.send((node_id, SdoRequest::CellBalanceLimit)).ok();
+    tx.send((node_id, SdoRequest::CellImpedance)).ok();
+    tx.send((node_id, SdoRequest::BatteryCapacity)).ok();
+    tx.send((node_id, SdoRequest::BatteryCapacityParam)).ok();
+    tx.send((node_id, SdoRequest::BatteryCycleCount)).ok();
+    tx.send((node_id, SdoRequest::BatteryChargeVoltage)).ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrent)).ok();
+    tx.send((node_id, SdoRequest::BatteryChargeTemperature))
+        .ok();
+    tx.send((node_id, SdoRequest::MasterBatteryTemperature))
+        .ok();
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
+
+    init_debug_log();
+    debug_log(&format!(
+        "Starting varta-tui on interface {}",
+        args.can_interface
+    ));
 
     let mut varta = varta_easyblade::Varta::new(&args.can_interface).await?;
     let (sdo_response_tx, mut sdo_response_rx) = tokio::sync::mpsc::unbounded_channel();
@@ -1640,7 +1783,7 @@ async fn main() -> anyhow::Result<()> {
     let mut selected = 0;
     let mut selected_tab = SelectedTab::ModuleInfo;
     let mut expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
-    let mut module_tasks: HashMap<u8, ModuleSdoTask> = HashMap::new();
+    let varta_sdo_task = spawn_varta_sdo_task(&args.can_interface, sdo_response_tx);
     let mut save_state = SaveState::Idle;
 
     loop {
@@ -1657,27 +1800,23 @@ async fn main() -> anyhow::Result<()> {
             result = varta.process_socketcan_msg() => {
                 match result {
                     Ok(Some(node_id)) => {
-                        let task = spawn_module_task(&varta.canbus_interface, node_id, sdo_response_tx.clone());
-                        burst_initial_sdos(&task.sdo_request_tx);
-                        module_tasks.insert(node_id, task);
+                        debug_log(&format!("[CAN] New module detected: node_id={}", node_id));
+                        burst_initial_sdos(node_id, &varta_sdo_task.sdo_request_tx);
                     },
                     Ok(None) => {},
                     Err(e) => {
-                        eprintln!("Error processing CAN message: {e}");
+                        debug_log(&format!("[CAN] Error processing message: {}", e));
                     },
                 }
                 expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
             }
             _ = expire_timer.as_mut() => {
+                let before = varta.easyblade_count();
                 varta.expire_missing_modules();
-                module_tasks.retain(|node_id, task| {
-                    if varta.easyblades[*node_id as usize].is_some() {
-                        true
-                    } else {
-                        task.cancellation_token.cancel();
-                        false
-                    }
-                });
+                let after = varta.easyblade_count();
+                if before != after {
+                    debug_log(&format!("[EXPIRY] Modules expired: {} -> {}", before, after));
+                }
                 expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
             }
             response = sdo_response_rx.recv() => {
@@ -1853,8 +1992,107 @@ async fn main() -> anyhow::Result<()> {
                                 eb.master_battery_temperature = Some(v);
                             }
                         },
-                        _ => {
-                            // Errors are silently dropped for now
+                        varta_easyblade::SdoResponse::SerialNumber { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] SerialNumber ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::SoftwareVersion { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] SoftwareVersion ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::HardwareVersion { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] HardwareVersion ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceErrorHistory { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceErrorHistory ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellVoltages { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellVoltages ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceConfigInfo { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceConfigInfo ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceSerialNumberInfo { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceSerialNumberInfo ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceDateInfo { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceDateInfo ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceVariantInfo { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceVariantInfo ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceControlParam { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceControlParam ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceOperationTime { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceOperationTime ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::DeviceErrorCounter { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] DeviceErrorCounter ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellVoltageMinMax { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellVoltageMinMax ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellVoltageLimit { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellVoltageLimit ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryVoltage { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryVoltage ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryVoltageLimit { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryVoltageLimit ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryCurrent { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryCurrent ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryCurrentLimit { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryCurrentLimit ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::FetTemperature { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] FetTemperature ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::FetTemperatureMinMax { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] FetTemperatureMinMax ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::FetTemperatureLimit { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] FetTemperatureLimit ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellTemperature { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellTemperature ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellTemperatureMinMax { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellTemperatureMinMax ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellTemperatureLimit { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellTemperatureLimit ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellBalanceStatus { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellBalanceStatus ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellBalanceLimit { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellBalanceLimit ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::CellImpedance { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] CellImpedance ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryCapacity { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryCapacity ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryCapacityParam { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryCapacityParam ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryCycleCount { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryCycleCount ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeVoltage { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryChargeVoltage ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrent { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryChargeCurrent ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeTemperature { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] BatteryChargeTemperature ERROR: {}", node_id, e));
+                        },
+                        varta_easyblade::SdoResponse::MasterBatteryTemperature { node_id, value: Err(e) } => {
+                            debug_log(&format!("[RESPONSE:{}] MasterBatteryTemperature ERROR: {}", node_id, e));
                         },
                     }
                 }
@@ -1869,6 +2107,7 @@ async fn main() -> anyhow::Result<()> {
                             if save_state.is_active() {
                                 save_state = SaveState::Idle;
                             } else {
+                                varta_sdo_task.cancellation_token.cancel();
                                 break;
                             }
                         },
@@ -1896,24 +2135,20 @@ async fn main() -> anyhow::Result<()> {
                         KeyCode::Right if !save_state.is_active() => {
                             selected_tab = selected_tab.cycle(true);
                         }
-                        KeyCode::Char('r') | KeyCode::Char('R') if !save_state.is_active() && count > 0 => {
-                            let eb = varta.get_easyblade_by_index(selected);
-                            if let Some(eb) = eb {
-                                let node_id = eb.node_id;
-                                if let Some(task) = module_tasks.get(&node_id) {
-                                    let sdos = sdos_for_tab(selected_tab);
-                                    for sdo in sdos {
-                                        let _ = task.sdo_request_tx.send(sdo);
-                                    }
-                                }
-                            }
-                        }
                         KeyCode::Char('r') if !save_state.is_active() && count > 0 && key.modifiers.contains(KeyModifiers::CONTROL) => {
                             let eb = varta.get_easyblade_by_index(selected);
                             if let Some(eb) = eb {
                                 let node_id = eb.node_id;
-                                if let Some(task) = module_tasks.get(&node_id) {
-                                    burst_initial_sdos(&task.sdo_request_tx);
+                                burst_initial_sdos(node_id, &varta_sdo_task.sdo_request_tx);
+                            }
+                        }
+                        KeyCode::Char('r') | KeyCode::Char('R') if !save_state.is_active() && count > 0 => {
+                            let eb = varta.get_easyblade_by_index(selected);
+                            if let Some(eb) = eb {
+                                let node_id = eb.node_id;
+                                let sdos = sdos_for_tab(selected_tab);
+                                for sdo in sdos {
+                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, sdo));
                                 }
                             }
                         }

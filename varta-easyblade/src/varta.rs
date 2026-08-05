@@ -169,6 +169,7 @@ impl Varta {
             if was_new {
                 new_module = Some(node_id);
             }
+            easyblade.last_seen = std::time::SystemTime::now();
             match msg {
                 varta_easyblade_can_messages::Messages::Pack01PackInfo1(m) => {
                     Self::update_easyblade_voltage_current(easyblade, m.voltage(), m.current());
