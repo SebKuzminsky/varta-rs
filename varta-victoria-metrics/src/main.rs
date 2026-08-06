@@ -144,72 +144,89 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         });
     }
 
-    for (_idx, entry) in varta.easyblades.iter().enumerate() {
-        // let node_id = idx as u8;
-        // let node_label = vec![("node_id", node_id.to_string())];
+    for eb in varta
+        .easyblades
+        .iter()
+        .filter_map(|eb| if let Some(eb) = eb { Some(eb) } else { None })
+    {
+        let Some(serial_number) = eb.serial_number else {
+            continue;
+        };
 
-        if let Some(eb) = entry {
-            if let Some(voltage) = eb.voltage {
-                points.push(MetricPoint {
-                    metric: "varta_module_voltage".to_string(),
-                    value: voltage as f64,
-                    timestamp: ts,
-                });
-            }
+        let metric_header = format!("varta_module_{:4}", serial_number);
 
-            if let Some(current) = eb.current {
-                points.push(MetricPoint {
-                    metric: "varta_module_current".to_string(),
-                    value: current as f64,
-                    timestamp: ts,
-                });
-            }
+        if let Some(voltage) = eb.voltage {
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_voltage",
+                value: voltage as f64,
+                timestamp: ts,
+            });
+        }
 
-            if let Some(soc) = eb.soc {
-                points.push(MetricPoint {
-                    metric: "varta_module_soc".to_string(),
-                    value: soc as f64,
-                    timestamp: ts,
-                });
-            }
+        if let Some(current) = eb.current {
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_current",
+                value: current as f64,
+                timestamp: ts,
+            });
+        }
 
-            if let Some(soh) = eb.soh {
-                points.push(MetricPoint {
-                    metric: "varta_module_soh".to_string(),
-                    value: soh as f64,
-                    timestamp: ts,
-                });
-            }
+        if let Some(soc) = eb.soc {
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_soc",
+                value: soc as f64,
+                timestamp: ts,
+            });
+        }
 
-            if let Some((charge_fet, discharge_fet, bypass_fet)) = eb.fet_status {
-                points.push(MetricPoint {
-                    metric: "varta_module_charge_fet".to_string(),
-                    value: if charge_fet { 1.0 } else { 0.0 },
-                    timestamp: ts,
-                });
-                points.push(MetricPoint {
-                    metric: "varta_module_discharge_fet".to_string(),
-                    value: if discharge_fet { 1.0 } else { 0.0 },
-                    timestamp: ts,
-                });
-                points.push(MetricPoint {
-                    metric: "varta_module_bypass_fet".to_string(),
-                    value: if bypass_fet { 1.0 } else { 0.0 },
-                    timestamp: ts,
-                });
-            }
+        if let Some(soh) = eb.soh {
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_soh",
+                value: soh as f64,
+                timestamp: ts,
+            });
+        }
 
-            if let Some(serial) = eb.serial_number {
-                points.push(MetricPoint {
-                    metric: "varta_module_serial".to_string(),
-                    value: serial as f64,
-                    timestamp: ts,
-                });
-            }
+        if let Some((charge_fet, discharge_fet, bypass_fet)) = eb.fet_status {
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_charge_fet",
+                value: if charge_fet { 1.0 } else { 0.0 },
+                timestamp: ts,
+            });
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_discharge_fet",
+                value: if discharge_fet { 1.0 } else { 0.0 },
+                timestamp: ts,
+            });
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_bypass_fet",
+                value: if bypass_fet { 1.0 } else { 0.0 },
+                timestamp: ts,
+            });
         }
     }
 
     points
+}
+
+async fn try_read_serial_number(varta: &mut varta_easyblade::Varta, canbus: &str, node_id: u8) {
+    if let Some(eb) = &mut varta.easyblades[node_id as usize] {
+        let (socketcan_tx, socketcan_rx) = match zencan_client::open_socketcan(canbus) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("Failed to open CAN interface {}: {}", canbus, e);
+                return;
+            },
+        };
+        let mut sdo_client = zencan_client::SdoClient::new_std(node_id, socketcan_tx, socketcan_rx);
+
+        let Ok(serial_number) =
+            varta_easyblade::Varta::sdo_read_serial_number(&mut sdo_client).await
+        else {
+            return;
+        };
+        eb.serial_number = Some(serial_number);
+    }
 }
 
 #[tokio::main]
@@ -237,6 +254,9 @@ async fn main() {
         tokio::select! {
             result = varta.process_socketcan_msg() => {
                 match result {
+                    Ok(Some(node_id)) => {
+                        try_read_serial_number(&mut varta, &args.canbus, node_id).await;
+                    },
                     Ok(_) => { },
                     Err(e) => {
                         eprintln!("Error reading CAN: {}", e);
@@ -245,6 +265,14 @@ async fn main() {
                 }
             },
             _ = batch_interval.tick() => {
+                // Try to read the serial number for any Easyblades that don't have it yet.
+                for node_id in 0..varta_easyblade::MAX_MODULES {
+                    if let Some(eb) = &mut varta.easyblades[node_id]
+                        && eb.serial_number.is_none() {
+                        try_read_serial_number(&mut varta, &args.canbus, node_id as u8).await;
+                    }
+                }
+
                 let points = collect_metrics(&varta);
                 if !points.is_empty()
                     && let Err(e) = send_metrics(&client, &args.vm_url, &points).await

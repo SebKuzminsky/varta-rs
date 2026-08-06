@@ -2326,6 +2326,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "varta-easyblade",
+ "zencan-client",
 ]
 
 [[package]]
