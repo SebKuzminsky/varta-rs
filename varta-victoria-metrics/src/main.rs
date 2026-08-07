@@ -210,21 +210,23 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
 }
 
 async fn try_read_serial_number(varta: &mut varta_easyblade::Varta, canbus: &str, node_id: u8) {
-    if let Some(eb) = &mut varta.easyblades[node_id as usize] {
-        let (socketcan_tx, socketcan_rx) = match zencan_client::open_socketcan(canbus) {
-            Ok(s) => s,
-            Err(e) => {
-                eprintln!("Failed to open CAN interface {}: {}", canbus, e);
-                return;
-            },
-        };
-        let mut sdo_client = zencan_client::SdoClient::new_std(node_id, socketcan_tx, socketcan_rx);
+    if varta.easyblades[node_id as usize].is_none() {
+        return;
+    }
 
-        let Ok(serial_number) =
-            varta_easyblade::Varta::sdo_read_serial_number(&mut sdo_client).await
-        else {
+    let mut sdo = match varta_easyblade::SdoSession::new(canbus, node_id) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Failed to open CAN interface {}: {}", canbus, e);
             return;
-        };
+        },
+    };
+
+    let Ok(serial_number) = sdo.read_serial_number().await else {
+        return;
+    };
+
+    if let Some(eb) = &mut varta.easyblades[node_id as usize] {
         eb.serial_number = Some(serial_number);
     }
 }

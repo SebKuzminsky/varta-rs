@@ -1,4 +1,5 @@
 pub mod varta;
+pub use varta::SdoSession;
 pub use varta::Varta;
 
 pub mod varta_easyblade;

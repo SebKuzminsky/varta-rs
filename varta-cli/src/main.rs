@@ -3,11 +3,7 @@ use serde_json::{Map, Value, json};
 use std::fs;
 use std::io::Write;
 use std::time::Duration;
-use varta_easyblade::{DeviceError, Varta};
-use zencan_client::SdoClient;
-use zencan_client::common::{SocketCanReceiver, SocketCanSender};
-
-type ZenSdoClient = SdoClient<SocketCanSender, SocketCanReceiver>;
+use varta_easyblade::{DeviceError, SdoSession, Varta};
 
 #[derive(Debug, Parser)]
 #[command(name = "varta-cli")]
@@ -162,149 +158,85 @@ fn ok_value<T>(result: Result<T, String>, transform: impl Fn(T) -> Value) -> Val
     }
 }
 
-async fn read_serial_number(sdo_client: &mut ZenSdoClient) -> Result<u16, String> {
-    Varta::sdo_read_serial_number(sdo_client).await
+async fn read_serial_number(sdo: &mut SdoSession) -> Result<u16, String> {
+    sdo.read_serial_number().await
 }
 
-async fn read_all_sdos(sdo_client: &mut ZenSdoClient) -> SdoData {
+async fn read_all_sdos(sdo: &mut SdoSession) -> SdoData {
     SdoData {
-        software_version: Some(ok_value(
-            Varta::sdo_read_software_version(sdo_client).await,
-            |v| json!(v),
-        )),
-        hardware_version: Some(ok_value(
-            Varta::sdo_read_hardware_version(sdo_client).await,
-            |v| json!(v),
-        )),
-        device_config_info: Some(ok_value(
-            Varta::sdo_read_device_config_info(sdo_client).await,
-            |v| json!(v),
-        )),
+        software_version: Some(ok_value(sdo.read_software_version().await, |v| json!(v))),
+        hardware_version: Some(ok_value(sdo.read_hardware_version().await, |v| json!(v))),
+        device_config_info: Some(ok_value(sdo.read_device_config_info().await, |v| json!(v))),
         device_serial_number_info: Some(ok_value(
-            Varta::sdo_read_device_serial_number_info(sdo_client).await,
+            sdo.read_device_serial_number_info().await,
             |v| json!(v),
         )),
-        device_date_info: Some(ok_value(
-            Varta::sdo_read_device_date_info(sdo_client).await,
-            |v| json!(v),
-        )),
-        device_variant_info: Some(ok_value(
-            Varta::sdo_read_device_variant_info(sdo_client).await,
-            |v| json!(v),
-        )),
-        device_control_param: Some(ok_value(
-            Varta::sdo_read_device_control_param(sdo_client).await,
-            |v| json!(v),
-        )),
-        device_operation_time: Some(ok_value(
-            Varta::sdo_read_device_operation_time(sdo_client).await,
-            |v| json!(v),
-        )),
-        device_error_history: Some(ok_value(
-            Varta::sdo_read_device_error_history(sdo_client).await,
-            |errors| {
-                json!(
-                    errors
-                        .iter()
-                        .map(device_error_to_string)
-                        .collect::<Vec<_>>()
-                )
-            },
-        )),
-        device_error_counter: Some(ok_value(
-            Varta::sdo_read_device_error_counter(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_voltages: Some(ok_value(
-            Varta::sdo_read_cell_voltages(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_voltage_min_max: Some(ok_value(
-            Varta::sdo_read_cell_voltage_min_max(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_voltage_limit: Some(ok_value(
-            Varta::sdo_read_cell_voltage_limit(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_voltage: Some(ok_value(
-            Varta::sdo_read_battery_voltage(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_voltage_limit: Some(ok_value(
-            Varta::sdo_read_battery_voltage_limit(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_current: Some(ok_value(
-            Varta::sdo_read_battery_current(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_current_limit: Some(ok_value(
-            Varta::sdo_read_battery_current_limit(sdo_client).await,
-            |v| json!(v),
-        )),
-        fet_temperature: Some(ok_value(
-            Varta::sdo_read_fet_temperature(sdo_client).await,
-            |v| json!(v),
-        )),
-        fet_temperature_min_max: Some(ok_value(
-            Varta::sdo_read_fet_temperature_min_max(sdo_client).await,
-            |v| json!(v),
-        )),
-        fet_temperature_limit: Some(ok_value(
-            Varta::sdo_read_fet_temperature_limit(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_temperature: Some(ok_value(
-            Varta::sdo_read_cell_temperature(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_temperature_min_max: Some(ok_value(
-            Varta::sdo_read_cell_temperature_min_max(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_temperature_limit: Some(ok_value(
-            Varta::sdo_read_cell_temperature_limit(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_balance_status: Some(ok_value(
-            Varta::sdo_read_cell_balance_status(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_balance_limit: Some(ok_value(
-            Varta::sdo_read_cell_balance_limit(sdo_client).await,
-            |v| json!(v),
-        )),
-        cell_impedance: Some(ok_value(
-            Varta::sdo_read_cell_impedance(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_capacity: Some(ok_value(
-            Varta::sdo_read_battery_capacity(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_capacity_param: Some(ok_value(
-            Varta::sdo_read_battery_capacity_param(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_cycle_count: Some(ok_value(
-            Varta::sdo_read_battery_cycle_count(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_charge_voltage: Some(ok_value(
-            Varta::sdo_read_battery_charge_voltage(sdo_client).await,
-            |v| json!(v),
-        )),
-        battery_charge_current: Some(ok_value(
-            Varta::sdo_read_battery_charge_current(sdo_client).await,
-            |v| json!(v),
-        )),
+        device_date_info: Some(ok_value(sdo.read_device_date_info().await, |v| json!(v))),
+        device_variant_info: Some(ok_value(sdo.read_device_variant_info().await, |v| json!(v))),
+        device_control_param: Some(ok_value(sdo.read_device_control_param().await, |v| {
+            json!(v)
+        })),
+        device_operation_time: Some(ok_value(sdo.read_device_operation_time().await, |v| {
+            json!(v)
+        })),
+        device_error_history: Some(ok_value(sdo.read_device_error_history().await, |errors| {
+            json!(
+                errors
+                    .iter()
+                    .map(device_error_to_string)
+                    .collect::<Vec<_>>()
+            )
+        })),
+        device_error_counter: Some(ok_value(sdo.read_device_error_counter().await, |v| {
+            json!(v)
+        })),
+        cell_voltages: Some(ok_value(sdo.read_cell_voltages().await, |v| json!(v))),
+        cell_voltage_min_max: Some(ok_value(sdo.read_cell_voltage_min_max().await, |v| {
+            json!(v)
+        })),
+        cell_voltage_limit: Some(ok_value(sdo.read_cell_voltage_limit().await, |v| json!(v))),
+        battery_voltage: Some(ok_value(sdo.read_battery_voltage().await, |v| json!(v))),
+        battery_voltage_limit: Some(ok_value(sdo.read_battery_voltage_limit().await, |v| {
+            json!(v)
+        })),
+        battery_current: Some(ok_value(sdo.read_battery_current().await, |v| json!(v))),
+        battery_current_limit: Some(ok_value(sdo.read_battery_current_limit().await, |v| {
+            json!(v)
+        })),
+        fet_temperature: Some(ok_value(sdo.read_fet_temperature().await, |v| json!(v))),
+        fet_temperature_min_max: Some(ok_value(sdo.read_fet_temperature_min_max().await, |v| {
+            json!(v)
+        })),
+        fet_temperature_limit: Some(ok_value(sdo.read_fet_temperature_limit().await, |v| {
+            json!(v)
+        })),
+        cell_temperature: Some(ok_value(sdo.read_cell_temperature().await, |v| json!(v))),
+        cell_temperature_min_max: Some(ok_value(sdo.read_cell_temperature_min_max().await, |v| {
+            json!(v)
+        })),
+        cell_temperature_limit: Some(ok_value(sdo.read_cell_temperature_limit().await, |v| {
+            json!(v)
+        })),
+        cell_balance_status: Some(ok_value(sdo.read_cell_balance_status().await, |v| json!(v))),
+        cell_balance_limit: Some(ok_value(sdo.read_cell_balance_limit().await, |v| json!(v))),
+        cell_impedance: Some(ok_value(sdo.read_cell_impedance().await, |v| json!(v))),
+        battery_capacity: Some(ok_value(sdo.read_battery_capacity().await, |v| json!(v))),
+        battery_capacity_param: Some(ok_value(sdo.read_battery_capacity_param().await, |v| {
+            json!(v)
+        })),
+        battery_cycle_count: Some(ok_value(sdo.read_battery_cycle_count().await, |v| json!(v))),
+        battery_charge_voltage: Some(ok_value(sdo.read_battery_charge_voltage().await, |v| {
+            json!(v)
+        })),
+        battery_charge_current: Some(ok_value(sdo.read_battery_charge_current().await, |v| {
+            json!(v)
+        })),
         battery_charge_temperature: Some(ok_value(
-            Varta::sdo_read_battery_charge_temperature(sdo_client).await,
+            sdo.read_battery_charge_temperature().await,
             |v| json!(v),
         )),
         master_battery_temperature: Some(ok_value(
-            Varta::sdo_read_master_battery_temperature(sdo_client).await,
+            sdo.read_master_battery_temperature().await,
             |v| json!(v),
         )),
     }
@@ -460,16 +392,15 @@ async fn run_scan(can_interface: &str) {
     );
 
     for node_id in detected {
-        let (tx, rx) = match zencan_client::open_socketcan(can_interface) {
-            Ok(v) => v,
+        let mut sdo = match varta.sdo_client(node_id) {
+            Ok(s) => s,
             Err(e) => {
                 eprintln!("  Node {}: cannot open CAN: {}", node_id, e);
                 continue;
             },
         };
-        let mut sdo_client = SdoClient::new_std(node_id, tx, rx);
 
-        match read_serial_number(&mut sdo_client).await {
+        match read_serial_number(&mut sdo).await {
             Ok(sn) => println!("  Node {}: serial {}", node_id, sn),
             Err(e) => eprintln!("  Node {}: error reading serial: {}", node_id, e),
         }
@@ -517,12 +448,11 @@ async fn run_read(can_interface: &str, target_serial: u16, output: Option<String
             for (idx, entry) in varta.easyblades.iter().enumerate() {
                 if entry.is_some() && target_node.is_none() {
                     let node_id = idx as u8;
-                    let (tx, rx) = match zencan_client::open_socketcan(can_interface) {
-                        Ok(v) => v,
+                    let mut sdo = match varta.sdo_client(node_id) {
+                        Ok(s) => s,
                         Err(_) => continue,
                     };
-                    let mut sdo_client = SdoClient::new_std(node_id, tx, rx);
-                    if let Ok(sn) = read_serial_number(&mut sdo_client).await
+                    if let Ok(sn) = read_serial_number(&mut sdo).await
                         && sn == target_serial
                     {
                         target_node = Some(node_id);
@@ -553,16 +483,15 @@ async fn run_read(can_interface: &str, target_serial: u16, output: Option<String
         target_serial, node_id
     );
 
-    let (tx, rx) = match zencan_client::open_socketcan(can_interface) {
-        Ok(v) => v,
+    let mut sdo = match varta.sdo_client(node_id) {
+        Ok(s) => s,
         Err(e) => {
             eprintln!("Error opening CAN for SDO read: {}", e);
             std::process::exit(1);
         },
     };
-    let mut sdo_client = SdoClient::new_std(node_id, tx, rx);
 
-    let data = read_all_sdos(&mut sdo_client).await;
+    let data = read_all_sdos(&mut sdo).await;
     let json_value = sdo_data_to_json(node_id, target_serial, &data);
     let json_string = serde_json::to_string_pretty(&json_value).unwrap();
 
