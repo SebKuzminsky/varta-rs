@@ -47,6 +47,7 @@ struct Args {
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum SelectedTab {
     ModuleInfo,
+    MsgBits,
     CellVoltages,
     ErrorHistory,
     DeviceOperation,
@@ -76,6 +77,7 @@ fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
             SdoRequest::DeviceVariantInfo,
             SdoRequest::DeviceControlParam,
         ],
+        SelectedTab::MsgBits => vec![],
         SelectedTab::CellVoltages => vec![SdoRequest::CellVoltages],
         SelectedTab::ErrorHistory => vec![SdoRequest::DeviceErrorHistory],
         SelectedTab::DeviceOperation => vec![SdoRequest::DeviceOperationTime],
@@ -120,6 +122,7 @@ impl SelectedTab {
     fn title(&self) -> &'static str {
         match self {
             SelectedTab::ModuleInfo => "Module Info",
+            SelectedTab::MsgBits => "Message Bits",
             SelectedTab::CellVoltages => "Cell Voltages",
             SelectedTab::ErrorHistory => "Error History",
             SelectedTab::DeviceOperation => "Device Operation",
@@ -141,6 +144,7 @@ impl SelectedTab {
     fn cycle(&self, right: bool) -> Self {
         let tabs = [
             SelectedTab::ModuleInfo,
+            SelectedTab::MsgBits,
             SelectedTab::CellVoltages,
             SelectedTab::ErrorHistory,
             SelectedTab::DeviceOperation,
@@ -186,13 +190,17 @@ fn format_last_seen(last_seen: SystemTime) -> String {
         .to_string()
 }
 
-fn format_fet_status(fet: Option<(bool, bool, bool)>) -> String {
-    match fet {
-        Some((c, d, b)) => format!(
+fn yes_no(v: bool) -> &'static str {
+    if v { "Yes" } else { "No" }
+}
+
+fn format_fet_status(msgs: Option<&varta_easyblade::MsgBits>) -> String {
+    match msgs {
+        Some(m) => format!(
             "{}{}{}",
-            if c { "C" } else { "-" },
-            if d { "D" } else { "-" },
-            if b { "B" } else { "-" },
+            if m.info_bit_2_chgfet_closed { "C" } else { "-" },
+            if m.info_bit_3_dsgfet_closed { "D" } else { "-" },
+            if m.info_bit_4_bypass_fet_on { "B" } else { "-" },
         ),
         None => "---".to_string(),
     }
@@ -587,7 +595,7 @@ fn draw_frame(
             .current
             .map_or("----".to_string(), |c| format!("{c:.2} A"));
         let soc = eb.soc.map_or("----".to_string(), |v| format!("{:.1}%", v));
-        let fet = format_fet_status(eb.fet_status);
+        let fet = format_fet_status(eb.pack_msgs.as_ref());
         let last_seen = format_last_seen(eb.last_seen);
         let row = Row::new([
             eb.serial_number
@@ -633,6 +641,7 @@ fn draw_frame(
 
     let tab_titles: Vec<SelectedTab> = vec![
         SelectedTab::ModuleInfo,
+        SelectedTab::MsgBits,
         SelectedTab::CellVoltages,
         SelectedTab::ErrorHistory,
         SelectedTab::DeviceOperation,
@@ -743,10 +752,9 @@ fn draw_frame(
                      Hardware Version:     {}\n\
                      Voltage:              {}\n\
                      Current:              {}\n\
-                     SOC:                  {}\n\
-                     SOH:                  {}\n\
-                     FET Status:           {}\n\
-                     Last Seen:            {}\n",
+            SOC:                  {}\n\
+                      SOH:                  {}\n\
+                      Last Seen:            {}\n",
                     eb.node_id,
                     eb.serial_number
                         .map_or("N/A".to_string(), |v| format!("{}", v)),
@@ -758,7 +766,6 @@ fn draw_frame(
                         .map_or("N/A".to_string(), |c| format!("{:.2} A", c)),
                     eb.soc.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
                     eb.soh.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
-                    format_fet_status(eb.fet_status),
                     format_last_seen(eb.last_seen),
                 );
                 let text = Paragraph::new(info).wrap(Wrap { trim: true });
@@ -1309,6 +1316,117 @@ fn draw_frame(
                         "Master Max FET Temperature:  {:>7.1} °C\n\
                          Master Max Cell Temperature: {:>7.1} °C\n",
                         v.max_fet_temperature_c, v.max_cell_temperature_c,
+                    );
+                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                } else {
+                    let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
+                    f.render_widget(text, content_area);
+                }
+            } else {
+                let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
+                f.render_widget(text, content_area);
+            }
+        },
+
+        SelectedTab::MsgBits => {
+            if let Some(eb) = eb {
+                if let Some(m) = &eb.pack_msgs {
+                    let info = format!(
+                        "=== Info ===\n\
+                         Empty:                   {}\n\
+                         Almost Empty:            {}\n\
+                         CHG FET Closed:          {}\n\
+                         DSG FET Closed:          {}\n\
+                         Bypass FET On:           {}\n\
+                         Fully Charged:           {}\n\
+                         === Warnings ===\n\
+                         Low Voltage:             {}\n\
+                         Low SOC:                 {}\n\
+                         Reserve SOC:             {}\n\
+                         Over/Under Temp Discharge:{}\n\
+                         Over/Under Temp Charge:  {}\n\
+                         Max Charge Recuperation: {}\n\
+                         CAN Network Failure:     {}\n\
+                         Deactivation Enable:     {}\n\
+                         Node ID Process Enable:  {}\n\
+                         Unknown:                 {}\n\
+                         === Errors ===\n\
+                         Error Lock Discharge:    {}\n\
+                         Error Lock Charge:       {}\n\
+                         Over Charge Recuperation:{}\n\
+                         Short Circuit Charge:    {}\n\
+                         Short Circuit Discharge: {}\n\
+                         Max Voltage Alarm:       {}\n\
+                         Discharge FET Error:     {}\n\
+                         Charge FET Error:        {}\n\
+                         Max Charge Current:      {}\n\
+                         Max Discharge Current:   {}\n\
+                         Under Charge Alarm:      {}\n\
+                         Over Charge Alarm:       {}\n\
+                         Over/Under Temp Charge:  {}\n\
+                         Over/Under Temp Discharge:{}\n\
+                         Module Defect:           {}\n\
+                         Unknown:                 {}\n\
+                         === Charge ===\n\
+                         Voltage Enabled:         {}\n\
+                         Voltage Keep Power:      {}\n\
+                         Current Enable:          {}\n\
+                         Current Keep Power:      {}\n\
+                         Current Low Temp Range:  {}\n\
+                         Current Normal Temp Range:{}\n\
+                         Current High Temp Range: {}\n\
+                         Max Current Request:     {}\n\
+                         Max Cell Voltage Request:{}\n\
+                         Master Charger Output Off:{}\n\
+                         FET Disable Temp Cells:  {}\n\
+                         Charging Ready:          {}\n\
+                         Supply Conditions Ready: {}\n",
+                        yes_no(m.info_bit_0_empty),
+                        yes_no(m.info_bit_1_almost_empty),
+                        yes_no(m.info_bit_2_chgfet_closed),
+                        yes_no(m.info_bit_3_dsgfet_closed),
+                        yes_no(m.info_bit_4_bypass_fet_on),
+                        yes_no(m.info_bit_6_fully_charged),
+                        yes_no(m.warn_bit_0_low_voltage),
+                        yes_no(m.warn_bit_1_low_soc),
+                        yes_no(m.warn_bit_2_reserve_soc),
+                        yes_no(m.warn_bit_3_over_or_under_temp_discharge),
+                        yes_no(m.warn_bit_4_over_or_under_temp_charge),
+                        yes_no(m.warn_bit_7_max_charge_condition_recuperation),
+                        yes_no(m.warn_bit_11_can_network_failure),
+                        yes_no(m.warn_bit_12_set_deactivation_enable),
+                        yes_no(m.warn_bit_14_set_node_id_process_enable),
+                        yes_no(m.warn_bit_15_unknown),
+                        yes_no(m.error_bit_0_error_lock_flag_discharge),
+                        yes_no(m.error_bit_1_error_lock_flag_charge),
+                        yes_no(m.error_bit_2_over_charge_condition_recuperation),
+                        yes_no(m.error_bit_3_shortcircuit_charge_alarm),
+                        yes_no(m.error_bit_4_shortcircuit_discharge_alarm),
+                        yes_no(m.error_bit_5_max_voltage_alarm),
+                        yes_no(m.error_bit_6_discharge_fet_error),
+                        yes_no(m.error_bit_7_charge_fet_error),
+                        yes_no(m.error_bit_8_max_charge_current_alarm),
+                        yes_no(m.error_bit_9_max_discharge_current_alarm),
+                        yes_no(m.error_bit_10_under_charge_alarm),
+                        yes_no(m.error_bit_11_over_charge_alarm),
+                        yes_no(m.error_bit_12_over_under_temp_charge),
+                        yes_no(m.error_bit_13_over_under_temp_discharge),
+                        yes_no(m.error_bit_14_module_defect),
+                        yes_no(m.error_bit_15_uknown),
+                        yes_no(m.charge_bit_0_charge_voltage_enabled),
+                        yes_no(m.charge_bit_1_charge_voltage_keep_power),
+                        yes_no(m.charge_bit_4_charge_current_enable),
+                        yes_no(m.charge_bit_5_charge_current_keep_power),
+                        yes_no(m.charge_bit_6_charge_current_low_temp_range),
+                        yes_no(m.charge_bit_7_charge_current_normal_temp_range),
+                        yes_no(m.charge_bit_8_charge_current_high_temp_range),
+                        yes_no(m.charge_bit_10_charge_max_charge_current_request),
+                        yes_no(m.charge_bit_11_charge_max_charge_cell_voltage_request),
+                        yes_no(m.charge_bit_12_charge_master_set_charger_output_off),
+                        yes_no(m.charge_bit_13_charge_fet_disable_temp_range_cells),
+                        yes_no(m.charge_bit_14_master_charger_control_charging_ready),
+                        yes_no(m.charge_bit_15_charger_supply_conditions_ready),
                     );
                     let text = Paragraph::new(info).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);

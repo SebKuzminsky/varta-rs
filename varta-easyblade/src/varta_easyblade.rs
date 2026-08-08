@@ -284,6 +284,55 @@ pub struct MasterBatteryTemperature {
     pub max_cell_temperature_c: f32,
 }
 
+#[derive(Debug, Clone, Copy, Default, serde::Serialize)]
+pub struct MsgBits {
+    pub info_bit_0_empty: bool,
+    pub info_bit_1_almost_empty: bool,
+    pub info_bit_2_chgfet_closed: bool,
+    pub info_bit_3_dsgfet_closed: bool,
+    pub info_bit_4_bypass_fet_on: bool,
+    pub info_bit_6_fully_charged: bool,
+    pub warn_bit_0_low_voltage: bool,
+    pub warn_bit_1_low_soc: bool,
+    pub warn_bit_2_reserve_soc: bool,
+    pub warn_bit_3_over_or_under_temp_discharge: bool,
+    pub warn_bit_4_over_or_under_temp_charge: bool,
+    pub warn_bit_7_max_charge_condition_recuperation: bool,
+    pub warn_bit_11_can_network_failure: bool,
+    pub warn_bit_12_set_deactivation_enable: bool,
+    pub warn_bit_14_set_node_id_process_enable: bool,
+    pub warn_bit_15_unknown: bool,
+    pub error_bit_0_error_lock_flag_discharge: bool,
+    pub error_bit_1_error_lock_flag_charge: bool,
+    pub error_bit_2_over_charge_condition_recuperation: bool,
+    pub error_bit_3_shortcircuit_charge_alarm: bool,
+    pub error_bit_4_shortcircuit_discharge_alarm: bool,
+    pub error_bit_5_max_voltage_alarm: bool,
+    pub error_bit_6_discharge_fet_error: bool,
+    pub error_bit_7_charge_fet_error: bool,
+    pub error_bit_8_max_charge_current_alarm: bool,
+    pub error_bit_9_max_discharge_current_alarm: bool,
+    pub error_bit_10_under_charge_alarm: bool,
+    pub error_bit_11_over_charge_alarm: bool,
+    pub error_bit_12_over_under_temp_charge: bool,
+    pub error_bit_13_over_under_temp_discharge: bool,
+    pub error_bit_14_module_defect: bool,
+    pub error_bit_15_uknown: bool,
+    pub charge_bit_0_charge_voltage_enabled: bool,
+    pub charge_bit_1_charge_voltage_keep_power: bool,
+    pub charge_bit_4_charge_current_enable: bool,
+    pub charge_bit_5_charge_current_keep_power: bool,
+    pub charge_bit_6_charge_current_low_temp_range: bool,
+    pub charge_bit_7_charge_current_normal_temp_range: bool,
+    pub charge_bit_8_charge_current_high_temp_range: bool,
+    pub charge_bit_10_charge_max_charge_current_request: bool,
+    pub charge_bit_11_charge_max_charge_cell_voltage_request: bool,
+    pub charge_bit_12_charge_master_set_charger_output_off: bool,
+    pub charge_bit_13_charge_fet_disable_temp_range_cells: bool,
+    pub charge_bit_14_master_charger_control_charging_ready: bool,
+    pub charge_bit_15_charger_supply_conditions_ready: bool,
+}
+
 #[allow(clippy::type_complexity)]
 #[derive(strum::EnumCount, Clone)]
 pub enum SdoRequest {
@@ -374,6 +423,7 @@ pub struct MasterInfo {
     pub master_full_charge_capacity: Option<f32>,
     pub master_remaining_capacity: Option<f32>,
     pub last_seen: Option<std::time::SystemTime>,
+    pub master_msgs: Option<MsgBits>,
 }
 
 #[derive(Debug)]
@@ -389,7 +439,6 @@ pub struct VartaEasyblade {
     pub soh: Option<f32>,
     pub cell_voltages: Option<Vec<f32>>,
     pub device_errors: Option<Vec<DeviceError>>,
-    pub fet_status: Option<(bool, bool, bool)>,
     pub device_config_info: Option<DeviceConfigInfo>,
     pub device_serial_number_info: Option<DeviceSerialNumberInfo>,
     pub device_date_info: Option<DeviceDateInfo>,
@@ -419,6 +468,7 @@ pub struct VartaEasyblade {
     pub battery_charge_current: Option<BatteryChargeCurrent>,
     pub battery_charge_temperature: Option<BatteryChargeTemperature>,
     pub master_battery_temperature: Option<MasterBatteryTemperature>,
+    pub pack_msgs: Option<MsgBits>,
 }
 
 /// Device Error values logged by the Varta Easyblade module in SDO 0x2018

@@ -32,6 +32,7 @@ pub use varta_easyblade::FetTemperatureLimit;
 pub use varta_easyblade::FetTemperatureMinMax;
 pub use varta_easyblade::MasterBatteryTemperature;
 pub use varta_easyblade::MasterInfo;
+pub use varta_easyblade::MsgBits;
 pub use varta_easyblade::SdoRequest;
 pub use varta_easyblade::SdoResponse;
 pub use varta_easyblade::VartaEasyblade;

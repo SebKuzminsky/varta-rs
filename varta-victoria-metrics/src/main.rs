@@ -187,20 +187,20 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
             });
         }
 
-        if let Some((charge_fet, discharge_fet, bypass_fet)) = eb.fet_status {
+        if let Some(m) = &eb.pack_msgs {
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_charge_fet",
-                value: if charge_fet { 1.0 } else { 0.0 },
+                value: if m.info_bit_2_chgfet_closed { 1.0 } else { 0.0 },
                 timestamp: ts,
             });
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_discharge_fet",
-                value: if discharge_fet { 1.0 } else { 0.0 },
+                value: if m.info_bit_3_dsgfet_closed { 1.0 } else { 0.0 },
                 timestamp: ts,
             });
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_bypass_fet",
-                value: if bypass_fet { 1.0 } else { 0.0 },
+                value: if m.info_bit_4_bypass_fet_on { 1.0 } else { 0.0 },
                 timestamp: ts,
             });
         }
