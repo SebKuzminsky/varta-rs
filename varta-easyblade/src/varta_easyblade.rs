@@ -137,7 +137,34 @@ pub struct CellVoltageMinMax {
 
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct CellVoltageLimit {
+    /// Single Cell Over Voltage Error (0x2104 sub1)
     pub over_voltage_error_v: f32,
+    /// Single Cell Max Charge Voltage (0x2104 sub2)
+    pub max_charge_voltage_v: f32,
+    /// Single Cell Fully Charged Voltage (0x2104 sub3)
+    pub fully_charged_voltage_v: f32,
+    /// Single Cell Near Fully Charged Voltage (0x2104 sub4)
+    pub near_fully_charged_voltage_v: f32,
+    /// Single Cell Fully Charged Reset Voltage (0x2104 sub5)
+    pub fully_charged_reset_voltage_v: f32,
+    /// Single Cell EDV Reset Voltage (0x2104 sub6)
+    pub edv_reset_voltage_v: f32,
+    /// Single Cell Near Empty Voltage Warning (0x2104 sub7)
+    pub near_empty_voltage_warning_v: f32,
+    /// Single Cell Near Empty Voltage EDV1 (0x2104 sub8)
+    pub near_empty_voltage_edv1_v: f32,
+    /// Single Cell Empty Voltage EDV0 (0x2104 sub9)
+    pub empty_voltage_edv0_v: f32,
+    /// Single Cell Min Error Reset Voltage (0x2104 subA)
+    pub min_error_reset_voltage_v: f32,
+    /// Single Cell EDV OFF Voltage (0x2104 subB)
+    pub edv_off_voltage_v: f32,
+    /// Single Cell Under Voltage Error (0x2104 subC)
+    pub under_voltage_error_v: f32,
+    /// Single Cell Deep Low Voltage Error (0x2104 subD)
+    pub deep_low_voltage_error_v: f32,
+    /// Single Cell Max Charge Voltage - no Password (0x2104 subE)
+    pub max_charge_voltage_no_password_v: f32,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]

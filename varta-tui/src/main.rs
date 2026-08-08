@@ -78,13 +78,13 @@ fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
             SdoRequest::DeviceControlParam,
         ],
         SelectedTab::MsgBits => vec![],
-        SelectedTab::CellVoltages => vec![SdoRequest::CellVoltages],
+        SelectedTab::CellVoltages => {
+            vec![SdoRequest::CellVoltages, SdoRequest::CellVoltageMinMax]
+        },
         SelectedTab::ErrorHistory => vec![SdoRequest::DeviceErrorHistory],
         SelectedTab::DeviceOperation => vec![SdoRequest::DeviceOperationTime],
         SelectedTab::ErrorCounters => vec![SdoRequest::DeviceErrorCounter],
-        SelectedTab::CellVoltageLimits => {
-            vec![SdoRequest::CellVoltageMinMax, SdoRequest::CellVoltageLimit]
-        },
+        SelectedTab::CellVoltageLimits => vec![SdoRequest::CellVoltageLimit],
         SelectedTab::BatteryVoltage => {
             vec![SdoRequest::BatteryVoltage, SdoRequest::BatteryVoltageLimit]
         },
@@ -531,8 +531,7 @@ fn draw_frame(
     let area = f.area();
 
     // Middle pane: sized just right to show all the modules.
-    let middle_len = (varta.easyblade_count() + 3)
-        .min(area.height as usize);
+    let middle_len = (varta.easyblade_count() + 3).min(area.height as usize);
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -785,12 +784,19 @@ fn draw_frame(
 
         SelectedTab::CellVoltages => {
             if let Some(eb) = eb {
-                if let Some(ref voltages) = eb.cell_voltages {
-                    let lines: String = voltages
+                if let (Some(voltages), Some(min_max)) =
+                    (&eb.cell_voltages, &eb.cell_voltage_min_max)
+                {
+                    let mut lines: String = voltages
                         .iter()
                         .enumerate()
                         .map(|(i, v)| format!("Cell {:>2}: {:.3} V\n", i + 1, v))
                         .collect();
+                    lines.push_str(&format!(
+                        "\nMin Cell Voltage: {:.3} V\n\
+                         Max Cell Voltage: {:.3} V",
+                        min_max.min_voltage_v, min_max.max_voltage_v,
+                    ));
                     let text = Paragraph::new(lines).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
                 } else {
@@ -1008,14 +1014,36 @@ fn draw_frame(
 
         SelectedTab::CellVoltageLimits => {
             if let Some(eb) = eb {
-                if let (Some(min_max), Some(limit)) =
-                    (&eb.cell_voltage_min_max, &eb.cell_voltage_limit)
-                {
+                if let Some(limit) = &eb.cell_voltage_limit {
                     let info = format!(
-                        "Min Cell Voltage:   {:.3} V\n\
-                         Max Cell Voltage:   {:.3} V\n\
-                         Over Voltage Error: {:.3} V\n",
-                        min_max.min_voltage_v, min_max.max_voltage_v, limit.over_voltage_error_v,
+                        "Over Voltage Error:                  {:.3} V\n\
+                         Max Charge Voltage:                  {:.3} V\n\
+                         Fully Charged Voltage:               {:.3} V\n\
+                         Near Fully Charged Voltage:          {:.3} V\n\
+                         Fully Charged Reset Voltage:         {:.3} V\n\
+                         EDV Reset Voltage:                   {:.3} V\n\
+                         Near Empty Voltage Warning:          {:.3} V\n\
+                         Near Empty Voltage EDV1:             {:.3} V\n\
+                         Empty Voltage EDV0:                  {:.3} V\n\
+                         Min Error Reset Voltage:             {:.3} V\n\
+                         EDV OFF Voltage:                     {:.3} V\n\
+                         Under Voltage Error:                 {:.3} V\n\
+                         Deep Low Voltage Error:              {:.3} V\n\
+                         Max Charge Voltage (no password):    {:.3} V\n",
+                        limit.over_voltage_error_v,
+                        limit.max_charge_voltage_v,
+                        limit.fully_charged_voltage_v,
+                        limit.near_fully_charged_voltage_v,
+                        limit.fully_charged_reset_voltage_v,
+                        limit.edv_reset_voltage_v,
+                        limit.near_empty_voltage_warning_v,
+                        limit.near_empty_voltage_edv1_v,
+                        limit.empty_voltage_edv0_v,
+                        limit.min_error_reset_voltage_v,
+                        limit.edv_off_voltage_v,
+                        limit.under_voltage_error_v,
+                        limit.deep_low_voltage_error_v,
+                        limit.max_charge_voltage_no_password_v,
                     );
                     let text = Paragraph::new(info).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);

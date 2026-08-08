@@ -2135,15 +2135,93 @@ impl SdoSession {
                 })
             },
             SdoRequest::CellVoltageLimit => {
-                let raw = self
+                let sub1 = self
                     .sdo_client
                     .read_u32(0x2104, 0x01)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub2 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x02)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub3 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x03)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub4 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x04)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub5 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x05)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub6 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x06)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub7 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x07)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub8 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x08)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sub9 = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x09)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let suba = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x0a)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let subb = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x0b)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let subc = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x0c)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let subd = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x0d)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let sube = self
+                    .sdo_client
+                    .read_u32(0x2104, 0x0e)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellVoltageLimit {
                     node_id: self.node_id,
                     value: CellVoltageLimit {
-                        over_voltage_error_v: raw as f32 / 1000.0,
+                        over_voltage_error_v: sub1 as f32 / 1000.0,
+                        max_charge_voltage_v: sub2 as f32 / 1000.0,
+                        fully_charged_voltage_v: sub3 as f32 / 1000.0,
+                        near_fully_charged_voltage_v: sub4 as f32 / 1000.0,
+                        fully_charged_reset_voltage_v: sub5 as f32 / 1000.0,
+                        edv_reset_voltage_v: sub6 as f32 / 1000.0,
+                        near_empty_voltage_warning_v: sub7 as f32 / 1000.0,
+                        near_empty_voltage_edv1_v: sub8 as f32 / 1000.0,
+                        empty_voltage_edv0_v: sub9 as f32 / 1000.0,
+                        min_error_reset_voltage_v: suba as f32 / 1000.0,
+                        edv_off_voltage_v: subb as f32 / 1000.0,
+                        under_voltage_error_v: subc as f32 / 1000.0,
+                        deep_low_voltage_error_v: subd as f32 / 1000.0,
+                        max_charge_voltage_no_password_v: sube as f32 / 1000.0,
                     },
                 })
             },
