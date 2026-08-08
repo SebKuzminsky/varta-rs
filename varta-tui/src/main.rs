@@ -530,9 +530,16 @@ fn draw_frame(
 ) {
     let area = f.area();
 
+    // Middle pane: sized just right to show all the modules.
+    let middle_len = (varta.easyblade_count() + 3)
+        .min(area.height as usize);
     let layout = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(6), Constraint::Min(5), Constraint::Min(5)])
+        .constraints([
+            Constraint::Length(6),
+            Constraint::Length(middle_len as u16),
+            Constraint::Min(5),
+        ])
         .split(area);
 
     // Top: master info
