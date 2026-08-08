@@ -1541,8 +1541,9 @@ async fn varta_sdo_task(
                     Err(e) => {
                         let elapsed = start.elapsed();
                         debug_log(&format!(
-                            "[SDO:{}] SDO read failed in {}ms: {}",
+                            "[SDO:{}] SDO read ({}) failed in {}ms: {}",
                             node_id,
+                            sdo_request,
                             elapsed.as_millis(),
                             e,
                         ));

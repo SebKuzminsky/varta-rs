@@ -361,7 +361,7 @@ pub struct MsgBits {
 }
 
 #[allow(clippy::type_complexity)]
-#[derive(strum::EnumCount, Clone)]
+#[derive(strum::EnumCount, Clone, Copy, Debug)]
 pub enum SdoRequest {
     SerialNumber,
     SoftwareVersion,
@@ -397,6 +397,47 @@ pub enum SdoRequest {
     BatteryChargeCurrent,
     BatteryChargeTemperature,
     MasterBatteryTemperature,
+}
+
+impl std::fmt::Display for SdoRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SdoRequest::SerialNumber => write!(f, "0x2004:0x01"),
+            SdoRequest::SoftwareVersion => write!(f, "0x2000:0x02,0x03"),
+            SdoRequest::HardwareVersion => write!(f, "0x2000:0x01"),
+            SdoRequest::DeviceErrorHistory => write!(f, "0x2018:0x00..0x10"),
+            SdoRequest::CellVoltages => write!(f, "0x2100:0x01..0x10"),
+            SdoRequest::DeviceConfigInfo => write!(f, "0x2002:0x01..0x03"),
+            SdoRequest::DeviceSerialNumberInfo => write!(f, "0x2004:0x01..0x03"),
+            SdoRequest::DeviceDateInfo => write!(f, "0x2006:0x01..0x03"),
+            SdoRequest::DeviceVariantInfo => write!(f, "0x2008:0x01..0x07"),
+            SdoRequest::DeviceControlParam => write!(f, "0x2010:0x01"),
+            SdoRequest::DeviceOperationTime => write!(f, "0x2016:0x01..0x0A"),
+            SdoRequest::DeviceErrorCounter => write!(f, "0x201A:0x01..0x4F"),
+            SdoRequest::CellVoltageMinMax => write!(f, "0x2102:0x01..0x02"),
+            SdoRequest::CellVoltageLimit => write!(f, "0x2104:0x01..0x0E"),
+            SdoRequest::BatteryVoltage => write!(f, "0x2200:0x01..0x03"),
+            SdoRequest::BatteryVoltageLimit => write!(f, "0x2204:0x01"),
+            SdoRequest::BatteryCurrent => write!(f, "0x2300:0x01..0x05"),
+            SdoRequest::BatteryCurrentLimit => write!(f, "0x2304:0x01"),
+            SdoRequest::FetTemperature => write!(f, "0x2400:0x01..0x02"),
+            SdoRequest::FetTemperatureMinMax => write!(f, "0x2402:0x01..0x02"),
+            SdoRequest::FetTemperatureLimit => write!(f, "0x2404:0x01"),
+            SdoRequest::CellTemperature => write!(f, "0x2500:0x01..0x06"),
+            SdoRequest::CellTemperatureMinMax => write!(f, "0x2502:0x01..0x02"),
+            SdoRequest::CellTemperatureLimit => write!(f, "0x2504:0x01"),
+            SdoRequest::CellBalanceStatus => write!(f, "0x2600:0x01..0x03"),
+            SdoRequest::CellBalanceLimit => write!(f, "0x2604:0x01"),
+            SdoRequest::CellImpedance => write!(f, "0x2700:0x01..0x12"),
+            SdoRequest::BatteryCapacity => write!(f, "0x2800:0x01..0x07"),
+            SdoRequest::BatteryCapacityParam => write!(f, "0x2804:0x01"),
+            SdoRequest::BatteryCycleCount => write!(f, "0x2900:0x01..0x09"),
+            SdoRequest::BatteryChargeVoltage => write!(f, "0x3000:0x01..0x03"),
+            SdoRequest::BatteryChargeCurrent => write!(f, "0x3100:0x01..0x0A"),
+            SdoRequest::BatteryChargeTemperature => write!(f, "0x3200:0x01..0x06"),
+            SdoRequest::MasterBatteryTemperature => write!(f, "0x3700:0x01..0x02"),
+        }
+    }
 }
 
 pub enum SdoResponse {
