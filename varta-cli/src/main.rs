@@ -159,7 +159,7 @@ fn ok_value<T>(result: Result<T, String>, transform: impl Fn(T) -> Value) -> Val
 }
 
 async fn read_serial_number(sdo: &mut SdoSession) -> Result<u16, String> {
-    sdo.read_serial_number().await
+    Ok(sdo.read_serial_number().await?.value)
 }
 
 async fn read_all_sdos(sdo: &mut SdoSession) -> SdoData {
@@ -182,6 +182,7 @@ async fn read_all_sdos(sdo: &mut SdoSession) -> SdoData {
         device_error_history: Some(ok_value(sdo.read_device_error_history().await, |errors| {
             json!(
                 errors
+                    .values
                     .iter()
                     .map(device_error_to_string)
                     .collect::<Vec<_>>()
@@ -436,7 +437,7 @@ async fn run_read(can_interface: &str, target_serial: u16, output: Option<String
         if target_node.is_none() {
             for (idx, entry) in varta.easyblades.iter().enumerate() {
                 if let Some(eb) = entry
-                    && eb.serial_number == Some(target_serial)
+                    && eb.serial_number.as_ref().map(|s| s.value) == Some(target_serial)
                 {
                     target_node = Some(idx as u8);
                     break;

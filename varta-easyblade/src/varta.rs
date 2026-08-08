@@ -10,6 +10,7 @@ use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
 use varta_easyblade::BatteryCapacity;
+use varta_easyblade::BatteryCapacityParam;
 use varta_easyblade::BatteryChargeCurrent;
 use varta_easyblade::BatteryChargeTemperature;
 use varta_easyblade::BatteryChargeVoltage;
@@ -26,17 +27,24 @@ use varta_easyblade::CellTemperatureLimit;
 use varta_easyblade::CellTemperatureMinMax;
 use varta_easyblade::CellVoltageLimit;
 use varta_easyblade::CellVoltageMinMax;
+use varta_easyblade::CellVoltages;
 use varta_easyblade::DeviceConfigInfo;
+use varta_easyblade::DeviceControlParam;
 use varta_easyblade::DeviceDateInfo;
 use varta_easyblade::DeviceErrorCounterInfo;
+use varta_easyblade::DeviceErrorHistory;
 use varta_easyblade::DeviceOperationTime;
 use varta_easyblade::DeviceSerialNumberInfo;
 use varta_easyblade::DeviceVariantInfo;
 use varta_easyblade::FetTemperature;
 use varta_easyblade::FetTemperatureLimit;
 use varta_easyblade::FetTemperatureMinMax;
+use varta_easyblade::HardwareVersion;
 use varta_easyblade::MasterBatteryTemperature;
 use varta_easyblade::MsgBits;
+use varta_easyblade::Sdo;
+use varta_easyblade::SerialNumber;
+use varta_easyblade::SoftwareVersion;
 
 fn get_node_id_from_can_message(msg: &varta_easyblade_can_messages::Messages) -> Option<u8> {
     match msg {
@@ -1343,7 +1351,7 @@ impl SdoSession {
             SdoRequest::SerialNumber => {
                 let bytes = self
                     .sdo_client
-                    .upload(0x2004, 0x01)
+                    .upload(SerialNumber::INDEX, SerialNumber::SUBINDEX_FIRST)
                     .await
                     .map_err(|e| e.to_string())?;
                 if bytes.len() < 2 {
@@ -1351,44 +1359,51 @@ impl SdoSession {
                 }
                 Ok(SdoResponse::SerialNumber {
                     node_id: self.node_id,
-                    value: u16::from_le_bytes([bytes[0], bytes[1]]),
+                    value: SerialNumber {
+                        value: u16::from_le_bytes([bytes[0], bytes[1]]),
+                    },
                 })
             },
             SdoRequest::SoftwareVersion => {
                 let sw = self
                     .sdo_client
-                    .upload(0x2000, 0x02)
+                    .upload(SoftwareVersion::INDEX, SoftwareVersion::SUBINDEX_FIRST)
                     .await
                     .map_err(|e| e.to_string())?;
                 let fw = self
                     .sdo_client
-                    .upload(0x2000, 0x03)
+                    .upload(SoftwareVersion::INDEX, SoftwareVersion::SUBINDEX_LAST)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sw_str = String::from_utf8_lossy(&sw).trim_matches('\0').to_string();
                 let fw_str = String::from_utf8_lossy(&fw).trim_matches('\0').to_string();
                 Ok(SdoResponse::SoftwareVersion {
                     node_id: self.node_id,
-                    value: format!("{}{}", sw_str, fw_str),
+                    value: SoftwareVersion { value: format!("{}{}", sw_str, fw_str) },
                 })
             },
             SdoRequest::HardwareVersion => {
                 let bytes = self
                     .sdo_client
-                    .upload(0x2000, 0x01)
+                    .upload(HardwareVersion::INDEX, HardwareVersion::SUBINDEX_FIRST)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::HardwareVersion {
                     node_id: self.node_id,
-                    value: String::from_utf8_lossy(&bytes)
-                        .trim_matches('\0')
-                        .to_string(),
+                    value: HardwareVersion {
+                        value: String::from_utf8_lossy(&bytes)
+                            .trim_matches('\0')
+                            .to_string(),
+                    },
                 })
             },
             SdoRequest::DeviceErrorHistory => {
                 let highest_subindex = self
                     .sdo_client
-                    .read_u8(0x2018, 0x00)
+                    .read_u8(
+                        DeviceErrorHistory::INDEX,
+                        DeviceErrorHistory::SUBINDEX_FIRST,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 if highest_subindex != 16 {
@@ -1401,7 +1416,7 @@ impl SdoSession {
                 for sub_index in 1..=16u8 {
                     let val = self
                         .sdo_client
-                        .read_u8(0x2018, sub_index)
+                        .read_u8(DeviceErrorHistory::INDEX, sub_index)
                         .await
                         .map_err(|e| e.to_string())?;
                     let e: varta_easyblade::DeviceError =
@@ -1411,12 +1426,15 @@ impl SdoSession {
                         };
                     errors.push(e);
                 }
-                Ok(SdoResponse::DeviceErrorHistory { node_id: self.node_id, value: errors })
+                Ok(SdoResponse::DeviceErrorHistory {
+                    node_id: self.node_id,
+                    value: DeviceErrorHistory { values: errors },
+                })
             },
             SdoRequest::CellVoltages => {
                 let highest_subindex = self
                     .sdo_client
-                    .read_u8(0x2100, 0x00)
+                    .read_u8(CellVoltages::INDEX, 0x00)
                     .await
                     .map_err(|e| e.to_string())?;
                 if highest_subindex != 16 {
@@ -1429,30 +1447,33 @@ impl SdoSession {
                 for sub_index in 1..=14u8 {
                     let val = self
                         .sdo_client
-                        .read_u32(0x2100, sub_index)
+                        .read_u32(CellVoltages::INDEX, sub_index)
                         .await
                         .map_err(|e| e.to_string())?;
                     cell_voltages.push((val as f32) / 1000.0);
                 }
                 Ok(SdoResponse::CellVoltages {
                     node_id: self.node_id,
-                    value: cell_voltages,
+                    value: CellVoltages { values: cell_voltages },
                 })
             },
             SdoRequest::DeviceConfigInfo => {
                 let c1 = self
                     .sdo_client
-                    .upload(0x2002, 0x01)
+                    .upload(DeviceConfigInfo::INDEX, DeviceConfigInfo::SUBINDEX_FIRST)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c2 = self
                     .sdo_client
-                    .upload(0x2002, 0x02)
+                    .upload(
+                        DeviceConfigInfo::INDEX,
+                        DeviceConfigInfo::SUBINDEX_FIRST + 1,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let c3 = self
                     .sdo_client
-                    .upload(0x2002, 0x03)
+                    .upload(DeviceConfigInfo::INDEX, DeviceConfigInfo::SUBINDEX_LAST)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceConfigInfo {
@@ -1467,17 +1488,26 @@ impl SdoSession {
             SdoRequest::DeviceSerialNumberInfo => {
                 let s1 = self
                     .sdo_client
-                    .read_u32(0x2004, 0x01)
+                    .read_u32(
+                        DeviceSerialNumberInfo::INDEX,
+                        DeviceSerialNumberInfo::SUBINDEX_FIRST,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s2 = self
                     .sdo_client
-                    .read_u32(0x2004, 0x02)
+                    .read_u32(
+                        DeviceSerialNumberInfo::INDEX,
+                        DeviceSerialNumberInfo::SUBINDEX_FIRST + 1,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s3 = self
                     .sdo_client
-                    .read_u32(0x2004, 0x03)
+                    .read_u32(
+                        DeviceSerialNumberInfo::INDEX,
+                        DeviceSerialNumberInfo::SUBINDEX_LAST,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceSerialNumberInfo {
@@ -1492,17 +1522,17 @@ impl SdoSession {
             SdoRequest::DeviceDateInfo => {
                 let d1 = self
                     .sdo_client
-                    .read_u16(0x2006, 0x01)
+                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX_FIRST)
                     .await
                     .map_err(|e| e.to_string())?;
                 let d2 = self
                     .sdo_client
-                    .read_u16(0x2006, 0x02)
+                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX_FIRST + 1)
                     .await
                     .map_err(|e| e.to_string())?;
                 let d3 = self
                     .sdo_client
-                    .read_u16(0x2006, 0x03)
+                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX_LAST)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceDateInfo {
@@ -1513,37 +1543,52 @@ impl SdoSession {
             SdoRequest::DeviceVariantInfo => {
                 let s1 = self
                     .sdo_client
-                    .read_u8(0x2008, 0x01)
+                    .read_u8(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX_FIRST)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s2 = self
                     .sdo_client
-                    .read_u8(0x2008, 0x02)
+                    .read_u8(
+                        DeviceVariantInfo::INDEX,
+                        DeviceVariantInfo::SUBINDEX_FIRST + 1,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s3 = self
                     .sdo_client
-                    .read_u8(0x2008, 0x03)
+                    .read_u8(
+                        DeviceVariantInfo::INDEX,
+                        DeviceVariantInfo::SUBINDEX_FIRST + 2,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s4 = self
                     .sdo_client
-                    .read_u16(0x2008, 0x04)
+                    .read_u16(
+                        DeviceVariantInfo::INDEX,
+                        DeviceVariantInfo::SUBINDEX_FIRST + 3,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s5 = self
                     .sdo_client
-                    .read_u16(0x2008, 0x05)
+                    .read_u16(
+                        DeviceVariantInfo::INDEX,
+                        DeviceVariantInfo::SUBINDEX_FIRST + 4,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s6 = self
                     .sdo_client
-                    .read_u16(0x2008, 0x06)
+                    .read_u16(
+                        DeviceVariantInfo::INDEX,
+                        DeviceVariantInfo::SUBINDEX_FIRST + 5,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s7 = self
                     .sdo_client
-                    .read_u8(0x2008, 0x07)
+                    .read_u8(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX_LAST)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceVariantInfo {
@@ -1562,60 +1607,96 @@ impl SdoSession {
             SdoRequest::DeviceControlParam => {
                 let val = self
                     .sdo_client
-                    .read_u16(0x2010, 0x01)
+                    .read_u16(
+                        DeviceControlParam::INDEX,
+                        DeviceControlParam::SUBINDEX_FIRST,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
-                Ok(SdoResponse::DeviceControlParam { node_id: self.node_id, value: val })
+                Ok(SdoResponse::DeviceControlParam {
+                    node_id: self.node_id,
+                    value: DeviceControlParam { value: val },
+                })
             },
             SdoRequest::DeviceOperationTime => {
                 let m1 = self
                     .sdo_client
-                    .read_u8(0x2016, 0x01)
+                    .read_u8(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let m2 = self
                     .sdo_client
-                    .read_u8(0x2016, 0x02)
+                    .read_u8(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 1,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let m3 = self
                     .sdo_client
-                    .read_u8(0x2016, 0x03)
+                    .read_u8(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 2,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let m4 = self
                     .sdo_client
-                    .read_u8(0x2016, 0x04)
+                    .read_u8(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 3,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let m5 = self
                     .sdo_client
-                    .read_u8(0x2016, 0x05)
+                    .read_u8(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 4,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let h1 = self
                     .sdo_client
-                    .read_u32(0x2016, 0x06)
+                    .read_u32(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 5,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let h2 = self
                     .sdo_client
-                    .read_u32(0x2016, 0x07)
+                    .read_u32(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 6,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let h3 = self
                     .sdo_client
-                    .read_u32(0x2016, 0x08)
+                    .read_u32(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 7,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let h4 = self
                     .sdo_client
-                    .read_u32(0x2016, 0x09)
+                    .read_u32(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_FIRST + 8,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 let h5 = self
                     .sdo_client
-                    .read_u32(0x2016, 0x0a)
+                    .read_u32(
+                        DeviceOperationTime::INDEX,
+                        DeviceOperationTime::SUBINDEX_LAST,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceOperationTime {
@@ -1637,397 +1718,397 @@ impl SdoSession {
             SdoRequest::DeviceErrorCounter => {
                 let over_temp_laden_zellen = self
                     .sdo_client
-                    .read_u16(0x201a, 0x01)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let under_temp_laden_zellen = self
                     .sdo_client
-                    .read_u16(0x201a, 0x02)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let over_temp_laden_fet = self
                     .sdo_client
-                    .read_u16(0x201a, 0x03)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let over_temp_entladen_zellen = self
                     .sdo_client
-                    .read_u16(0x201a, 0x04)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let under_temp_entladen_zellen = self
                     .sdo_client
-                    .read_u16(0x201a, 0x05)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 let over_temp_entladen_fet = self
                     .sdo_client
-                    .read_u16(0x201a, 0x06)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x06)
                     .await
                     .map_err(|e| e.to_string())?;
                 let over_temp_clamp = self
                     .sdo_client
-                    .read_u16(0x201a, 0x07)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x07)
                     .await
                     .map_err(|e| e.to_string())?;
                 let over_voltage = self
                     .sdo_client
-                    .read_u16(0x201a, 0x08)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x08)
                     .await
                     .map_err(|e| e.to_string())?;
                 let under_voltage = self
                     .sdo_client
-                    .read_u16(0x201a, 0x09)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x09)
                     .await
                     .map_err(|e| e.to_string())?;
                 let deep_low_voltage = self
                     .sdo_client
-                    .read_u16(0x201a, 0x0a)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x0a)
                     .await
                     .map_err(|e| e.to_string())?;
                 let cell_disbalance = self
                     .sdo_client
-                    .read_u16(0x201a, 0x0b)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x0b)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_pack_spn_min_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x0c)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x0c)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_pack_spn_max_alarm = self
                     .sdo_client
-                    .read_u16(0x201a, 0x0d)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x0d)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_pack_fused_spn_diff_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x0e)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x0e)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_pwr_spn_diff_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x0f)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x0f)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_pwr_spn_min_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x10)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x10)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_pwr_spn_max_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x11)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x11)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_netz_spn_min_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x12)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x12)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_netz_spn_max_alarm = self
                     .sdo_client
-                    .read_u16(0x201a, 0x13)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x13)
                     .await
                     .map_err(|e| e.to_string())?;
                 let akku_rekuperation_spn_max_alarm = self
                     .sdo_client
-                    .read_u16(0x201a, 0x14)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x14)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_charge_sc = self
                     .sdo_client
-                    .read_u16(0x201a, 0x15)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x15)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_charge_occ_1 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x16)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x16)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_charge_occ_2 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x17)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x17)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_charge_occ_3 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x18)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x18)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_discharge_sc = self
                     .sdo_client
-                    .read_u16(0x201a, 0x19)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x19)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_discharge_ocd_1 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x1a)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x1a)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_discharge_ocd_2 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x1b)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x1b)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_discharge_ocd_3 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x1c)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x1c)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_akku_diff_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x1d)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x1d)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_spn_min_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x1e)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x1e)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_spn_max_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x1f)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x1f)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_uc_fet_enable = self
                     .sdo_client
-                    .read_u16(0x201a, 0x20)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x20)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_current_sense_ein = self
                     .sdo_client
-                    .read_u16(0x201a, 0x21)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x21)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_voltage_sense_ein = self
                     .sdo_client
-                    .read_u16(0x201a, 0x22)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x22)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_temp_cell_sense_ein = self
                     .sdo_client
-                    .read_u16(0x201a, 0x23)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x23)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_temp_fet_sense_ein = self
                     .sdo_client
-                    .read_u16(0x201a, 0x24)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x24)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_pyro_fuse_eject_sense_ein = self
                     .sdo_client
-                    .read_u16(0x201a, 0x25)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x25)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_i_discharge_fet_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x26)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x26)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_i_charge_fet_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x27)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x27)
                     .await
                     .map_err(|e| e.to_string())?;
                 let scnd_voltage_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x28)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x28)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_spn_min_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x29)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x29)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_spn_max_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x2a)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x2a)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_temp_zellen_min_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x2b)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x2b)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_temp_zellen_max_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x2c)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x2c)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_temp_fet_min_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x2d)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x2d)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_temp_fet_max_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x2e)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x2e)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_temp_clamp_min_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x2f)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x2f)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_temp_clamp_max_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x30)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x30)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_i_charge_min_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x31)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x31)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_i_charge_max_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x32)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x32)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_i_discharge_min_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x33)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x33)
                     .await
                     .map_err(|e| e.to_string())?;
                 let adc_i_discharge_max_scale = self
                     .sdo_client
-                    .read_u16(0x201a, 0x34)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x34)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_discharge_fet_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x35)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x35)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_charge_fet_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x36)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x36)
                     .await
                     .map_err(|e| e.to_string())?;
                 let i_discharge_charge_fet_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x37)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x37)
                     .await
                     .map_err(|e| e.to_string())?;
                 let temp_discharge_error_lock = self
                     .sdo_client
-                    .read_u16(0x201a, 0x38)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x38)
                     .await
                     .map_err(|e| e.to_string())?;
                 let temp_charge_error_lock = self
                     .sdo_client
-                    .read_u16(0x201a, 0x39)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x39)
                     .await
                     .map_err(|e| e.to_string())?;
                 let over_charge_current_alarm_recuperation = self
                     .sdo_client
-                    .read_u16(0x201a, 0x3a)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x3a)
                     .await
                     .map_err(|e| e.to_string())?;
                 let over_charge_cell_voltage_alarm_recuperation = self
                     .sdo_client
-                    .read_u16(0x201a, 0x3b)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x3b)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v24_spn_min_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x3c)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x3c)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v24_spn_max_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x3d)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x3d)
                     .await
                     .map_err(|e| e.to_string())?;
                 let can_network_not_conf_node_id = self
                     .sdo_client
-                    .read_u16(0x201a, 0x3e)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x3e)
                     .await
                     .map_err(|e| e.to_string())?;
                 let can_network_double_node_id = self
                     .sdo_client
-                    .read_u16(0x201a, 0x3f)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x3f)
                     .await
                     .map_err(|e| e.to_string())?;
                 let parameter_configuration_error = self
                     .sdo_client
-                    .read_u16(0x201a, 0x40)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x40)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_01 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x41)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x41)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_02 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x42)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x42)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_03 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x43)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x43)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_04 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x44)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x44)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_05 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x45)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x45)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_06 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x46)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x46)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_07 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x47)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x47)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_08 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x48)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x48)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_09 = self
                     .sdo_client
-                    .read_u16(0x201a, 0x49)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x49)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_0a = self
                     .sdo_client
-                    .read_u16(0x201a, 0x4a)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x4a)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_0b = self
                     .sdo_client
-                    .read_u16(0x201a, 0x4b)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x4b)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_0c = self
                     .sdo_client
-                    .read_u16(0x201a, 0x4c)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x4c)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_0d = self
                     .sdo_client
-                    .read_u16(0x201a, 0x4d)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x4d)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_0e = self
                     .sdo_client
-                    .read_u16(0x201a, 0x4e)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x4e)
                     .await
                     .map_err(|e| e.to_string())?;
                 let reserved_0f = self
                     .sdo_client
-                    .read_u16(0x201a, 0x4f)
+                    .read_u16(DeviceErrorCounterInfo::INDEX, 0x4f)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceErrorCounter {
@@ -2118,12 +2199,12 @@ impl SdoSession {
             SdoRequest::CellVoltageMinMax => {
                 let min = self
                     .sdo_client
-                    .read_u32(0x2102, 0x01)
+                    .read_u32(CellVoltageMinMax::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let max = self
                     .sdo_client
-                    .read_u32(0x2102, 0x02)
+                    .read_u32(CellVoltageMinMax::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellVoltageMinMax {
@@ -2137,72 +2218,72 @@ impl SdoSession {
             SdoRequest::CellVoltageLimit => {
                 let sub1 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x01)
+                    .read_u32(CellVoltageLimit::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub2 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x02)
+                    .read_u32(CellVoltageLimit::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub3 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x03)
+                    .read_u32(CellVoltageLimit::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub4 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x04)
+                    .read_u32(CellVoltageLimit::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub5 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x05)
+                    .read_u32(CellVoltageLimit::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub6 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x06)
+                    .read_u32(CellVoltageLimit::INDEX, 0x06)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub7 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x07)
+                    .read_u32(CellVoltageLimit::INDEX, 0x07)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub8 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x08)
+                    .read_u32(CellVoltageLimit::INDEX, 0x08)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sub9 = self
                     .sdo_client
-                    .read_u32(0x2104, 0x09)
+                    .read_u32(CellVoltageLimit::INDEX, 0x09)
                     .await
                     .map_err(|e| e.to_string())?;
                 let suba = self
                     .sdo_client
-                    .read_u32(0x2104, 0x0a)
+                    .read_u32(CellVoltageLimit::INDEX, 0x0a)
                     .await
                     .map_err(|e| e.to_string())?;
                 let subb = self
                     .sdo_client
-                    .read_u32(0x2104, 0x0b)
+                    .read_u32(CellVoltageLimit::INDEX, 0x0b)
                     .await
                     .map_err(|e| e.to_string())?;
                 let subc = self
                     .sdo_client
-                    .read_u32(0x2104, 0x0c)
+                    .read_u32(CellVoltageLimit::INDEX, 0x0c)
                     .await
                     .map_err(|e| e.to_string())?;
                 let subd = self
                     .sdo_client
-                    .read_u32(0x2104, 0x0d)
+                    .read_u32(CellVoltageLimit::INDEX, 0x0d)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sube = self
                     .sdo_client
-                    .read_u32(0x2104, 0x0e)
+                    .read_u32(CellVoltageLimit::INDEX, 0x0e)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellVoltageLimit {
@@ -2228,17 +2309,17 @@ impl SdoSession {
             SdoRequest::BatteryVoltage => {
                 let v1 = self
                     .sdo_client
-                    .read_u32(0x2200, 0x01)
+                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX_FIRST)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v2 = self
                     .sdo_client
-                    .read_u32(0x2200, 0x02)
+                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX_FIRST + 1)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v3 = self
                     .sdo_client
-                    .read_u32(0x2200, 0x03)
+                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX_LAST)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryVoltage {
@@ -2253,7 +2334,7 @@ impl SdoSession {
             SdoRequest::BatteryVoltageLimit => {
                 let raw = self
                     .sdo_client
-                    .read_u32(0x2204, 0x01)
+                    .read_u32(BatteryVoltageLimit::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryVoltageLimit {
@@ -2266,27 +2347,27 @@ impl SdoSession {
             SdoRequest::BatteryCurrent => {
                 let c1 = self
                     .sdo_client
-                    .read_i32(0x2300, 0x01)
+                    .read_i32(BatteryCurrent::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c2 = self
                     .sdo_client
-                    .read_i32(0x2300, 0x02)
+                    .read_i32(BatteryCurrent::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c3 = self
                     .sdo_client
-                    .read_i32(0x2300, 0x03)
+                    .read_i32(BatteryCurrent::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c4 = self
                     .sdo_client
-                    .read_i32(0x2300, 0x04)
+                    .read_i32(BatteryCurrent::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c5 = self
                     .sdo_client
-                    .read_i32(0x2300, 0x05)
+                    .read_i32(BatteryCurrent::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryCurrent {
@@ -2303,7 +2384,7 @@ impl SdoSession {
             SdoRequest::BatteryCurrentLimit => {
                 let raw = self
                     .sdo_client
-                    .read_i32(0x2304, 0x01)
+                    .read_i32(BatteryCurrentLimit::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryCurrentLimit {
@@ -2316,12 +2397,12 @@ impl SdoSession {
             SdoRequest::FetTemperature => {
                 let t1 = self
                     .sdo_client
-                    .read_i32(0x2400, 0x01)
+                    .read_i32(FetTemperature::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t2 = self
                     .sdo_client
-                    .read_i32(0x2400, 0x02)
+                    .read_i32(FetTemperature::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::FetTemperature {
@@ -2335,12 +2416,12 @@ impl SdoSession {
             SdoRequest::FetTemperatureMinMax => {
                 let min = self
                     .sdo_client
-                    .read_i32(0x2402, 0x01)
+                    .read_i32(FetTemperatureMinMax::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let max = self
                     .sdo_client
-                    .read_i32(0x2402, 0x02)
+                    .read_i32(FetTemperatureMinMax::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::FetTemperatureMinMax {
@@ -2354,7 +2435,7 @@ impl SdoSession {
             SdoRequest::FetTemperatureLimit => {
                 let raw = self
                     .sdo_client
-                    .read_i32(0x2404, 0x01)
+                    .read_i32(FetTemperatureLimit::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::FetTemperatureLimit {
@@ -2365,32 +2446,32 @@ impl SdoSession {
             SdoRequest::CellTemperature => {
                 let t1 = self
                     .sdo_client
-                    .read_i32(0x2500, 0x01)
+                    .read_i32(CellTemperature::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t2 = self
                     .sdo_client
-                    .read_i32(0x2500, 0x02)
+                    .read_i32(CellTemperature::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t3 = self
                     .sdo_client
-                    .read_i32(0x2500, 0x03)
+                    .read_i32(CellTemperature::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t4 = self
                     .sdo_client
-                    .read_i32(0x2500, 0x04)
+                    .read_i32(CellTemperature::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t5 = self
                     .sdo_client
-                    .read_i32(0x2500, 0x05)
+                    .read_i32(CellTemperature::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t6 = self
                     .sdo_client
-                    .read_i32(0x2500, 0x06)
+                    .read_i32(CellTemperature::INDEX, 0x06)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellTemperature {
@@ -2408,12 +2489,12 @@ impl SdoSession {
             SdoRequest::CellTemperatureMinMax => {
                 let min = self
                     .sdo_client
-                    .read_i32(0x2502, 0x01)
+                    .read_i32(CellTemperatureMinMax::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let max = self
                     .sdo_client
-                    .read_i32(0x2502, 0x02)
+                    .read_i32(CellTemperatureMinMax::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellTemperatureMinMax {
@@ -2427,7 +2508,7 @@ impl SdoSession {
             SdoRequest::CellTemperatureLimit => {
                 let raw = self
                     .sdo_client
-                    .read_i32(0x2504, 0x01)
+                    .read_i32(CellTemperatureLimit::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellTemperatureLimit {
@@ -2438,17 +2519,17 @@ impl SdoSession {
             SdoRequest::CellBalanceStatus => {
                 let s1 = self
                     .sdo_client
-                    .read_u16(0x2600, 0x01)
+                    .read_u16(CellBalanceStatus::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s2 = self
                     .sdo_client
-                    .read_u16(0x2600, 0x02)
+                    .read_u16(CellBalanceStatus::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s3 = self
                     .sdo_client
-                    .read_u16(0x2600, 0x03)
+                    .read_u16(CellBalanceStatus::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellBalanceStatus {
@@ -2463,7 +2544,7 @@ impl SdoSession {
             SdoRequest::CellBalanceLimit => {
                 let raw = self
                     .sdo_client
-                    .read_u32(0x2604, 0x01)
+                    .read_u32(CellBalanceLimit::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::CellBalanceLimit {
@@ -2478,7 +2559,7 @@ impl SdoSession {
                 for i in 0..18u8 {
                     raw[i as usize] = self
                         .sdo_client
-                        .read_u16(0x2700, i + 1)
+                        .read_u16(CellImpedance::INDEX, i + 1)
                         .await
                         .map_err(|e| e.to_string())?;
                 }
@@ -2496,37 +2577,37 @@ impl SdoSession {
             SdoRequest::BatteryCapacity => {
                 let design = self
                     .sdo_client
-                    .read_u32(0x2800, 0x01)
+                    .read_u32(BatteryCapacity::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let fcc = self
                     .sdo_client
-                    .read_u32(0x2800, 0x02)
+                    .read_u32(BatteryCapacity::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let remain = self
                     .sdo_client
-                    .read_u32(0x2800, 0x03)
+                    .read_u32(BatteryCapacity::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let soc = self
                     .sdo_client
-                    .read_u8(0x2800, 0x04)
+                    .read_u8(BatteryCapacity::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let soh = self
                     .sdo_client
-                    .read_u8(0x2800, 0x05)
+                    .read_u8(BatteryCapacity::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 let discharged = self
                     .sdo_client
-                    .read_u32(0x2800, 0x06)
+                    .read_u32(BatteryCapacity::INDEX, 0x06)
                     .await
                     .map_err(|e| e.to_string())?;
                 let charged = self
                     .sdo_client
-                    .read_u32(0x2800, 0x07)
+                    .read_u32(BatteryCapacity::INDEX, 0x07)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryCapacity {
@@ -2545,55 +2626,61 @@ impl SdoSession {
             SdoRequest::BatteryCapacityParam => {
                 let val = self
                     .sdo_client
-                    .read_u8(0x2804, 0x01)
+                    .read_u8(
+                        BatteryCapacityParam::INDEX,
+                        BatteryCapacityParam::SUBINDEX_FIRST,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
-                Ok(SdoResponse::BatteryCapacityParam { node_id: self.node_id, value: val })
+                Ok(SdoResponse::BatteryCapacityParam {
+                    node_id: self.node_id,
+                    value: BatteryCapacityParam { value: val },
+                })
             },
             SdoRequest::BatteryCycleCount => {
                 let c1 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x01)
+                    .read_u32(BatteryCycleCount::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c2 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x02)
+                    .read_u32(BatteryCycleCount::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c3 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x03)
+                    .read_u32(BatteryCycleCount::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c4 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x04)
+                    .read_u32(BatteryCycleCount::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c5 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x05)
+                    .read_u32(BatteryCycleCount::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c6 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x06)
+                    .read_u32(BatteryCycleCount::INDEX, 0x06)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c7 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x07)
+                    .read_u32(BatteryCycleCount::INDEX, 0x07)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c8 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x08)
+                    .read_u32(BatteryCycleCount::INDEX, 0x08)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c9 = self
                     .sdo_client
-                    .read_u32(0x2900, 0x09)
+                    .read_u32(BatteryCycleCount::INDEX, 0x09)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryCycleCount {
@@ -2614,17 +2701,17 @@ impl SdoSession {
             SdoRequest::BatteryChargeVoltage => {
                 let v1 = self
                     .sdo_client
-                    .read_u32(0x3000, 0x01)
+                    .read_u32(BatteryChargeVoltage::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v2 = self
                     .sdo_client
-                    .read_u32(0x3000, 0x02)
+                    .read_u32(BatteryChargeVoltage::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v3 = self
                     .sdo_client
-                    .read_u32(0x3000, 0x03)
+                    .read_u32(BatteryChargeVoltage::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryChargeVoltage {
@@ -2639,52 +2726,52 @@ impl SdoSession {
             SdoRequest::BatteryChargeCurrent => {
                 let c1 = self
                     .sdo_client
-                    .read_u32(0x3100, 0x01)
+                    .read_u32(BatteryChargeCurrent::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c2 = self
                     .sdo_client
-                    .read_u32(0x3100, 0x02)
+                    .read_u32(BatteryChargeCurrent::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c3 = self
                     .sdo_client
-                    .read_u32(0x3100, 0x03)
+                    .read_u32(BatteryChargeCurrent::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c4 = self
                     .sdo_client
-                    .read_u32(0x3100, 0x04)
+                    .read_u32(BatteryChargeCurrent::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c5 = self
                     .sdo_client
-                    .read_u32(0x3100, 0x05)
+                    .read_u32(BatteryChargeCurrent::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t1 = self
                     .sdo_client
-                    .read_u16(0x3100, 0x06)
+                    .read_u16(BatteryChargeCurrent::INDEX, 0x06)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t2 = self
                     .sdo_client
-                    .read_u16(0x3100, 0x07)
+                    .read_u16(BatteryChargeCurrent::INDEX, 0x07)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t3 = self
                     .sdo_client
-                    .read_u16(0x3100, 0x08)
+                    .read_u16(BatteryChargeCurrent::INDEX, 0x08)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t4 = self
                     .sdo_client
-                    .read_u16(0x3100, 0x09)
+                    .read_u16(BatteryChargeCurrent::INDEX, 0x09)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c10 = self
                     .sdo_client
-                    .read_u32(0x3100, 0x0a)
+                    .read_u32(BatteryChargeCurrent::INDEX, 0x0a)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryChargeCurrent {
@@ -2706,32 +2793,32 @@ impl SdoSession {
             SdoRequest::BatteryChargeTemperature => {
                 let t1 = self
                     .sdo_client
-                    .read_i32(0x3200, 0x01)
+                    .read_i32(BatteryChargeTemperature::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t2 = self
                     .sdo_client
-                    .read_i32(0x3200, 0x02)
+                    .read_i32(BatteryChargeTemperature::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t3 = self
                     .sdo_client
-                    .read_i32(0x3200, 0x03)
+                    .read_i32(BatteryChargeTemperature::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t4 = self
                     .sdo_client
-                    .read_i32(0x3200, 0x04)
+                    .read_i32(BatteryChargeTemperature::INDEX, 0x04)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t5 = self
                     .sdo_client
-                    .read_i32(0x3200, 0x05)
+                    .read_i32(BatteryChargeTemperature::INDEX, 0x05)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t6 = self
                     .sdo_client
-                    .read_i32(0x3200, 0x06)
+                    .read_i32(BatteryChargeTemperature::INDEX, 0x06)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryChargeTemperature {
@@ -2749,12 +2836,12 @@ impl SdoSession {
             SdoRequest::MasterBatteryTemperature => {
                 let t1 = self
                     .sdo_client
-                    .read_i32(0x3700, 0x01)
+                    .read_i32(MasterBatteryTemperature::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
                 let t2 = self
                     .sdo_client
-                    .read_i32(0x3700, 0x02)
+                    .read_i32(MasterBatteryTemperature::INDEX, 0x02)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::MasterBatteryTemperature {
@@ -2769,7 +2856,7 @@ impl SdoSession {
     }
 
     /// Read the serial number of the node.
-    pub async fn read_serial_number(&mut self) -> Result<u16, String> {
+    pub async fn read_serial_number(&mut self) -> Result<SerialNumber, String> {
         match self.read(SdoRequest::SerialNumber).await? {
             SdoResponse::SerialNumber { value, .. } => Ok(value),
             _ => unreachable!(),
@@ -2777,7 +2864,7 @@ impl SdoSession {
     }
 
     /// Read the software version of the node.
-    pub async fn read_software_version(&mut self) -> Result<String, String> {
+    pub async fn read_software_version(&mut self) -> Result<SoftwareVersion, String> {
         match self.read(SdoRequest::SoftwareVersion).await? {
             SdoResponse::SoftwareVersion { value, .. } => Ok(value),
             _ => unreachable!(),
@@ -2785,7 +2872,7 @@ impl SdoSession {
     }
 
     /// Read the hardware version of the node.
-    pub async fn read_hardware_version(&mut self) -> Result<String, String> {
+    pub async fn read_hardware_version(&mut self) -> Result<HardwareVersion, String> {
         match self.read(SdoRequest::HardwareVersion).await? {
             SdoResponse::HardwareVersion { value, .. } => Ok(value),
             _ => unreachable!(),
@@ -2793,9 +2880,7 @@ impl SdoSession {
     }
 
     /// Read the device error history.
-    pub async fn read_device_error_history(
-        &mut self,
-    ) -> Result<Vec<varta_easyblade::DeviceError>, String> {
+    pub async fn read_device_error_history(&mut self) -> Result<DeviceErrorHistory, String> {
         match self.read(SdoRequest::DeviceErrorHistory).await? {
             SdoResponse::DeviceErrorHistory { value, .. } => Ok(value),
             _ => unreachable!(),
@@ -2803,7 +2888,7 @@ impl SdoSession {
     }
 
     /// Read the cell voltages.
-    pub async fn read_cell_voltages(&mut self) -> Result<Vec<f32>, String> {
+    pub async fn read_cell_voltages(&mut self) -> Result<CellVoltages, String> {
         match self.read(SdoRequest::CellVoltages).await? {
             SdoResponse::CellVoltages { value, .. } => Ok(value),
             _ => unreachable!(),
@@ -2845,7 +2930,7 @@ impl SdoSession {
     }
 
     /// Read the device control parameter.
-    pub async fn read_device_control_param(&mut self) -> Result<u16, String> {
+    pub async fn read_device_control_param(&mut self) -> Result<DeviceControlParam, String> {
         match self.read(SdoRequest::DeviceControlParam).await? {
             SdoResponse::DeviceControlParam { value, .. } => Ok(value),
             _ => unreachable!(),
@@ -2997,7 +3082,7 @@ impl SdoSession {
     }
 
     /// Read the battery capacity parameter.
-    pub async fn read_battery_capacity_param(&mut self) -> Result<u8, String> {
+    pub async fn read_battery_capacity_param(&mut self) -> Result<BatteryCapacityParam, String> {
         match self.read(SdoRequest::BatteryCapacityParam).await? {
             SdoResponse::BatteryCapacityParam { value, .. } => Ok(value),
             _ => unreachable!(),

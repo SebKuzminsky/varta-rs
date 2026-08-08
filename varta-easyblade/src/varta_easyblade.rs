@@ -1,10 +1,171 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+/// Trait for SDO objects that defines their CANopen index and subindex range.
+/// This is the single source of truth for SDO address constants, eliminating
+/// duplication between Display formatting and read logic.
+pub trait Sdo: std::fmt::Display {
+    /// The CANopen object dictionary index for this SDO.
+    const INDEX: u16;
+    /// The first (lowest) subindex used by this SDO (inclusive).
+    const SUBINDEX_FIRST: u8;
+    /// The last (highest) subindex used by this SDO (inclusive).
+    const SUBINDEX_LAST: u8;
+
+    /// Format the SDO address as "0xINDEX:0xSUB" (single subindex) or
+    /// "0xINDEX:0xSUB_FIRST..0xSUB_LAST" (range).
+    fn fmt_sdo(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if Self::SUBINDEX_FIRST == Self::SUBINDEX_LAST {
+            write!(f, "0x{:04X}:0x{:02X}", Self::INDEX, Self::SUBINDEX_FIRST)
+        } else {
+            write!(
+                f,
+                "0x{:04X}:0x{:02X}..0x{:02X}",
+                Self::INDEX,
+                Self::SUBINDEX_FIRST,
+                Self::SUBINDEX_LAST
+            )
+        }
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SerialNumber {
+    pub value: u16,
+}
+
+impl Sdo for SerialNumber {
+    const INDEX: u16 = 0x2004;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for SerialNumber {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SoftwareVersion {
+    pub value: String,
+}
+
+impl Sdo for SoftwareVersion {
+    const INDEX: u16 = 0x2000;
+    const SUBINDEX_FIRST: u8 = 0x02;
+    const SUBINDEX_LAST: u8 = 0x03;
+}
+
+impl std::fmt::Display for SoftwareVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct HardwareVersion {
+    pub value: String,
+}
+
+impl Sdo for HardwareVersion {
+    const INDEX: u16 = 0x2000;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for HardwareVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Device Error History Values (0x2018 subindex 0 holds count, 1..=16 hold errors).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct DeviceErrorHistory {
+    pub values: Vec<DeviceError>,
+}
+
+impl Sdo for DeviceErrorHistory {
+    const INDEX: u16 = 0x2018;
+    const SUBINDEX_FIRST: u8 = 0x00;
+    const SUBINDEX_LAST: u8 = 0x10;
+}
+
+impl std::fmt::Display for DeviceErrorHistory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Cell Voltages (0x2100 subindex 0 holds count, 1..=16 hold voltages in mV).
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CellVoltages {
+    pub values: Vec<f32>,
+}
+
+impl Sdo for CellVoltages {
+    const INDEX: u16 = 0x2100;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x10;
+}
+
+impl std::fmt::Display for CellVoltages {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct DeviceControlParam {
+    pub value: u16,
+}
+
+impl Sdo for DeviceControlParam {
+    const INDEX: u16 = 0x2010;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for DeviceControlParam {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct BatteryCapacityParam {
+    pub value: u8,
+}
+
+impl Sdo for BatteryCapacityParam {
+    const INDEX: u16 = 0x2804;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for BatteryCapacityParam {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceConfigInfo {
     pub config_1: String,
     pub config_2: String,
     pub config_3: String,
+}
+
+impl Sdo for DeviceConfigInfo {
+    const INDEX: u16 = 0x2002;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x03;
+}
+
+impl std::fmt::Display for DeviceConfigInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -14,11 +175,35 @@ pub struct DeviceSerialNumberInfo {
     pub serial_part_3: u32,
 }
 
+impl Sdo for DeviceSerialNumberInfo {
+    const INDEX: u16 = 0x2004;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x03;
+}
+
+impl std::fmt::Display for DeviceSerialNumberInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceDateInfo {
     pub year: u16,
     pub month: u16,
     pub day: u16,
+}
+
+impl Sdo for DeviceDateInfo {
+    const INDEX: u16 = 0x2006;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x03;
+}
+
+impl std::fmt::Display for DeviceDateInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -30,6 +215,18 @@ pub struct DeviceVariantInfo {
     pub variant_5: u16,
     pub variant_6: u16,
     pub variant_7: u8,
+}
+
+impl Sdo for DeviceVariantInfo {
+    const INDEX: u16 = 0x2008;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x07;
+}
+
+impl std::fmt::Display for DeviceVariantInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -115,6 +312,18 @@ pub struct DeviceErrorCounterInfo {
     pub reserved_0f: u16,
 }
 
+impl Sdo for DeviceErrorCounterInfo {
+    const INDEX: u16 = 0x201A;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x4F;
+}
+
+impl std::fmt::Display for DeviceErrorCounterInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct DeviceOperationTime {
     pub minutes_below_zero: u8,
@@ -129,10 +338,34 @@ pub struct DeviceOperationTime {
     pub hours_above_80: u32,
 }
 
+impl Sdo for DeviceOperationTime {
+    const INDEX: u16 = 0x2016;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x0A;
+}
+
+impl std::fmt::Display for DeviceOperationTime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct CellVoltageMinMax {
     pub min_voltage_v: f32,
     pub max_voltage_v: f32,
+}
+
+impl Sdo for CellVoltageMinMax {
+    const INDEX: u16 = 0x2102;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x02;
+}
+
+impl std::fmt::Display for CellVoltageMinMax {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, Copy, serde::Serialize)]
@@ -167,6 +400,18 @@ pub struct CellVoltageLimit {
     pub max_charge_voltage_no_password_v: f32,
 }
 
+impl Sdo for CellVoltageLimit {
+    const INDEX: u16 = 0x2104;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x0E;
+}
+
+impl std::fmt::Display for CellVoltageLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryVoltage {
     pub sum_of_cell_voltage_v: f32,
@@ -174,9 +419,33 @@ pub struct BatteryVoltage {
     pub external_connector_voltage_v: f32,
 }
 
+impl Sdo for BatteryVoltage {
+    const INDEX: u16 = 0x2200;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x03;
+}
+
+impl std::fmt::Display for BatteryVoltage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct BatteryVoltageLimit {
     pub internal_external_min_delta_v: f32,
+}
+
+impl Sdo for BatteryVoltageLimit {
+    const INDEX: u16 = 0x2204;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for BatteryVoltageLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -188,9 +457,33 @@ pub struct BatteryCurrent {
     pub average_10s_current_a: f32,
 }
 
+impl Sdo for BatteryCurrent {
+    const INDEX: u16 = 0x2300;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x05;
+}
+
+impl std::fmt::Display for BatteryCurrent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct BatteryCurrentLimit {
     pub discharge_sc_error_a: f32,
+}
+
+impl Sdo for BatteryCurrentLimit {
+    const INDEX: u16 = 0x2304;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for BatteryCurrentLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -199,15 +492,51 @@ pub struct FetTemperature {
     pub temperature_2_c: f32,
 }
 
+impl Sdo for FetTemperature {
+    const INDEX: u16 = 0x2400;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x02;
+}
+
+impl std::fmt::Display for FetTemperature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct FetTemperatureMinMax {
     pub min_temperature_c: f32,
     pub max_temperature_c: f32,
 }
 
+impl Sdo for FetTemperatureMinMax {
+    const INDEX: u16 = 0x2402;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x02;
+}
+
+impl std::fmt::Display for FetTemperatureMinMax {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct FetTemperatureLimit {
     pub discharge_over_temp_c: f32,
+}
+
+impl Sdo for FetTemperatureLimit {
+    const INDEX: u16 = 0x2404;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for FetTemperatureLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -220,15 +549,51 @@ pub struct CellTemperature {
     pub temperature_6_c: f32,
 }
 
+impl Sdo for CellTemperature {
+    const INDEX: u16 = 0x2500;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x06;
+}
+
+impl std::fmt::Display for CellTemperature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct CellTemperatureMinMax {
     pub min_temperature_c: f32,
     pub max_temperature_c: f32,
 }
 
+impl Sdo for CellTemperatureMinMax {
+    const INDEX: u16 = 0x2502;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x02;
+}
+
+impl std::fmt::Display for CellTemperatureMinMax {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct CellTemperatureLimit {
     pub discharge_over_temp_c: f32,
+}
+
+impl Sdo for CellTemperatureLimit {
+    const INDEX: u16 = 0x2504;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for CellTemperatureLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -238,9 +603,33 @@ pub struct CellBalanceStatus {
     pub balance_fet_active_persistent: u16,
 }
 
+impl Sdo for CellBalanceStatus {
+    const INDEX: u16 = 0x2600;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x03;
+}
+
+impl std::fmt::Display for CellBalanceStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct CellBalanceLimit {
     pub balance_start_diff_voltage_v: f32,
+}
+
+impl Sdo for CellBalanceLimit {
+    const INDEX: u16 = 0x2604;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x01;
+}
+
+impl std::fmt::Display for CellBalanceLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -248,6 +637,18 @@ pub struct CellImpedance {
     pub cell_impedances_mohm: [u16; 16],
     pub low_temp_factor: u16,
     pub high_temp_factor: u16,
+}
+
+impl Sdo for CellImpedance {
+    const INDEX: u16 = 0x2700;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x12;
+}
+
+impl std::fmt::Display for CellImpedance {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -259,6 +660,18 @@ pub struct BatteryCapacity {
     pub soh_percent: f32,
     pub total_discharged_capacity_ah: f32,
     pub total_charged_capacity_ah: f32,
+}
+
+impl Sdo for BatteryCapacity {
+    const INDEX: u16 = 0x2800;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x07;
+}
+
+impl std::fmt::Display for BatteryCapacity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -274,11 +687,35 @@ pub struct BatteryCycleCount {
     pub charge_use_high_temperature: u32,
 }
 
+impl Sdo for BatteryCycleCount {
+    const INDEX: u16 = 0x2900;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x09;
+}
+
+impl std::fmt::Display for BatteryCycleCount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryChargeVoltage {
     pub charge_voltage_valid_v: f32,
     pub charge_max_voltage_v: f32,
     pub charge_keep_power_voltage_v: f32,
+}
+
+impl Sdo for BatteryChargeVoltage {
+    const INDEX: u16 = 0x3000;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x03;
+}
+
+impl std::fmt::Display for BatteryChargeVoltage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -295,6 +732,18 @@ pub struct BatteryChargeCurrent {
     pub charge_current_config: u32,
 }
 
+impl Sdo for BatteryChargeCurrent {
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x0A;
+}
+
+impl std::fmt::Display for BatteryChargeCurrent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryChargeTemperature {
     pub temp_min_low_c: f32,
@@ -305,10 +754,34 @@ pub struct BatteryChargeTemperature {
     pub temp_6_c: f32,
 }
 
+impl Sdo for BatteryChargeTemperature {
+    const INDEX: u16 = 0x3200;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x06;
+}
+
+impl std::fmt::Display for BatteryChargeTemperature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct MasterBatteryTemperature {
     pub max_fet_temperature_c: f32,
     pub max_cell_temperature_c: f32,
+}
+
+impl Sdo for MasterBatteryTemperature {
+    const INDEX: u16 = 0x3700;
+    const SUBINDEX_FIRST: u8 = 0x01;
+    const SUBINDEX_LAST: u8 = 0x02;
+}
+
+impl std::fmt::Display for MasterBatteryTemperature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, serde::Serialize)]
@@ -402,55 +875,55 @@ pub enum SdoRequest {
 impl std::fmt::Display for SdoRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SdoRequest::SerialNumber => write!(f, "0x2004:0x01"),
-            SdoRequest::SoftwareVersion => write!(f, "0x2000:0x02,0x03"),
-            SdoRequest::HardwareVersion => write!(f, "0x2000:0x01"),
-            SdoRequest::DeviceErrorHistory => write!(f, "0x2018:0x00..0x10"),
-            SdoRequest::CellVoltages => write!(f, "0x2100:0x01..0x10"),
-            SdoRequest::DeviceConfigInfo => write!(f, "0x2002:0x01..0x03"),
-            SdoRequest::DeviceSerialNumberInfo => write!(f, "0x2004:0x01..0x03"),
-            SdoRequest::DeviceDateInfo => write!(f, "0x2006:0x01..0x03"),
-            SdoRequest::DeviceVariantInfo => write!(f, "0x2008:0x01..0x07"),
-            SdoRequest::DeviceControlParam => write!(f, "0x2010:0x01"),
-            SdoRequest::DeviceOperationTime => write!(f, "0x2016:0x01..0x0A"),
-            SdoRequest::DeviceErrorCounter => write!(f, "0x201A:0x01..0x4F"),
-            SdoRequest::CellVoltageMinMax => write!(f, "0x2102:0x01..0x02"),
-            SdoRequest::CellVoltageLimit => write!(f, "0x2104:0x01..0x0E"),
-            SdoRequest::BatteryVoltage => write!(f, "0x2200:0x01..0x03"),
-            SdoRequest::BatteryVoltageLimit => write!(f, "0x2204:0x01"),
-            SdoRequest::BatteryCurrent => write!(f, "0x2300:0x01..0x05"),
-            SdoRequest::BatteryCurrentLimit => write!(f, "0x2304:0x01"),
-            SdoRequest::FetTemperature => write!(f, "0x2400:0x01..0x02"),
-            SdoRequest::FetTemperatureMinMax => write!(f, "0x2402:0x01..0x02"),
-            SdoRequest::FetTemperatureLimit => write!(f, "0x2404:0x01"),
-            SdoRequest::CellTemperature => write!(f, "0x2500:0x01..0x06"),
-            SdoRequest::CellTemperatureMinMax => write!(f, "0x2502:0x01..0x02"),
-            SdoRequest::CellTemperatureLimit => write!(f, "0x2504:0x01"),
-            SdoRequest::CellBalanceStatus => write!(f, "0x2600:0x01..0x03"),
-            SdoRequest::CellBalanceLimit => write!(f, "0x2604:0x01"),
-            SdoRequest::CellImpedance => write!(f, "0x2700:0x01..0x12"),
-            SdoRequest::BatteryCapacity => write!(f, "0x2800:0x01..0x07"),
-            SdoRequest::BatteryCapacityParam => write!(f, "0x2804:0x01"),
-            SdoRequest::BatteryCycleCount => write!(f, "0x2900:0x01..0x09"),
-            SdoRequest::BatteryChargeVoltage => write!(f, "0x3000:0x01..0x03"),
-            SdoRequest::BatteryChargeCurrent => write!(f, "0x3100:0x01..0x0A"),
-            SdoRequest::BatteryChargeTemperature => write!(f, "0x3200:0x01..0x06"),
-            SdoRequest::MasterBatteryTemperature => write!(f, "0x3700:0x01..0x02"),
+            SdoRequest::SerialNumber => <SerialNumber as Sdo>::fmt_sdo(f),
+            SdoRequest::SoftwareVersion => <SoftwareVersion as Sdo>::fmt_sdo(f),
+            SdoRequest::HardwareVersion => <HardwareVersion as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceErrorHistory => <DeviceErrorHistory as Sdo>::fmt_sdo(f),
+            SdoRequest::CellVoltages => <CellVoltages as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceConfigInfo => <DeviceConfigInfo as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceSerialNumberInfo => <DeviceSerialNumberInfo as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceDateInfo => <DeviceDateInfo as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceVariantInfo => <DeviceVariantInfo as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceControlParam => <DeviceControlParam as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceOperationTime => <DeviceOperationTime as Sdo>::fmt_sdo(f),
+            SdoRequest::DeviceErrorCounter => <DeviceErrorCounterInfo as Sdo>::fmt_sdo(f),
+            SdoRequest::CellVoltageMinMax => <CellVoltageMinMax as Sdo>::fmt_sdo(f),
+            SdoRequest::CellVoltageLimit => <CellVoltageLimit as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryVoltage => <BatteryVoltage as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryVoltageLimit => <BatteryVoltageLimit as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryCurrent => <BatteryCurrent as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryCurrentLimit => <BatteryCurrentLimit as Sdo>::fmt_sdo(f),
+            SdoRequest::FetTemperature => <FetTemperature as Sdo>::fmt_sdo(f),
+            SdoRequest::FetTemperatureMinMax => <FetTemperatureMinMax as Sdo>::fmt_sdo(f),
+            SdoRequest::FetTemperatureLimit => <FetTemperatureLimit as Sdo>::fmt_sdo(f),
+            SdoRequest::CellTemperature => <CellTemperature as Sdo>::fmt_sdo(f),
+            SdoRequest::CellTemperatureMinMax => <CellTemperatureMinMax as Sdo>::fmt_sdo(f),
+            SdoRequest::CellTemperatureLimit => <CellTemperatureLimit as Sdo>::fmt_sdo(f),
+            SdoRequest::CellBalanceStatus => <CellBalanceStatus as Sdo>::fmt_sdo(f),
+            SdoRequest::CellBalanceLimit => <CellBalanceLimit as Sdo>::fmt_sdo(f),
+            SdoRequest::CellImpedance => <CellImpedance as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryCapacity => <BatteryCapacity as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryCapacityParam => <BatteryCapacityParam as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryCycleCount => <BatteryCycleCount as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeVoltage => <BatteryChargeVoltage as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeCurrent => <BatteryChargeCurrent as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeTemperature => <BatteryChargeTemperature as Sdo>::fmt_sdo(f),
+            SdoRequest::MasterBatteryTemperature => <MasterBatteryTemperature as Sdo>::fmt_sdo(f),
         }
     }
 }
 
 pub enum SdoResponse {
-    SerialNumber { node_id: u8, value: u16 },
-    SoftwareVersion { node_id: u8, value: String },
-    HardwareVersion { node_id: u8, value: String },
-    DeviceErrorHistory { node_id: u8, value: Vec<DeviceError> },
-    CellVoltages { node_id: u8, value: Vec<f32> },
+    SerialNumber { node_id: u8, value: SerialNumber },
+    SoftwareVersion { node_id: u8, value: SoftwareVersion },
+    HardwareVersion { node_id: u8, value: HardwareVersion },
+    DeviceErrorHistory { node_id: u8, value: DeviceErrorHistory },
+    CellVoltages { node_id: u8, value: CellVoltages },
     DeviceConfigInfo { node_id: u8, value: DeviceConfigInfo },
     DeviceSerialNumberInfo { node_id: u8, value: DeviceSerialNumberInfo },
     DeviceDateInfo { node_id: u8, value: DeviceDateInfo },
     DeviceVariantInfo { node_id: u8, value: DeviceVariantInfo },
-    DeviceControlParam { node_id: u8, value: u16 },
+    DeviceControlParam { node_id: u8, value: DeviceControlParam },
     DeviceOperationTime { node_id: u8, value: DeviceOperationTime },
     DeviceErrorCounter { node_id: u8, value: DeviceErrorCounterInfo },
     CellVoltageMinMax { node_id: u8, value: CellVoltageMinMax },
@@ -469,7 +942,7 @@ pub enum SdoResponse {
     CellBalanceLimit { node_id: u8, value: CellBalanceLimit },
     CellImpedance { node_id: u8, value: CellImpedance },
     BatteryCapacity { node_id: u8, value: BatteryCapacity },
-    BatteryCapacityParam { node_id: u8, value: u8 },
+    BatteryCapacityParam { node_id: u8, value: BatteryCapacityParam },
     BatteryCycleCount { node_id: u8, value: BatteryCycleCount },
     BatteryChargeVoltage { node_id: u8, value: BatteryChargeVoltage },
     BatteryChargeCurrent { node_id: u8, value: BatteryChargeCurrent },
@@ -497,21 +970,21 @@ pub struct MasterInfo {
 #[derive(Debug)]
 pub struct VartaEasyblade {
     pub node_id: u8,
-    pub serial_number: Option<u16>,
-    pub software_version: Option<String>,
-    pub hardware_version: Option<String>,
+    pub serial_number: Option<SerialNumber>,
+    pub software_version: Option<SoftwareVersion>,
+    pub hardware_version: Option<HardwareVersion>,
     pub last_seen: std::time::SystemTime,
     pub voltage: Option<f32>,
     pub current: Option<f32>,
     pub soc: Option<f32>,
     pub soh: Option<f32>,
-    pub cell_voltages: Option<Vec<f32>>,
-    pub device_errors: Option<Vec<DeviceError>>,
+    pub cell_voltages: Option<CellVoltages>,
+    pub device_errors: Option<DeviceErrorHistory>,
     pub device_config_info: Option<DeviceConfigInfo>,
     pub device_serial_number_info: Option<DeviceSerialNumberInfo>,
     pub device_date_info: Option<DeviceDateInfo>,
     pub device_variant_info: Option<DeviceVariantInfo>,
-    pub device_control_param: Option<u16>,
+    pub device_control_param: Option<DeviceControlParam>,
     pub device_operation_time: Option<DeviceOperationTime>,
     pub device_error_counter: Option<DeviceErrorCounterInfo>,
     pub cell_voltage_min_max: Option<CellVoltageMinMax>,
@@ -530,7 +1003,7 @@ pub struct VartaEasyblade {
     pub cell_balance_limit: Option<CellBalanceLimit>,
     pub cell_impedance: Option<CellImpedance>,
     pub battery_capacity: Option<BatteryCapacity>,
-    pub battery_capacity_param: Option<u8>,
+    pub battery_capacity_param: Option<BatteryCapacityParam>,
     pub battery_cycle_count: Option<BatteryCycleCount>,
     pub battery_charge_voltage: Option<BatteryChargeVoltage>,
     pub battery_charge_current: Option<BatteryChargeCurrent>,
@@ -542,7 +1015,7 @@ pub struct VartaEasyblade {
 /// Device Error values logged by the Varta Easyblade module in SDO 0x2018
 /// (DeviceError History Values).
 #[repr(u8)]
-#[derive(Debug, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, IntoPrimitive, TryFromPrimitive)]
 pub enum DeviceError {
     None = 0x00,
 

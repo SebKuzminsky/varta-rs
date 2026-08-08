@@ -149,11 +149,11 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         .iter()
         .filter_map(|eb| if let Some(eb) = eb { Some(eb) } else { None })
     {
-        let Some(serial_number) = eb.serial_number else {
+        let Some(serial_number) = &eb.serial_number else {
             continue;
         };
 
-        let metric_header = format!("varta_module_{:4}", serial_number);
+        let metric_header = format!("varta_module_{:4}", serial_number.value);
 
         if let Some(voltage) = eb.voltage {
             points.push(MetricPoint {

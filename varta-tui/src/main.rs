@@ -363,7 +363,12 @@ fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value 
     if let Some(ref v) = eb.device_errors {
         map.insert(
             "device_error_history".into(),
-            json!(v.iter().map(|e| format!("{:?}", e)).collect::<Vec<_>>()),
+            json!(
+                v.values
+                    .iter()
+                    .map(|e| format!("{:?}", e))
+                    .collect::<Vec<_>>()
+            ),
         );
     }
     if let Some(ref v) = eb.device_error_counter {
@@ -605,7 +610,8 @@ fn draw_frame(
         let last_seen = format_last_seen(eb.last_seen);
         let row = Row::new([
             eb.serial_number
-                .map_or("----".to_string(), |v| format!("{}", v)),
+                .as_ref()
+                .map_or("----".to_string(), |v| format!("{}", v.value)),
             voltage,
             current,
             soc,
@@ -763,9 +769,16 @@ fn draw_frame(
                       Last Seen:            {}\n",
                     eb.node_id,
                     eb.serial_number
-                        .map_or("N/A".to_string(), |v| format!("{}", v)),
-                    eb.software_version.as_deref().unwrap_or("N/A"),
-                    eb.hardware_version.as_deref().unwrap_or("N/A"),
+                        .as_ref()
+                        .map_or("N/A".to_string(), |v| format!("{}", v.value)),
+                    eb.software_version
+                        .as_ref()
+                        .map(|v| v.value.as_str())
+                        .unwrap_or("N/A"),
+                    eb.hardware_version
+                        .as_ref()
+                        .map(|v| v.value.as_str())
+                        .unwrap_or("N/A"),
                     eb.voltage
                         .map_or("N/A".to_string(), |v| format!("{:.2} V", v)),
                     eb.current
@@ -788,6 +801,7 @@ fn draw_frame(
                     (&eb.cell_voltages, &eb.cell_voltage_min_max)
                 {
                     let mut lines: String = voltages
+                        .values
                         .iter()
                         .enumerate()
                         .map(|(i, v)| format!("Cell {:>2}: {:.3} V\n", i + 1, v))
@@ -812,6 +826,7 @@ fn draw_frame(
             if let Some(eb) = eb {
                 if let Some(ref errors) = eb.device_errors {
                     let error_text: Text = errors
+                        .values
                         .iter()
                         .enumerate()
                         .map(|(i, e)| format!("[{:#03}] {:?}\n", i + 1, e))
@@ -1887,7 +1902,7 @@ async fn main() -> anyhow::Result<()> {
                         KeyCode::Char('s') if !save_state.is_active() && count > 0 => {
                             let eb = varta.get_easyblade_by_index(selected);
                             if let Some(eb) = eb {
-                                let serial = eb.serial_number.unwrap_or(0);
+                                let serial = eb.serial_number.as_ref().map(|s| s.value).unwrap_or(0);
                                 let file_path = format!("/tmp/varta-easyblade-{}.json", serial);
                                 save_state = SaveState::Saving { file_path };
                                 try_complete_save(&varta, selected, &mut save_state);
