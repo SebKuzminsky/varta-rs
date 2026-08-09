@@ -63,6 +63,62 @@ enum SelectedTab {
     CycleCount,
     ChargeParameters,
     MasterTemperature,
+    Configuration,
+}
+
+/// A single editable configuration field.
+#[derive(Debug, Clone)]
+struct ConfigField {
+    /// Display label (e.g. "Battery Max Charge Voltage")
+    label: &'static str,
+    /// Current value string shown in the field (e.g. "54.600 V")
+    value: String,
+    /// Editable portion of the value (just the number, e.g. "54.600")
+    edit_buffer: String,
+    /// Whether this field is currently being edited
+    is_focused: bool,
+    /// Status message after last write attempt (cleared on next input)
+    status: Option<String>,
+}
+
+impl ConfigField {
+    fn new(label: &'static str, value: f32, unit: &str) -> Self {
+        let value_str = format!("{:.3} {}", value, unit);
+        let edit_buf = format!("{:.3}", value);
+        Self {
+            label,
+            value: value_str,
+            edit_buffer: edit_buf,
+            is_focused: false,
+            status: None,
+        }
+    }
+
+    fn update_value(&mut self, value: f32, unit: &str) {
+        self.value = format!("{:.3} {}", value, unit);
+        self.edit_buffer = format!("{:.3}", value);
+    }
+
+    fn insert_char(&mut self, ch: char) {
+        self.edit_buffer.push(ch);
+    }
+
+    fn backspace(&mut self) {
+        self.edit_buffer.pop();
+    }
+
+    fn parse_value(&self) -> Option<f32> {
+        self.edit_buffer.parse().ok()
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+struct ConfigState {
+    fields: Vec<ConfigField>,
+    focused_index: usize,
+    /// The selected module index the config was last loaded for.
+    /// Reset when the user switches modules so stale data isn't shown.
+    loaded_for_selected: Option<usize>,
 }
 
 fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
@@ -115,6 +171,7 @@ fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
             SdoRequest::BatteryChargeTemperature,
         ],
         SelectedTab::MasterTemperature => vec![SdoRequest::MasterBatteryTemperature],
+        SelectedTab::Configuration => vec![SdoRequest::BatteryChargeVoltage],
     }
 }
 
@@ -138,6 +195,7 @@ impl SelectedTab {
             SelectedTab::CycleCount => "Cycle Count",
             SelectedTab::ChargeParameters => "Charge Parameters",
             SelectedTab::MasterTemperature => "Master Temperature",
+            SelectedTab::Configuration => "Configuration",
         }
     }
 
@@ -160,6 +218,7 @@ impl SelectedTab {
             SelectedTab::CycleCount,
             SelectedTab::ChargeParameters,
             SelectedTab::MasterTemperature,
+            SelectedTab::Configuration,
         ];
         let idx = tabs.iter().position(|t| *t == *self).unwrap();
         let next = if right {
@@ -470,6 +529,48 @@ fn try_complete_save(varta: &varta_easyblade::Varta, selected: usize, save_state
     }
 }
 
+fn update_config_state(
+    config_state: &mut ConfigState,
+    varta: &varta_easyblade::Varta,
+    selected: usize,
+) {
+    // Reset config when the selected module changes
+    if config_state.loaded_for_selected != Some(selected) {
+        config_state.fields.clear();
+        config_state.focused_index = 0;
+        config_state.loaded_for_selected = Some(selected);
+    }
+
+    let eb = match varta.get_easyblade_by_index(selected) {
+        Some(eb) => eb,
+        None => {
+            config_state.fields.clear();
+            return;
+        },
+    };
+
+    // Initialize fields if empty
+    if config_state.fields.is_empty() {
+        if let Some(ref charge_voltage) = eb.battery_charge_voltage {
+            config_state.fields.push(ConfigField::new(
+                "Battery Max Charge Voltage",
+                charge_voltage.charge_max_voltage_v,
+                "V",
+            ));
+            config_state.fields[0].is_focused = true;
+        }
+        return;
+    }
+
+    // Update values from module data (but not while a field is being edited)
+    if let Some(ref charge_voltage) = eb.battery_charge_voltage
+        && let Some(field) = config_state.fields.get_mut(0)
+        && !field.is_focused
+    {
+        field.update_value(charge_voltage.charge_max_voltage_v, "V");
+    }
+}
+
 fn draw_popup(f: &mut Frame, area: Rect, save_state: &SaveState, completion: f64) {
     f.render_widget(Clear, area);
 
@@ -532,6 +633,7 @@ fn draw_frame(
     selected: usize,
     tab: SelectedTab,
     save_state: &SaveState,
+    config_state: &ConfigState,
 ) {
     let area = f.area();
 
@@ -669,6 +771,7 @@ fn draw_frame(
         SelectedTab::CycleCount,
         SelectedTab::ChargeParameters,
         SelectedTab::MasterTemperature,
+        SelectedTab::Configuration,
     ];
 
     // Build tab labels and calculate widths
@@ -1489,6 +1592,63 @@ fn draw_frame(
                 f.render_widget(text, content_area);
             }
         },
+
+        SelectedTab::Configuration => {
+            if config_state.fields.is_empty() {
+                let text =
+                    Paragraph::new("No configuration data available").wrap(Wrap { trim: true });
+                f.render_widget(text, content_area);
+            } else {
+                let mut lines: Vec<Line> = Vec::new();
+                for field in config_state.fields.iter() {
+                    let display_value = if field.is_focused {
+                        &field.edit_buffer
+                    } else {
+                        field
+                            .value
+                            .split_whitespace()
+                            .next()
+                            .unwrap_or(&field.value)
+                    };
+                    let unit = field.value.split_whitespace().last().unwrap_or("");
+
+                    let mut spans: Vec<Span> = Vec::new();
+                    spans.push(Span::raw(format!("{}: ", field.label)));
+
+                    if field.is_focused {
+                        spans.push(Span::styled(
+                            format!("{} {}", display_value, unit),
+                            Style::new().add_modifier(Modifier::REVERSED),
+                        ));
+                    } else {
+                        spans.push(Span::raw(format!("{} {}", display_value, unit)));
+                    }
+
+                    lines.push(Line::from(spans));
+
+                    if let Some(ref status) = field.status {
+                        let status_style = if status.starts_with("OK") {
+                            Style::new().fg(Color::Green)
+                        } else {
+                            Style::new().fg(Color::Red)
+                        };
+                        lines.push(Line::from(Span::styled(
+                            format!("    {}", status),
+                            status_style,
+                        )));
+                    }
+                }
+
+                lines.push(Line::from(""));
+                lines.push(Line::from(Span::styled(
+                    "Tab: next field  Enter: write value  Backspace: delete",
+                    Style::new().fg(Color::Gray),
+                )));
+
+                let text = Paragraph::new(lines).wrap(Wrap { trim: true });
+                f.render_widget(text, content_area);
+            }
+        },
     }
 
     if save_state.is_active() {
@@ -1509,6 +1669,45 @@ fn draw_frame(
 struct VartaSdoTask {
     sdo_request_tx: tokio::sync::mpsc::UnboundedSender<(u8, SdoRequest)>,
     cancellation_token: tokio_util::sync::CancellationToken,
+}
+
+fn sdo_request_name(request: &SdoRequest) -> &'static str {
+    match request {
+        SdoRequest::SerialNumber => "SerialNumber",
+        SdoRequest::SoftwareVersion => "SoftwareVersion",
+        SdoRequest::HardwareVersion => "HardwareVersion",
+        SdoRequest::DeviceErrorHistory => "DeviceErrorHistory",
+        SdoRequest::CellVoltages => "CellVoltages",
+        SdoRequest::DeviceConfigInfo => "DeviceConfigInfo",
+        SdoRequest::DeviceSerialNumberInfo => "DeviceSerialNumberInfo",
+        SdoRequest::DeviceDateInfo => "DeviceDateInfo",
+        SdoRequest::DeviceVariantInfo => "DeviceVariantInfo",
+        SdoRequest::DeviceControlParam => "DeviceControlParam",
+        SdoRequest::DeviceOperationTime => "DeviceOperationTime",
+        SdoRequest::DeviceErrorCounter => "DeviceErrorCounter",
+        SdoRequest::CellVoltageMinMax => "CellVoltageMinMax",
+        SdoRequest::CellVoltageLimit => "CellVoltageLimit",
+        SdoRequest::BatteryVoltage => "BatteryVoltage",
+        SdoRequest::BatteryVoltageLimit => "BatteryVoltageLimit",
+        SdoRequest::BatteryCurrent => "BatteryCurrent",
+        SdoRequest::BatteryCurrentLimit => "BatteryCurrentLimit",
+        SdoRequest::FetTemperature => "FetTemperature",
+        SdoRequest::FetTemperatureMinMax => "FetTemperatureMinMax",
+        SdoRequest::FetTemperatureLimit => "FetTemperatureLimit",
+        SdoRequest::CellTemperature => "CellTemperature",
+        SdoRequest::CellTemperatureMinMax => "CellTemperatureMinMax",
+        SdoRequest::CellTemperatureLimit => "CellTemperatureLimit",
+        SdoRequest::CellBalanceStatus => "CellBalanceStatus",
+        SdoRequest::CellBalanceLimit => "CellBalanceLimit",
+        SdoRequest::CellImpedance => "CellImpedance",
+        SdoRequest::BatteryCapacity => "BatteryCapacity",
+        SdoRequest::BatteryCapacityParam => "BatteryCapacityParam",
+        SdoRequest::BatteryCycleCount => "BatteryCycleCount",
+        SdoRequest::BatteryChargeVoltage => "BatteryChargeVoltage",
+        SdoRequest::BatteryChargeCurrent => "BatteryChargeCurrent",
+        SdoRequest::BatteryChargeTemperature => "BatteryChargeTemperature",
+        SdoRequest::MasterBatteryTemperature => "MasterBatteryTemperature",
+    }
 }
 
 async fn varta_sdo_task(
@@ -1547,8 +1746,11 @@ async fn varta_sdo_task(
                     Ok(response) => {
                         let elapsed = start.elapsed();
                         debug_log(&format!(
-                            "[SDO:{}] SDO read completed in {}ms",
+                            "[SDO:{}] {} ({}) -> {} in {}ms",
                             node_id,
+                            sdo_request_name(&sdo_request),
+                            sdo_request,
+                            response,
                             elapsed.as_millis(),
                         ));
                         let _ = sdo_response_tx.send(response);
@@ -1556,8 +1758,9 @@ async fn varta_sdo_task(
                     Err(e) => {
                         let elapsed = start.elapsed();
                         debug_log(&format!(
-                            "[SDO:{}] SDO read ({}) failed in {}ms: {}",
+                            "[SDO:{}] SDO read ({} {}) failed in {}ms: {}",
                             node_id,
+                            sdo_request_name(&sdo_request),
                             sdo_request,
                             elapsed.as_millis(),
                             e,
@@ -1671,6 +1874,7 @@ async fn main() -> anyhow::Result<()> {
     let mut expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
     let varta_sdo_task = spawn_varta_sdo_task(&args.can_interface, sdo_response_tx);
     let mut save_state = SaveState::Idle;
+    let mut config_state = ConfigState::default();
 
     loop {
         let count = varta.easyblade_count();
@@ -1678,9 +1882,22 @@ async fn main() -> anyhow::Result<()> {
             selected = count.saturating_sub(1);
         }
 
+        // Update config fields from current module data
+        update_config_state(&mut config_state, &varta, selected);
+
         let current_tab = selected_tab;
         let current_save_state = save_state.clone();
-        terminal.draw(|f| draw_frame(f, &varta, selected, current_tab, &current_save_state))?;
+        let current_config_state = config_state.clone();
+        terminal.draw(|f| {
+            draw_frame(
+                f,
+                &varta,
+                selected,
+                current_tab,
+                &current_save_state,
+                &current_config_state,
+            )
+        })?;
 
         tokio::select! {
             result = varta.process_socketcan_msg() => {
@@ -1935,6 +2152,85 @@ async fn main() -> anyhow::Result<()> {
                                 for sdo in sdos {
                                     let _ = varta_sdo_task.sdo_request_tx.send((node_id, sdo));
                                 }
+                            }
+                        }
+                        // Configuration tab: Tab to cycle fields
+                        KeyCode::Tab if selected_tab == SelectedTab::Configuration && !config_state.fields.is_empty() => {
+                            config_state.focused_index = (config_state.focused_index + 1) % config_state.fields.len();
+                            for (i, field) in config_state.fields.iter_mut().enumerate() {
+                                field.is_focused = i == config_state.focused_index;
+                                field.status = None;
+                            }
+                        }
+                        // Configuration tab: Enter to write value
+                        KeyCode::Enter if selected_tab == SelectedTab::Configuration => {
+                            if config_state.focused_index >= config_state.fields.len() {
+                                continue;
+                            }
+                            let value = match config_state.fields[config_state.focused_index].parse_value() {
+                                Some(v) => v,
+                                None => {
+                                    config_state.fields[config_state.focused_index].status = Some("Invalid value".to_string());
+                                    continue;
+                                }
+                            };
+                            let node_id = if let Some(eb) = varta.get_easyblade_by_index(selected) {
+                                eb.node_id
+                            } else {
+                                config_state.fields[config_state.focused_index].status = Some("No module selected".to_string());
+                                continue;
+                            };
+                            // Write the SDO
+                            let mut sdo_session = match varta_easyblade::SdoSession::new(&args.can_interface, node_id) {
+                                Ok(s) => s,
+                                Err(e) => {
+                                    debug_log(&format!("failed to create SdoSession: {}", e));
+                                    config_state.fields[config_state.focused_index].status = Some(format!("Error: {}", e));
+                                    continue;
+                                }
+                            };
+
+                            match sdo_session.sdo_write_battery_charge_max_voltage(value).await {
+                                Ok(changed) => {
+                                    let msg = if changed { "OK - value changed" } else { "OK - already set" };
+                                    debug_log(&format!(
+                                        "[CONFIG:{}] BatteryChargeMaxVoltage (0x3000:0x02) <- {:.3}V - {}",
+                                        node_id, value, msg,
+                                    ));
+                                    config_state.fields[config_state.focused_index].status = Some(msg.to_string());
+                                    // Unfocus so update_config_state syncs the new value next frame
+                                    config_state.fields[config_state.focused_index].is_focused = false;
+                                    // Re-read the value so the display updates
+                                    let _ = varta_sdo_task
+                                        .sdo_request_tx
+                                        .send((node_id, SdoRequest::BatteryChargeVoltage));
+                                },
+                                Err(e) => {
+                                    debug_log(&format!(
+                                        "[CONFIG:{}] BatteryChargeMaxVoltage (0x3000:0x02) <- {:.3}V failed: {}",
+                                        node_id, value, e,
+                                    ));
+                                    config_state.fields[config_state.focused_index].status = Some(format!("Error: {}", e));
+                                },
+                            }
+                        }
+
+                        // Configuration tab: character input for edit buffer
+                        KeyCode::Char(c) if selected_tab == SelectedTab::Configuration => {
+                            if let Some(field) = config_state.fields.get_mut(config_state.focused_index) {
+                                field.status = None;
+                                // Some terminals send backspace as BS (\x08) instead of KeyCode::Backspace
+                                if c == '\x08' {
+                                    field.backspace();
+                                } else if c.is_ascii_digit() || c == '.' || c == '-' {
+                                    field.insert_char(c);
+                                }
+                            }
+                        }
+                        KeyCode::Backspace if selected_tab == SelectedTab::Configuration => {
+                            if let Some(field) = config_state.fields.get_mut(config_state.focused_index) {
+                                field.status = None;
+                                field.backspace();
                             }
                         }
                         _ => {}

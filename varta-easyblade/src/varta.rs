@@ -3132,6 +3132,58 @@ impl SdoSession {
             _ => unreachable!(),
         }
     }
+
+    /// Unlock code required to write configuration SDOs in the 0x3000 range.
+    const CONFIG_UNLOCK_CODE: u16 = 0x032f;
+
+    /// Write the Battery Charge Max Voltage Parameter (0x3000sub02) if it differs from the target.
+    ///
+    /// `battery_charge_max_voltage` is in volts. The value is stored internally in millivolts.
+    /// Returns `true` if the value was changed, `false` if it already matched.
+    pub async fn sdo_write_battery_charge_max_voltage(
+        &mut self,
+        battery_charge_max_voltage: f32,
+    ) -> Result<bool, String> {
+        let current_raw = self
+            .sdo_client
+            .read_u32(0x3000, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        let current_v = current_raw as f32 / 1000.0;
+
+        // Compare with a small tolerance to account for floating-point rounding
+        if (current_v - battery_charge_max_voltage).abs() < 0.001 {
+            return Ok(false);
+        }
+
+        // Unlock configuration writes
+        self.sdo_client
+            .write_u16(0x2010, 0x01, Self::CONFIG_UNLOCK_CODE)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Write the new value (stored in millivolts)
+        let target_raw = (battery_charge_max_voltage * 1000.0) as u32;
+        self.sdo_client
+            .write_u32(0x3000, 0x02, target_raw)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Verify the write
+        let verify_raw = self
+            .sdo_client
+            .read_u32(0x3000, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        if verify_raw != target_raw {
+            return Err(format!(
+                "Write verification failed: expected {}, got {}",
+                target_raw, verify_raw
+            ));
+        }
+
+        Ok(true)
+    }
 }
 
 // Private API

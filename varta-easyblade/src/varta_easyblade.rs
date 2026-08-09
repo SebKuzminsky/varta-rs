@@ -950,6 +950,109 @@ pub enum SdoResponse {
     MasterBatteryTemperature { node_id: u8, value: MasterBatteryTemperature },
 }
 
+impl std::fmt::Display for SdoResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SdoResponse::SerialNumber { value, .. } => write!(f, "{}", value),
+            SdoResponse::SoftwareVersion { value, .. } => write!(f, "{}", value),
+            SdoResponse::HardwareVersion { value, .. } => write!(f, "{}", value),
+            SdoResponse::DeviceErrorHistory { value, .. } => {
+                write!(f, "{} entries", value.values.len())
+            },
+            SdoResponse::CellVoltages { value, .. } => {
+                write!(f, "{} cells", value.values.len())
+            },
+            SdoResponse::DeviceConfigInfo { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::DeviceSerialNumberInfo { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::DeviceDateInfo { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::DeviceVariantInfo { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::DeviceControlParam { value, .. } => write!(f, "{}", value),
+            SdoResponse::DeviceOperationTime { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::DeviceErrorCounter { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::CellVoltageMinMax { value, .. } => {
+                write!(
+                    f,
+                    "min={:.3} max={:.3}",
+                    value.min_voltage_v, value.max_voltage_v
+                )
+            },
+            SdoResponse::CellVoltageLimit { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::BatteryVoltage { value, .. } => {
+                write!(f, "sum={:.3}V", value.sum_of_cell_voltage_v)
+            },
+            SdoResponse::BatteryVoltageLimit { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::BatteryCurrent { value, .. } => {
+                write!(f, "fast={:.2}A", value.fast_current_a)
+            },
+            SdoResponse::BatteryCurrentLimit { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::FetTemperature { value, .. } => {
+                write!(
+                    f,
+                    "t1={:.1}C t2={:.1}C",
+                    value.temperature_1_c, value.temperature_2_c
+                )
+            },
+            SdoResponse::FetTemperatureMinMax { value, .. } => {
+                write!(
+                    f,
+                    "min={:.1} max={:.1}",
+                    value.min_temperature_c, value.max_temperature_c
+                )
+            },
+            SdoResponse::FetTemperatureLimit { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::CellTemperature { value, .. } => {
+                write!(f, "t1={:.1}C", value.temperature_1_c)
+            },
+            SdoResponse::CellTemperatureMinMax { value, .. } => {
+                write!(
+                    f,
+                    "min={:.1} max={:.1}",
+                    value.min_temperature_c, value.max_temperature_c
+                )
+            },
+            SdoResponse::CellTemperatureLimit { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::CellBalanceStatus { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::CellBalanceLimit { value, .. } => write!(f, "{:?}", value),
+            SdoResponse::CellImpedance { value, .. } => {
+                write!(f, "{} cells", value.cell_impedances_mohm.len())
+            },
+            SdoResponse::BatteryCapacity { value, .. } => {
+                write!(
+                    f,
+                    "remaining={:.2}Ah soc={:.1}%",
+                    value.remaining_capacity_ah, value.soc_percent
+                )
+            },
+            SdoResponse::BatteryCapacityParam { value, .. } => write!(f, "{}", value),
+            SdoResponse::BatteryCycleCount { value, .. } => {
+                write!(f, "discharge={}", value.discharge_cycles)
+            },
+            SdoResponse::BatteryChargeVoltage { value, .. } => {
+                write!(
+                    f,
+                    "valid={:.3}V max={:.3}V keep={:.3}V",
+                    value.charge_voltage_valid_v,
+                    value.charge_max_voltage_v,
+                    value.charge_keep_power_voltage_v,
+                )
+            },
+            SdoResponse::BatteryChargeCurrent { value, .. } => {
+                write!(f, "valid={:.3}A", value.charge_current_valid_a)
+            },
+            SdoResponse::BatteryChargeTemperature { value, .. } => {
+                write!(f, "min_low={:.1}C", value.temp_min_low_c)
+            },
+            SdoResponse::MasterBatteryTemperature { value, .. } => {
+                write!(
+                    f,
+                    "fet={:.1}C cell={:.1}C",
+                    value.max_fet_temperature_c, value.max_cell_temperature_c,
+                )
+            },
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct MasterInfo {
     pub voltage: Option<f32>,
