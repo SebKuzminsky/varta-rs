@@ -1252,46 +1252,50 @@ impl Varta {
         if self.easyblades[node_id as usize].is_none() {
             self.easyblades[node_id as usize] = Some(VartaEasyblade {
                 node_id,
-                serial_number: None,
-                software_version: None,
-                hardware_version: None,
                 last_seen: std::time::SystemTime::now(),
-                voltage: None,
-                current: None,
-                soc: None,
-                soh: None,
-                cell_voltages: None,
-                device_errors: None,
-                device_config_info: None,
-                device_serial_number_info: None,
-                device_date_info: None,
-                device_variant_info: None,
-                device_control_param: None,
-                device_operation_time: None,
-                device_error_counter: None,
-                cell_voltage_min_max: None,
-                cell_voltage_limit: None,
-                battery_voltage: None,
-                battery_voltage_limit: None,
-                battery_current: None,
-                battery_current_limit: None,
-                fet_temperature: None,
-                fet_temperature_min_max: None,
-                fet_temperature_limit: None,
-                cell_temperature: None,
-                cell_temperature_min_max: None,
-                cell_temperature_limit: None,
-                cell_balance_status: None,
-                cell_balance_limit: None,
-                cell_impedance: None,
-                battery_capacity: None,
-                battery_capacity_param: None,
-                battery_cycle_count: None,
-                battery_charge_voltage: None,
-                battery_charge_current: None,
-                battery_charge_temperature: None,
-                master_battery_temperature: None,
-                pack_msgs: None,
+                sdo: crate::varta_easyblade::SdoData {
+                    serial_number: None,
+                    software_version: None,
+                    hardware_version: None,
+                    cell_voltages: None,
+                    device_errors: None,
+                    device_config_info: None,
+                    device_serial_number_info: None,
+                    device_date_info: None,
+                    device_variant_info: None,
+                    device_control_param: None,
+                    device_operation_time: None,
+                    device_error_counter: None,
+                    cell_voltage_min_max: None,
+                    cell_voltage_limit: None,
+                    battery_voltage: None,
+                    battery_voltage_limit: None,
+                    battery_current: None,
+                    battery_current_limit: None,
+                    fet_temperature: None,
+                    fet_temperature_min_max: None,
+                    fet_temperature_limit: None,
+                    cell_temperature: None,
+                    cell_temperature_min_max: None,
+                    cell_temperature_limit: None,
+                    cell_balance_status: None,
+                    cell_balance_limit: None,
+                    cell_impedance: None,
+                    battery_capacity: None,
+                    battery_capacity_param: None,
+                    battery_cycle_count: None,
+                    battery_charge_voltage: None,
+                    battery_charge_current: None,
+                    battery_charge_temperature: None,
+                    master_battery_temperature: None,
+                },
+                pdo: crate::varta_easyblade::Pdo {
+                    voltage: None,
+                    current: None,
+                    soc: None,
+                    soh: None,
+                    msg_bits: None,
+                },
             });
         }
         self.easyblades[node_id as usize].as_mut().unwrap()
@@ -1351,7 +1355,7 @@ impl SdoSession {
             SdoRequest::SerialNumber => {
                 let bytes = self
                     .sdo_client
-                    .upload(SerialNumber::INDEX, SerialNumber::SUBINDEX_FIRST)
+                    .upload(SerialNumber::INDEX, SerialNumber::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 if bytes.len() < 2 {
@@ -1367,12 +1371,12 @@ impl SdoSession {
             SdoRequest::SoftwareVersion => {
                 let sw = self
                     .sdo_client
-                    .upload(SoftwareVersion::INDEX, SoftwareVersion::SUBINDEX_FIRST)
+                    .upload(SoftwareVersion::INDEX, SoftwareVersion::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 let fw = self
                     .sdo_client
-                    .upload(SoftwareVersion::INDEX, SoftwareVersion::SUBINDEX_LAST)
+                    .upload(SoftwareVersion::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 let sw_str = String::from_utf8_lossy(&sw).trim_matches('\0').to_string();
@@ -1385,7 +1389,7 @@ impl SdoSession {
             SdoRequest::HardwareVersion => {
                 let bytes = self
                     .sdo_client
-                    .upload(HardwareVersion::INDEX, HardwareVersion::SUBINDEX_FIRST)
+                    .upload(HardwareVersion::INDEX, HardwareVersion::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::HardwareVersion {
@@ -1400,10 +1404,7 @@ impl SdoSession {
             SdoRequest::DeviceErrorHistory => {
                 let highest_subindex = self
                     .sdo_client
-                    .read_u8(
-                        DeviceErrorHistory::INDEX,
-                        DeviceErrorHistory::SUBINDEX_FIRST,
-                    )
+                    .read_u8(DeviceErrorHistory::INDEX, DeviceErrorHistory::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 if highest_subindex != 16 {
@@ -1460,20 +1461,17 @@ impl SdoSession {
             SdoRequest::DeviceConfigInfo => {
                 let c1 = self
                     .sdo_client
-                    .upload(DeviceConfigInfo::INDEX, DeviceConfigInfo::SUBINDEX_FIRST)
+                    .upload(DeviceConfigInfo::INDEX, DeviceConfigInfo::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c2 = self
                     .sdo_client
-                    .upload(
-                        DeviceConfigInfo::INDEX,
-                        DeviceConfigInfo::SUBINDEX_FIRST + 1,
-                    )
+                    .upload(DeviceConfigInfo::INDEX, DeviceConfigInfo::SUBINDEX + 1)
                     .await
                     .map_err(|e| e.to_string())?;
                 let c3 = self
                     .sdo_client
-                    .upload(DeviceConfigInfo::INDEX, DeviceConfigInfo::SUBINDEX_LAST)
+                    .upload(DeviceConfigInfo::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceConfigInfo {
@@ -1490,7 +1488,7 @@ impl SdoSession {
                     .sdo_client
                     .read_u32(
                         DeviceSerialNumberInfo::INDEX,
-                        DeviceSerialNumberInfo::SUBINDEX_FIRST,
+                        DeviceSerialNumberInfo::SUBINDEX,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1498,16 +1496,13 @@ impl SdoSession {
                     .sdo_client
                     .read_u32(
                         DeviceSerialNumberInfo::INDEX,
-                        DeviceSerialNumberInfo::SUBINDEX_FIRST + 1,
+                        DeviceSerialNumberInfo::SUBINDEX + 1,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
                 let s3 = self
                     .sdo_client
-                    .read_u32(
-                        DeviceSerialNumberInfo::INDEX,
-                        DeviceSerialNumberInfo::SUBINDEX_LAST,
-                    )
+                    .read_u32(DeviceSerialNumberInfo::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceSerialNumberInfo {
@@ -1522,17 +1517,17 @@ impl SdoSession {
             SdoRequest::DeviceDateInfo => {
                 let d1 = self
                     .sdo_client
-                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX_FIRST)
+                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 let d2 = self
                     .sdo_client
-                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX_FIRST + 1)
+                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX + 1)
                     .await
                     .map_err(|e| e.to_string())?;
                 let d3 = self
                     .sdo_client
-                    .read_u16(DeviceDateInfo::INDEX, DeviceDateInfo::SUBINDEX_LAST)
+                    .read_u16(DeviceDateInfo::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceDateInfo {
@@ -1543,52 +1538,37 @@ impl SdoSession {
             SdoRequest::DeviceVariantInfo => {
                 let s1 = self
                     .sdo_client
-                    .read_u8(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX_FIRST)
+                    .read_u8(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s2 = self
                     .sdo_client
-                    .read_u8(
-                        DeviceVariantInfo::INDEX,
-                        DeviceVariantInfo::SUBINDEX_FIRST + 1,
-                    )
+                    .read_u8(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX + 1)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s3 = self
                     .sdo_client
-                    .read_u8(
-                        DeviceVariantInfo::INDEX,
-                        DeviceVariantInfo::SUBINDEX_FIRST + 2,
-                    )
+                    .read_u8(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX + 2)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s4 = self
                     .sdo_client
-                    .read_u16(
-                        DeviceVariantInfo::INDEX,
-                        DeviceVariantInfo::SUBINDEX_FIRST + 3,
-                    )
+                    .read_u16(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX + 3)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s5 = self
                     .sdo_client
-                    .read_u16(
-                        DeviceVariantInfo::INDEX,
-                        DeviceVariantInfo::SUBINDEX_FIRST + 4,
-                    )
+                    .read_u16(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX + 4)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s6 = self
                     .sdo_client
-                    .read_u16(
-                        DeviceVariantInfo::INDEX,
-                        DeviceVariantInfo::SUBINDEX_FIRST + 5,
-                    )
+                    .read_u16(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX + 5)
                     .await
                     .map_err(|e| e.to_string())?;
                 let s7 = self
                     .sdo_client
-                    .read_u8(DeviceVariantInfo::INDEX, DeviceVariantInfo::SUBINDEX_LAST)
+                    .read_u8(DeviceVariantInfo::INDEX, 0x07)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceVariantInfo {
@@ -1607,10 +1587,7 @@ impl SdoSession {
             SdoRequest::DeviceControlParam => {
                 let val = self
                     .sdo_client
-                    .read_u16(
-                        DeviceControlParam::INDEX,
-                        DeviceControlParam::SUBINDEX_FIRST,
-                    )
+                    .read_u16(DeviceControlParam::INDEX, DeviceControlParam::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceControlParam {
@@ -1621,17 +1598,14 @@ impl SdoSession {
             SdoRequest::DeviceOperationTime => {
                 let m1 = self
                     .sdo_client
-                    .read_u8(
-                        DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST,
-                    )
+                    .read_u8(DeviceOperationTime::INDEX, DeviceOperationTime::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 let m2 = self
                     .sdo_client
                     .read_u8(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 1,
+                        DeviceOperationTime::SUBINDEX + 1,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1639,7 +1613,7 @@ impl SdoSession {
                     .sdo_client
                     .read_u8(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 2,
+                        DeviceOperationTime::SUBINDEX + 2,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1647,7 +1621,7 @@ impl SdoSession {
                     .sdo_client
                     .read_u8(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 3,
+                        DeviceOperationTime::SUBINDEX + 3,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1655,7 +1629,7 @@ impl SdoSession {
                     .sdo_client
                     .read_u8(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 4,
+                        DeviceOperationTime::SUBINDEX + 4,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1663,7 +1637,7 @@ impl SdoSession {
                     .sdo_client
                     .read_u32(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 5,
+                        DeviceOperationTime::SUBINDEX + 5,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1671,7 +1645,7 @@ impl SdoSession {
                     .sdo_client
                     .read_u32(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 6,
+                        DeviceOperationTime::SUBINDEX + 6,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1679,7 +1653,7 @@ impl SdoSession {
                     .sdo_client
                     .read_u32(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 7,
+                        DeviceOperationTime::SUBINDEX + 7,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
@@ -1687,16 +1661,13 @@ impl SdoSession {
                     .sdo_client
                     .read_u32(
                         DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_FIRST + 8,
+                        DeviceOperationTime::SUBINDEX + 8,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
                 let h5 = self
                     .sdo_client
-                    .read_u32(
-                        DeviceOperationTime::INDEX,
-                        DeviceOperationTime::SUBINDEX_LAST,
-                    )
+                    .read_u32(DeviceOperationTime::INDEX, 0x0A)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::DeviceOperationTime {
@@ -2309,17 +2280,17 @@ impl SdoSession {
             SdoRequest::BatteryVoltage => {
                 let v1 = self
                     .sdo_client
-                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX_FIRST)
+                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v2 = self
                     .sdo_client
-                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX_FIRST + 1)
+                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX + 1)
                     .await
                     .map_err(|e| e.to_string())?;
                 let v3 = self
                     .sdo_client
-                    .read_u32(BatteryVoltage::INDEX, BatteryVoltage::SUBINDEX_LAST)
+                    .read_u32(BatteryVoltage::INDEX, 0x03)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryVoltage {
@@ -2626,10 +2597,7 @@ impl SdoSession {
             SdoRequest::BatteryCapacityParam => {
                 let val = self
                     .sdo_client
-                    .read_u8(
-                        BatteryCapacityParam::INDEX,
-                        BatteryCapacityParam::SUBINDEX_FIRST,
-                    )
+                    .read_u8(BatteryCapacityParam::INDEX, BatteryCapacityParam::SUBINDEX)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryCapacityParam {
@@ -3193,8 +3161,8 @@ impl Varta {
         voltage: f32,
         current: f32,
     ) {
-        easyblade.voltage = Some(voltage);
-        easyblade.current = Some(current);
+        easyblade.pdo.voltage = Some(voltage);
+        easyblade.pdo.current = Some(current);
         easyblade.last_seen = std::time::SystemTime::now();
     }
 
@@ -3204,12 +3172,12 @@ impl Varta {
         rem_cap: f32,
         design_cap: f32,
     ) {
-        easyblade.soc = if full_cap > 0.0 {
+        easyblade.pdo.soc = if full_cap > 0.0 {
             Some((rem_cap / full_cap) * 100.0)
         } else {
             None
         };
-        easyblade.soh = if design_cap > 0.0 {
+        easyblade.pdo.soh = if design_cap > 0.0 {
             Some((full_cap / design_cap) * 100.0)
         } else {
             None
@@ -3266,7 +3234,7 @@ impl Varta {
         charge_bit_14_master_charger_control_charging_ready: bool,
         charge_bit_15_charger_supply_conditions_ready: bool,
     ) {
-        easyblade.pack_msgs = Some(MsgBits {
+        easyblade.pdo.msg_bits = Some(MsgBits {
             info_bit_0_empty,
             info_bit_1_almost_empty,
             info_bit_2_chgfet_closed,

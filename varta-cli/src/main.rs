@@ -437,7 +437,7 @@ async fn run_read(can_interface: &str, target_serial: u16, output: Option<String
         if target_node.is_none() {
             for (idx, entry) in varta.easyblades.iter().enumerate() {
                 if let Some(eb) = entry
-                    && eb.serial_number.as_ref().map(|s| s.value) == Some(target_serial)
+                    && eb.sdo.serial_number.as_ref().map(|s| s.value) == Some(target_serial)
                 {
                     target_node = Some(idx as u8);
                     break;

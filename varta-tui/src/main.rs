@@ -285,106 +285,106 @@ const TOTAL_SDOS: f64 = SdoRequest::COUNT as f64;
 
 fn sdo_completion(eb: &varta_easyblade::VartaEasyblade) -> f64 {
     let mut count = 0.0;
-    if eb.serial_number.is_some() {
+    if eb.sdo.serial_number.is_some() {
         count += 1.0;
     }
-    if eb.software_version.is_some() {
+    if eb.sdo.software_version.is_some() {
         count += 1.0;
     }
-    if eb.hardware_version.is_some() {
+    if eb.sdo.hardware_version.is_some() {
         count += 1.0;
     }
-    if eb.device_config_info.is_some() {
+    if eb.sdo.device_config_info.is_some() {
         count += 1.0;
     }
-    if eb.device_serial_number_info.is_some() {
+    if eb.sdo.device_serial_number_info.is_some() {
         count += 1.0;
     }
-    if eb.device_date_info.is_some() {
+    if eb.sdo.device_date_info.is_some() {
         count += 1.0;
     }
-    if eb.device_variant_info.is_some() {
+    if eb.sdo.device_variant_info.is_some() {
         count += 1.0;
     }
-    if eb.device_control_param.is_some() {
+    if eb.sdo.device_control_param.is_some() {
         count += 1.0;
     }
-    if eb.device_operation_time.is_some() {
+    if eb.sdo.device_operation_time.is_some() {
         count += 1.0;
     }
-    if eb.device_errors.is_some() {
+    if eb.sdo.device_errors.is_some() {
         count += 1.0;
     }
-    if eb.device_error_counter.is_some() {
+    if eb.sdo.device_error_counter.is_some() {
         count += 1.0;
     }
-    if eb.cell_voltages.is_some() {
+    if eb.sdo.cell_voltages.is_some() {
         count += 1.0;
     }
-    if eb.cell_voltage_min_max.is_some() {
+    if eb.sdo.cell_voltage_min_max.is_some() {
         count += 1.0;
     }
-    if eb.cell_voltage_limit.is_some() {
+    if eb.sdo.cell_voltage_limit.is_some() {
         count += 1.0;
     }
-    if eb.battery_voltage.is_some() {
+    if eb.sdo.battery_voltage.is_some() {
         count += 1.0;
     }
-    if eb.battery_voltage_limit.is_some() {
+    if eb.sdo.battery_voltage_limit.is_some() {
         count += 1.0;
     }
-    if eb.battery_current.is_some() {
+    if eb.sdo.battery_current.is_some() {
         count += 1.0;
     }
-    if eb.battery_current_limit.is_some() {
+    if eb.sdo.battery_current_limit.is_some() {
         count += 1.0;
     }
-    if eb.fet_temperature.is_some() {
+    if eb.sdo.fet_temperature.is_some() {
         count += 1.0;
     }
-    if eb.fet_temperature_min_max.is_some() {
+    if eb.sdo.fet_temperature_min_max.is_some() {
         count += 1.0;
     }
-    if eb.fet_temperature_limit.is_some() {
+    if eb.sdo.fet_temperature_limit.is_some() {
         count += 1.0;
     }
-    if eb.cell_temperature.is_some() {
+    if eb.sdo.cell_temperature.is_some() {
         count += 1.0;
     }
-    if eb.cell_temperature_min_max.is_some() {
+    if eb.sdo.cell_temperature_min_max.is_some() {
         count += 1.0;
     }
-    if eb.cell_temperature_limit.is_some() {
+    if eb.sdo.cell_temperature_limit.is_some() {
         count += 1.0;
     }
-    if eb.cell_balance_status.is_some() {
+    if eb.sdo.cell_balance_status.is_some() {
         count += 1.0;
     }
-    if eb.cell_balance_limit.is_some() {
+    if eb.sdo.cell_balance_limit.is_some() {
         count += 1.0;
     }
-    if eb.cell_impedance.is_some() {
+    if eb.sdo.cell_impedance.is_some() {
         count += 1.0;
     }
-    if eb.battery_capacity.is_some() {
+    if eb.sdo.battery_capacity.is_some() {
         count += 1.0;
     }
-    if eb.battery_capacity_param.is_some() {
+    if eb.sdo.battery_capacity_param.is_some() {
         count += 1.0;
     }
-    if eb.battery_cycle_count.is_some() {
+    if eb.sdo.battery_cycle_count.is_some() {
         count += 1.0;
     }
-    if eb.battery_charge_voltage.is_some() {
+    if eb.sdo.battery_charge_voltage.is_some() {
         count += 1.0;
     }
-    if eb.battery_charge_current.is_some() {
+    if eb.sdo.battery_charge_current.is_some() {
         count += 1.0;
     }
-    if eb.battery_charge_temperature.is_some() {
+    if eb.sdo.battery_charge_temperature.is_some() {
         count += 1.0;
     }
-    if eb.master_battery_temperature.is_some() {
+    if eb.sdo.master_battery_temperature.is_some() {
         count += 1.0;
     }
     count
@@ -393,33 +393,33 @@ fn sdo_completion(eb: &varta_easyblade::VartaEasyblade) -> f64 {
 fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value {
     let mut map = serde_json::Map::new();
     map.insert("node_id".into(), json!(eb.node_id));
-    map.insert("serial_number".into(), json!(eb.serial_number));
+    map.insert("serial_number".into(), json!(eb.sdo.serial_number));
 
-    if let Some(ref v) = eb.software_version {
+    if let Some(ref v) = eb.sdo.software_version {
         map.insert("software_version".into(), json!(v));
     }
-    if let Some(ref v) = eb.hardware_version {
+    if let Some(ref v) = eb.sdo.hardware_version {
         map.insert("hardware_version".into(), json!(v));
     }
-    if let Some(ref v) = eb.device_config_info {
+    if let Some(ref v) = eb.sdo.device_config_info {
         map.insert("device_config_info".into(), json!(v));
     }
-    if let Some(ref v) = eb.device_serial_number_info {
+    if let Some(ref v) = eb.sdo.device_serial_number_info {
         map.insert("device_serial_number_info".into(), json!(v));
     }
-    if let Some(ref v) = eb.device_date_info {
+    if let Some(ref v) = eb.sdo.device_date_info {
         map.insert("device_date_info".into(), json!(v));
     }
-    if let Some(ref v) = eb.device_variant_info {
+    if let Some(ref v) = eb.sdo.device_variant_info {
         map.insert("device_variant_info".into(), json!(v));
     }
-    if let Some(ref v) = eb.device_control_param {
+    if let Some(ref v) = eb.sdo.device_control_param {
         map.insert("device_control_param".into(), json!(v));
     }
-    if let Some(ref v) = eb.device_operation_time {
+    if let Some(ref v) = eb.sdo.device_operation_time {
         map.insert("device_operation_time".into(), json!(v));
     }
-    if let Some(ref v) = eb.device_errors {
+    if let Some(ref v) = eb.sdo.device_errors {
         map.insert(
             "device_error_history".into(),
             json!(
@@ -430,76 +430,76 @@ fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value 
             ),
         );
     }
-    if let Some(ref v) = eb.device_error_counter {
+    if let Some(ref v) = eb.sdo.device_error_counter {
         map.insert("device_error_counter".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_voltages {
+    if let Some(ref v) = eb.sdo.cell_voltages {
         map.insert("cell_voltages".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_voltage_min_max {
+    if let Some(ref v) = eb.sdo.cell_voltage_min_max {
         map.insert("cell_voltage_min_max".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_voltage_limit {
+    if let Some(ref v) = eb.sdo.cell_voltage_limit {
         map.insert("cell_voltage_limit".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_voltage {
+    if let Some(ref v) = eb.sdo.battery_voltage {
         map.insert("battery_voltage".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_voltage_limit {
+    if let Some(ref v) = eb.sdo.battery_voltage_limit {
         map.insert("battery_voltage_limit".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_current {
+    if let Some(ref v) = eb.sdo.battery_current {
         map.insert("battery_current".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_current_limit {
+    if let Some(ref v) = eb.sdo.battery_current_limit {
         map.insert("battery_current_limit".into(), json!(v));
     }
-    if let Some(ref v) = eb.fet_temperature {
+    if let Some(ref v) = eb.sdo.fet_temperature {
         map.insert("fet_temperature".into(), json!(v));
     }
-    if let Some(ref v) = eb.fet_temperature_min_max {
+    if let Some(ref v) = eb.sdo.fet_temperature_min_max {
         map.insert("fet_temperature_min_max".into(), json!(v));
     }
-    if let Some(ref v) = eb.fet_temperature_limit {
+    if let Some(ref v) = eb.sdo.fet_temperature_limit {
         map.insert("fet_temperature_limit".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_temperature {
+    if let Some(ref v) = eb.sdo.cell_temperature {
         map.insert("cell_temperature".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_temperature_min_max {
+    if let Some(ref v) = eb.sdo.cell_temperature_min_max {
         map.insert("cell_temperature_min_max".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_temperature_limit {
+    if let Some(ref v) = eb.sdo.cell_temperature_limit {
         map.insert("cell_temperature_limit".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_balance_status {
+    if let Some(ref v) = eb.sdo.cell_balance_status {
         map.insert("cell_balance_status".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_balance_limit {
+    if let Some(ref v) = eb.sdo.cell_balance_limit {
         map.insert("cell_balance_limit".into(), json!(v));
     }
-    if let Some(ref v) = eb.cell_impedance {
+    if let Some(ref v) = eb.sdo.cell_impedance {
         map.insert("cell_impedance".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_capacity {
+    if let Some(ref v) = eb.sdo.battery_capacity {
         map.insert("battery_capacity".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_capacity_param {
+    if let Some(ref v) = eb.sdo.battery_capacity_param {
         map.insert("battery_capacity_param".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_cycle_count {
+    if let Some(ref v) = eb.sdo.battery_cycle_count {
         map.insert("battery_cycle_count".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_charge_voltage {
+    if let Some(ref v) = eb.sdo.battery_charge_voltage {
         map.insert("battery_charge_voltage".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_charge_current {
+    if let Some(ref v) = eb.sdo.battery_charge_current {
         map.insert("battery_charge_current".into(), json!(v));
     }
-    if let Some(ref v) = eb.battery_charge_temperature {
+    if let Some(ref v) = eb.sdo.battery_charge_temperature {
         map.insert("battery_charge_temperature".into(), json!(v));
     }
-    if let Some(ref v) = eb.master_battery_temperature {
+    if let Some(ref v) = eb.sdo.master_battery_temperature {
         map.insert("master_battery_temperature".into(), json!(v));
     }
 
@@ -551,7 +551,7 @@ fn update_config_state(
 
     // Initialize fields if empty
     if config_state.fields.is_empty() {
-        if let Some(ref charge_voltage) = eb.battery_charge_voltage {
+        if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage {
             config_state.fields.push(ConfigField::new(
                 "Battery Max Charge Voltage",
                 charge_voltage.charge_max_voltage_v,
@@ -563,7 +563,7 @@ fn update_config_state(
     }
 
     // Update values from module data (but not while a field is being edited)
-    if let Some(ref charge_voltage) = eb.battery_charge_voltage
+    if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage
         && let Some(field) = config_state.fields.get_mut(0)
         && !field.is_focused
     {
@@ -702,16 +702,22 @@ fn draw_frame(
         .enumerate()
     {
         let voltage = eb
+            .pdo
             .voltage
             .map_or("----".to_string(), |v| format!("{v:.2} V"));
         let current = eb
+            .pdo
             .current
             .map_or("----".to_string(), |c| format!("{c:.2} A"));
-        let soc = eb.soc.map_or("----".to_string(), |v| format!("{:.1}%", v));
-        let fet = format_fet_status(eb.pack_msgs.as_ref());
+        let soc = eb
+            .pdo
+            .soc
+            .map_or("----".to_string(), |v| format!("{:.1}%", v));
+        let fet = format_fet_status(eb.pdo.msg_bits.as_ref());
         let last_seen = format_last_seen(eb.last_seen);
         let row = Row::new([
-            eb.serial_number
+            eb.sdo
+                .serial_number
                 .as_ref()
                 .map_or("----".to_string(), |v| format!("{}", v.value)),
             voltage,
@@ -871,23 +877,32 @@ fn draw_frame(
                       SOH:                  {}\n\
                       Last Seen:            {}\n",
                     eb.node_id,
-                    eb.serial_number
+                    eb.sdo
+                        .serial_number
                         .as_ref()
                         .map_or("N/A".to_string(), |v| format!("{}", v.value)),
-                    eb.software_version
+                    eb.sdo
+                        .software_version
                         .as_ref()
                         .map(|v| v.value.as_str())
                         .unwrap_or("N/A"),
-                    eb.hardware_version
+                    eb.sdo
+                        .hardware_version
                         .as_ref()
                         .map(|v| v.value.as_str())
                         .unwrap_or("N/A"),
-                    eb.voltage
+                    eb.pdo
+                        .voltage
                         .map_or("N/A".to_string(), |v| format!("{:.2} V", v)),
-                    eb.current
+                    eb.pdo
+                        .current
                         .map_or("N/A".to_string(), |c| format!("{:.2} A", c)),
-                    eb.soc.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
-                    eb.soh.map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
+                    eb.pdo
+                        .soc
+                        .map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
+                    eb.pdo
+                        .soh
+                        .map_or("N/A".to_string(), |v| format!("{:.1}%", v)),
                     format_last_seen(eb.last_seen),
                 );
                 let text = Paragraph::new(info).wrap(Wrap { trim: true });
@@ -901,7 +916,7 @@ fn draw_frame(
         SelectedTab::CellVoltages => {
             if let Some(eb) = eb {
                 if let (Some(voltages), Some(min_max)) =
-                    (&eb.cell_voltages, &eb.cell_voltage_min_max)
+                    (&eb.sdo.cell_voltages, &eb.sdo.cell_voltage_min_max)
                 {
                     let mut lines: String = voltages
                         .values
@@ -927,7 +942,7 @@ fn draw_frame(
         },
         SelectedTab::ErrorHistory => {
             if let Some(eb) = eb {
-                if let Some(ref errors) = eb.device_errors {
+                if let Some(ref errors) = eb.sdo.device_errors {
                     let error_text: Text = errors
                         .values
                         .iter()
@@ -948,7 +963,7 @@ fn draw_frame(
 
         SelectedTab::DeviceOperation => {
             if let Some(eb) = eb {
-                if let Some(v) = &eb.device_operation_time {
+                if let Some(v) = &eb.sdo.device_operation_time {
                     let info = format!(
                         "Operation Minutes (by temp range):\n\
                          <0°C:       {:>3} min\n\
@@ -987,7 +1002,7 @@ fn draw_frame(
 
         SelectedTab::ErrorCounters => {
             if let Some(eb) = eb {
-                if let Some(ref counters) = eb.device_error_counter {
+                if let Some(ref counters) = eb.sdo.device_error_counter {
                     let lines = format!(
                         "over_temp_laden_zellen:                          {:>6}\n\
                          under_temp_laden_zellen:                         {:>6}\n\
@@ -1132,7 +1147,7 @@ fn draw_frame(
 
         SelectedTab::CellVoltageLimits => {
             if let Some(eb) = eb {
-                if let Some(limit) = &eb.cell_voltage_limit {
+                if let Some(limit) = &eb.sdo.cell_voltage_limit {
                     let info = format!(
                         "Over Voltage Error:                  {:.3} V\n\
                          Max Charge Voltage:                  {:.3} V\n\
@@ -1178,7 +1193,7 @@ fn draw_frame(
         SelectedTab::BatteryVoltage => {
             if let Some(eb) = eb {
                 if let (Some(voltage), Some(limit)) =
-                    (&eb.battery_voltage, &eb.battery_voltage_limit)
+                    (&eb.sdo.battery_voltage, &eb.sdo.battery_voltage_limit)
                 {
                     let info = format!(
                         "SumOfCell Voltage:       {:.3} V\n\
@@ -1205,7 +1220,7 @@ fn draw_frame(
         SelectedTab::BatteryCurrent => {
             if let Some(eb) = eb {
                 if let (Some(current), Some(limit)) =
-                    (&eb.battery_current, &eb.battery_current_limit)
+                    (&eb.sdo.battery_current, &eb.sdo.battery_current_limit)
                 {
                     let info = format!(
                         "Fast Current:           {:>10.2} A\n\
@@ -1236,9 +1251,9 @@ fn draw_frame(
         SelectedTab::FetTemperature => {
             if let Some(eb) = eb {
                 if let (Some(temp), Some(min_max), Some(limit)) = (
-                    &eb.fet_temperature,
-                    &eb.fet_temperature_min_max,
-                    &eb.fet_temperature_limit,
+                    &eb.sdo.fet_temperature,
+                    &eb.sdo.fet_temperature_min_max,
+                    &eb.sdo.fet_temperature_limit,
                 ) {
                     let info = format!(
                         "FET Temperature 1:    {:>7.1} °C\n\
@@ -1267,9 +1282,9 @@ fn draw_frame(
         SelectedTab::CellTemperature => {
             if let Some(eb) = eb {
                 if let (Some(temp), Some(min_max), Some(limit)) = (
-                    &eb.cell_temperature,
-                    &eb.cell_temperature_min_max,
-                    &eb.cell_temperature_limit,
+                    &eb.sdo.cell_temperature,
+                    &eb.sdo.cell_temperature_min_max,
+                    &eb.sdo.cell_temperature_limit,
                 ) {
                     let info = format!(
                         "Cell Temperature 1:   {:>7.1} °C\n\
@@ -1306,7 +1321,7 @@ fn draw_frame(
         SelectedTab::CellBalance => {
             if let Some(eb) = eb {
                 if let (Some(status), Some(limit)) =
-                    (&eb.cell_balance_status, &eb.cell_balance_limit)
+                    (&eb.sdo.cell_balance_status, &eb.sdo.cell_balance_limit)
                 {
                     let info = format!(
                         "Balance Status Register:      {:#05x}\n\
@@ -1332,7 +1347,7 @@ fn draw_frame(
 
         SelectedTab::Impedance => {
             if let Some(eb) = eb {
-                if let Some(ref imp) = eb.cell_impedance {
+                if let Some(ref imp) = eb.sdo.cell_impedance {
                     let mut lines = String::new();
                     for (i, v) in imp.cell_impedances_mohm.iter().enumerate() {
                         lines.push_str(&format!("Cell {:>2} Impedance: {:>6} mΩ\n", i + 1, v));
@@ -1353,7 +1368,7 @@ fn draw_frame(
 
         SelectedTab::Capacity => {
             if let Some(eb) = eb {
-                if let Some(v) = &eb.battery_capacity {
+                if let Some(v) = &eb.sdo.battery_capacity {
                     let info = format!(
                         "Design Capacity:           {:>10.2} Ah\n\
                          Full Charge Capacity:      {:>10.2} Ah\n\
@@ -1384,7 +1399,7 @@ fn draw_frame(
 
         SelectedTab::CycleCount => {
             if let Some(eb) = eb {
-                if let Some(v) = &eb.battery_cycle_count {
+                if let Some(v) = &eb.sdo.battery_cycle_count {
                     let info = format!(
                         "Discharge Cycles:                    {:>10}\n\
                          Discharge Learning Cycles:           {:>10}\n\
@@ -1420,9 +1435,9 @@ fn draw_frame(
         SelectedTab::ChargeParameters => {
             if let Some(eb) = eb {
                 if let (Some(voltage), Some(current), Some(temp)) = (
-                    &eb.battery_charge_voltage,
-                    &eb.battery_charge_current,
-                    &eb.battery_charge_temperature,
+                    &eb.sdo.battery_charge_voltage,
+                    &eb.sdo.battery_charge_current,
+                    &eb.sdo.battery_charge_temperature,
                 ) {
                     let info = format!(
                         "Charge Voltage Valid:    {:.3} V\n\
@@ -1464,7 +1479,7 @@ fn draw_frame(
 
         SelectedTab::MasterTemperature => {
             if let Some(eb) = eb {
-                if let Some(v) = &eb.master_battery_temperature {
+                if let Some(v) = &eb.sdo.master_battery_temperature {
                     let info = format!(
                         "Master Max FET Temperature:  {:>7.1} °C\n\
                          Master Max Cell Temperature: {:>7.1} °C\n",
@@ -1484,7 +1499,7 @@ fn draw_frame(
 
         SelectedTab::MsgBits => {
             if let Some(eb) = eb {
-                if let Some(m) = &eb.pack_msgs {
+                if let Some(m) = &eb.pdo.msg_bits {
                     let info = format!(
                         "=== Info ===\n\
                          Empty:                   {}\n\
@@ -1927,172 +1942,172 @@ async fn main() -> anyhow::Result<()> {
                     match resp {
                         varta_easyblade::SdoResponse::SerialNumber { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.serial_number = Some(value);
+                                eb.sdo.serial_number = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::SoftwareVersion { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.software_version = Some(value);
+                                eb.sdo.software_version = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::HardwareVersion { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.hardware_version = Some(value);
+                                eb.sdo.hardware_version = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceErrorHistory { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_errors = Some(value);
+                                eb.sdo.device_errors = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellVoltages { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_voltages = Some(value);
+                                eb.sdo.cell_voltages = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceConfigInfo { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_config_info = Some(value);
+                                eb.sdo.device_config_info = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceSerialNumberInfo { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_serial_number_info = Some(value);
+                                eb.sdo.device_serial_number_info = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceDateInfo { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_date_info = Some(value);
+                                eb.sdo.device_date_info = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceVariantInfo { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_variant_info = Some(value);
+                                eb.sdo.device_variant_info = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceControlParam { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_control_param = Some(value);
+                                eb.sdo.device_control_param = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceOperationTime { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_operation_time = Some(value);
+                                eb.sdo.device_operation_time = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::DeviceErrorCounter { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.device_error_counter = Some(value);
+                                eb.sdo.device_error_counter = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellVoltageMinMax { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_voltage_min_max = Some(value);
+                                eb.sdo.cell_voltage_min_max = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellVoltageLimit { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_voltage_limit = Some(value);
+                                eb.sdo.cell_voltage_limit = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryVoltage { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_voltage = Some(value);
+                                eb.sdo.battery_voltage = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryVoltageLimit { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_voltage_limit = Some(value);
+                                eb.sdo.battery_voltage_limit = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryCurrent { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_current = Some(value);
+                                eb.sdo.battery_current = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryCurrentLimit { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_current_limit = Some(value);
+                                eb.sdo.battery_current_limit = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::FetTemperature { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.fet_temperature = Some(value);
+                                eb.sdo.fet_temperature = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::FetTemperatureMinMax { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.fet_temperature_min_max = Some(value);
+                                eb.sdo.fet_temperature_min_max = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::FetTemperatureLimit { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.fet_temperature_limit = Some(value);
+                                eb.sdo.fet_temperature_limit = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellTemperature { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_temperature = Some(value);
+                                eb.sdo.cell_temperature = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellTemperatureMinMax { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_temperature_min_max = Some(value);
+                                eb.sdo.cell_temperature_min_max = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellTemperatureLimit { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_temperature_limit = Some(value);
+                                eb.sdo.cell_temperature_limit = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellBalanceStatus { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_balance_status = Some(value);
+                                eb.sdo.cell_balance_status = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellBalanceLimit { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_balance_limit = Some(value);
+                                eb.sdo.cell_balance_limit = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::CellImpedance { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.cell_impedance = Some(value);
+                                eb.sdo.cell_impedance = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryCapacity { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_capacity = Some(value);
+                                eb.sdo.battery_capacity = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryCapacityParam { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_capacity_param = Some(value);
+                                eb.sdo.battery_capacity_param = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryCycleCount { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_cycle_count = Some(value);
+                                eb.sdo.battery_cycle_count = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryChargeVoltage { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_charge_voltage = Some(value);
+                                eb.sdo.battery_charge_voltage = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryChargeCurrent { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_charge_current = Some(value);
+                                eb.sdo.battery_charge_current = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryChargeTemperature { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.battery_charge_temperature = Some(value);
+                                eb.sdo.battery_charge_temperature = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::MasterBatteryTemperature { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
-                                eb.master_battery_temperature = Some(value);
+                                eb.sdo.master_battery_temperature = Some(value);
                             }
                         },
 
@@ -2119,7 +2134,7 @@ async fn main() -> anyhow::Result<()> {
                         KeyCode::Char('s') if !save_state.is_active() && count > 0 => {
                             let eb = varta.get_easyblade_by_index(selected);
                             if let Some(eb) = eb {
-                                let serial = eb.serial_number.as_ref().map(|s| s.value).unwrap_or(0);
+                                let serial = eb.sdo.serial_number.as_ref().map(|s| s.value).unwrap_or(0);
                                 let file_path = format!("/tmp/varta-easyblade-{}.json", serial);
                                 save_state = SaveState::Saving { file_path };
                                 try_complete_save(&varta, selected, &mut save_state);

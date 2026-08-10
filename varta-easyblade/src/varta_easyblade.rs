@@ -1,30 +1,19 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-/// Trait for SDO objects that defines their CANopen index and subindex range.
+/// Trait for SDO objects that defines their CANopen index and subindex.
 /// This is the single source of truth for SDO address constants, eliminating
 /// duplication between Display formatting and read logic.
-pub trait Sdo: std::fmt::Display {
+pub trait Sdo: std::fmt::Display + Sized {
+    /// Human-readable name from the EDS (e.g. "Serial Number Customer 1").
+    const NAME: &'static str;
     /// The CANopen object dictionary index for this SDO.
     const INDEX: u16;
-    /// The first (lowest) subindex used by this SDO (inclusive).
-    const SUBINDEX_FIRST: u8;
-    /// The last (highest) subindex used by this SDO (inclusive).
-    const SUBINDEX_LAST: u8;
+    /// The single subindex for this SDO.
+    const SUBINDEX: u8;
 
-    /// Format the SDO address as "0xINDEX:0xSUB" (single subindex) or
-    /// "0xINDEX:0xSUB_FIRST..0xSUB_LAST" (range).
+    /// Format the SDO address as "0xINDEX:0xSUB".
     fn fmt_sdo(f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if Self::SUBINDEX_FIRST == Self::SUBINDEX_LAST {
-            write!(f, "0x{:04X}:0x{:02X}", Self::INDEX, Self::SUBINDEX_FIRST)
-        } else {
-            write!(
-                f,
-                "0x{:04X}:0x{:02X}..0x{:02X}",
-                Self::INDEX,
-                Self::SUBINDEX_FIRST,
-                Self::SUBINDEX_LAST
-            )
-        }
+        write!(f, "0x{:04X}:0x{:02X}", Self::INDEX, Self::SUBINDEX)
     }
 }
 
@@ -34,9 +23,9 @@ pub struct SerialNumber {
 }
 
 impl Sdo for SerialNumber {
+    const NAME: &'static str = "Serial Number Customer 1";
     const INDEX: u16 = 0x2004;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for SerialNumber {
@@ -51,9 +40,9 @@ pub struct SoftwareVersion {
 }
 
 impl Sdo for SoftwareVersion {
+    const NAME: &'static str = "Application FW RevVersion Information";
     const INDEX: u16 = 0x2000;
-    const SUBINDEX_FIRST: u8 = 0x02;
-    const SUBINDEX_LAST: u8 = 0x03;
+    const SUBINDEX: u8 = 0x02;
 }
 
 impl std::fmt::Display for SoftwareVersion {
@@ -68,9 +57,9 @@ pub struct HardwareVersion {
 }
 
 impl Sdo for HardwareVersion {
+    const NAME: &'static str = "Hardware Version Information";
     const INDEX: u16 = 0x2000;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for HardwareVersion {
@@ -86,9 +75,9 @@ pub struct DeviceErrorHistory {
 }
 
 impl Sdo for DeviceErrorHistory {
+    const NAME: &'static str = "Device Error History Values";
     const INDEX: u16 = 0x2018;
-    const SUBINDEX_FIRST: u8 = 0x00;
-    const SUBINDEX_LAST: u8 = 0x10;
+    const SUBINDEX: u8 = 0x00;
 }
 
 impl std::fmt::Display for DeviceErrorHistory {
@@ -104,9 +93,9 @@ pub struct CellVoltages {
 }
 
 impl Sdo for CellVoltages {
+    const NAME: &'static str = "Cell Voltage Values";
     const INDEX: u16 = 0x2100;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x10;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellVoltages {
@@ -121,9 +110,9 @@ pub struct DeviceControlParam {
 }
 
 impl Sdo for DeviceControlParam {
+    const NAME: &'static str = "Code Number";
     const INDEX: u16 = 0x2010;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for DeviceControlParam {
@@ -138,9 +127,9 @@ pub struct BatteryCapacityParam {
 }
 
 impl Sdo for BatteryCapacityParam {
+    const NAME: &'static str = "SOC Capacity Fully Charged Flag Reset";
     const INDEX: u16 = 0x2804;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryCapacityParam {
@@ -157,9 +146,9 @@ pub struct DeviceConfigInfo {
 }
 
 impl Sdo for DeviceConfigInfo {
+    const NAME: &'static str = "Device Configuration Information";
     const INDEX: u16 = 0x2002;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x03;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for DeviceConfigInfo {
@@ -176,9 +165,9 @@ pub struct DeviceSerialNumberInfo {
 }
 
 impl Sdo for DeviceSerialNumberInfo {
+    const NAME: &'static str = "Device Serial Number Information";
     const INDEX: u16 = 0x2004;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x03;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for DeviceSerialNumberInfo {
@@ -195,9 +184,9 @@ pub struct DeviceDateInfo {
 }
 
 impl Sdo for DeviceDateInfo {
+    const NAME: &'static str = "Device Date Information";
     const INDEX: u16 = 0x2006;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x03;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for DeviceDateInfo {
@@ -218,9 +207,9 @@ pub struct DeviceVariantInfo {
 }
 
 impl Sdo for DeviceVariantInfo {
+    const NAME: &'static str = "Device Variant Information";
     const INDEX: u16 = 0x2008;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x07;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for DeviceVariantInfo {
@@ -313,9 +302,9 @@ pub struct DeviceErrorCounterInfo {
 }
 
 impl Sdo for DeviceErrorCounterInfo {
+    const NAME: &'static str = "Device Error Counter Values";
     const INDEX: u16 = 0x201A;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x4F;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for DeviceErrorCounterInfo {
@@ -339,9 +328,9 @@ pub struct DeviceOperationTime {
 }
 
 impl Sdo for DeviceOperationTime {
+    const NAME: &'static str = "Device Operation Time Values";
     const INDEX: u16 = 0x2016;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x0A;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for DeviceOperationTime {
@@ -357,9 +346,9 @@ pub struct CellVoltageMinMax {
 }
 
 impl Sdo for CellVoltageMinMax {
+    const NAME: &'static str = "Cell Voltage Min Max Values";
     const INDEX: u16 = 0x2102;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x02;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellVoltageMinMax {
@@ -401,9 +390,9 @@ pub struct CellVoltageLimit {
 }
 
 impl Sdo for CellVoltageLimit {
+    const NAME: &'static str = "Cell Voltage Limit Parameter";
     const INDEX: u16 = 0x2104;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x0E;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellVoltageLimit {
@@ -420,9 +409,9 @@ pub struct BatteryVoltage {
 }
 
 impl Sdo for BatteryVoltage {
+    const NAME: &'static str = "Battery Voltage Values";
     const INDEX: u16 = 0x2200;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x03;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryVoltage {
@@ -437,9 +426,9 @@ pub struct BatteryVoltageLimit {
 }
 
 impl Sdo for BatteryVoltageLimit {
+    const NAME: &'static str = "Battery Voltage Limit Parameter";
     const INDEX: u16 = 0x2204;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryVoltageLimit {
@@ -458,9 +447,9 @@ pub struct BatteryCurrent {
 }
 
 impl Sdo for BatteryCurrent {
+    const NAME: &'static str = "Battery Current Values";
     const INDEX: u16 = 0x2300;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x05;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryCurrent {
@@ -475,9 +464,9 @@ pub struct BatteryCurrentLimit {
 }
 
 impl Sdo for BatteryCurrentLimit {
+    const NAME: &'static str = "Battery Current Limit Parameter";
     const INDEX: u16 = 0x2304;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryCurrentLimit {
@@ -493,9 +482,9 @@ pub struct FetTemperature {
 }
 
 impl Sdo for FetTemperature {
+    const NAME: &'static str = "FET Temperature Values";
     const INDEX: u16 = 0x2400;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x02;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for FetTemperature {
@@ -511,9 +500,9 @@ pub struct FetTemperatureMinMax {
 }
 
 impl Sdo for FetTemperatureMinMax {
+    const NAME: &'static str = "FET Temperature Min Max Values";
     const INDEX: u16 = 0x2402;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x02;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for FetTemperatureMinMax {
@@ -528,9 +517,9 @@ pub struct FetTemperatureLimit {
 }
 
 impl Sdo for FetTemperatureLimit {
+    const NAME: &'static str = "FET Temperature Limit Parameter";
     const INDEX: u16 = 0x2404;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for FetTemperatureLimit {
@@ -550,9 +539,9 @@ pub struct CellTemperature {
 }
 
 impl Sdo for CellTemperature {
+    const NAME: &'static str = "Cell Temperature Values";
     const INDEX: u16 = 0x2500;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x06;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellTemperature {
@@ -568,9 +557,9 @@ pub struct CellTemperatureMinMax {
 }
 
 impl Sdo for CellTemperatureMinMax {
+    const NAME: &'static str = "Cell Temperature Min Max Values";
     const INDEX: u16 = 0x2502;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x02;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellTemperatureMinMax {
@@ -585,9 +574,9 @@ pub struct CellTemperatureLimit {
 }
 
 impl Sdo for CellTemperatureLimit {
+    const NAME: &'static str = "Cell Temperature Limit Parameter";
     const INDEX: u16 = 0x2504;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellTemperatureLimit {
@@ -604,9 +593,9 @@ pub struct CellBalanceStatus {
 }
 
 impl Sdo for CellBalanceStatus {
+    const NAME: &'static str = "Cell Balance Status Register Values";
     const INDEX: u16 = 0x2600;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x03;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellBalanceStatus {
@@ -621,9 +610,9 @@ pub struct CellBalanceLimit {
 }
 
 impl Sdo for CellBalanceLimit {
+    const NAME: &'static str = "Cell Balance Limit Parameter";
     const INDEX: u16 = 0x2604;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x01;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellBalanceLimit {
@@ -640,9 +629,9 @@ pub struct CellImpedance {
 }
 
 impl Sdo for CellImpedance {
+    const NAME: &'static str = "Cell Impedance Parameter";
     const INDEX: u16 = 0x2700;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x12;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for CellImpedance {
@@ -663,9 +652,9 @@ pub struct BatteryCapacity {
 }
 
 impl Sdo for BatteryCapacity {
+    const NAME: &'static str = "Battery Capacity Values";
     const INDEX: u16 = 0x2800;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x07;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryCapacity {
@@ -688,9 +677,9 @@ pub struct BatteryCycleCount {
 }
 
 impl Sdo for BatteryCycleCount {
+    const NAME: &'static str = "Battery Cycles Count Values";
     const INDEX: u16 = 0x2900;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x09;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryCycleCount {
@@ -707,9 +696,9 @@ pub struct BatteryChargeVoltage {
 }
 
 impl Sdo for BatteryChargeVoltage {
+    const NAME: &'static str = "Battery Charge Voltage Parameter";
     const INDEX: u16 = 0x3000;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x03;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryChargeVoltage {
@@ -733,9 +722,9 @@ pub struct BatteryChargeCurrent {
 }
 
 impl Sdo for BatteryChargeCurrent {
+    const NAME: &'static str = "Battery Charge Current Parameter";
     const INDEX: u16 = 0x3100;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x0A;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryChargeCurrent {
@@ -755,9 +744,9 @@ pub struct BatteryChargeTemperature {
 }
 
 impl Sdo for BatteryChargeTemperature {
+    const NAME: &'static str = "Battery Charge Temperature Parameter";
     const INDEX: u16 = 0x3200;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x06;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for BatteryChargeTemperature {
@@ -773,9 +762,9 @@ pub struct MasterBatteryTemperature {
 }
 
 impl Sdo for MasterBatteryTemperature {
+    const NAME: &'static str = "Master Battery Temperature Values";
     const INDEX: u16 = 0x3700;
-    const SUBINDEX_FIRST: u8 = 0x01;
-    const SUBINDEX_LAST: u8 = 0x02;
+    const SUBINDEX: u8 = 0x01;
 }
 
 impl std::fmt::Display for MasterBatteryTemperature {
@@ -1070,17 +1059,13 @@ pub struct MasterInfo {
     pub master_msgs: Option<MsgBits>,
 }
 
-#[derive(Debug)]
-pub struct VartaEasyblade {
-    pub node_id: u8,
+/// SDO data read from a Varta Easyblade module.
+/// Each field is `None` until successfully read via SDO.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SdoData {
     pub serial_number: Option<SerialNumber>,
     pub software_version: Option<SoftwareVersion>,
     pub hardware_version: Option<HardwareVersion>,
-    pub last_seen: std::time::SystemTime,
-    pub voltage: Option<f32>,
-    pub current: Option<f32>,
-    pub soc: Option<f32>,
-    pub soh: Option<f32>,
     pub cell_voltages: Option<CellVoltages>,
     pub device_errors: Option<DeviceErrorHistory>,
     pub device_config_info: Option<DeviceConfigInfo>,
@@ -1112,7 +1097,25 @@ pub struct VartaEasyblade {
     pub battery_charge_current: Option<BatteryChargeCurrent>,
     pub battery_charge_temperature: Option<BatteryChargeTemperature>,
     pub master_battery_temperature: Option<MasterBatteryTemperature>,
-    pub pack_msgs: Option<MsgBits>,
+}
+
+/// PDO data received from Varta Easyblade CAN messages.
+#[derive(Debug, Clone, Default, serde::Serialize)]
+pub struct Pdo {
+    pub voltage: Option<f32>,
+    pub current: Option<f32>,
+    pub soc: Option<f32>,
+    pub soh: Option<f32>,
+    pub msg_bits: Option<MsgBits>,
+}
+
+/// Varta Easyblade module state.
+#[derive(Debug)]
+pub struct VartaEasyblade {
+    pub node_id: u8,
+    pub last_seen: std::time::SystemTime,
+    pub sdo: SdoData,
+    pub pdo: Pdo,
 }
 
 /// Device Error values logged by the Varta Easyblade module in SDO 0x2018

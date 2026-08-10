@@ -38,7 +38,8 @@ pub use varta_easyblade::HardwareVersion;
 pub use varta_easyblade::MasterBatteryTemperature;
 pub use varta_easyblade::MasterInfo;
 pub use varta_easyblade::MsgBits;
-pub use varta_easyblade::Sdo;
+
+pub use varta_easyblade::Pdo;
 pub use varta_easyblade::SdoRequest;
 pub use varta_easyblade::SdoResponse;
 pub use varta_easyblade::SerialNumber;

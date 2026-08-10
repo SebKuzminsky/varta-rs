@@ -149,13 +149,13 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
         .iter()
         .filter_map(|eb| if let Some(eb) = eb { Some(eb) } else { None })
     {
-        let Some(serial_number) = &eb.serial_number else {
+        let Some(serial_number) = &eb.sdo.serial_number else {
             continue;
         };
 
         let metric_header = format!("varta_module_{:4}", serial_number.value);
 
-        if let Some(voltage) = eb.voltage {
+        if let Some(voltage) = eb.pdo.voltage {
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_voltage",
                 value: voltage as f64,
@@ -163,7 +163,7 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
             });
         }
 
-        if let Some(current) = eb.current {
+        if let Some(current) = eb.pdo.current {
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_current",
                 value: current as f64,
@@ -171,7 +171,7 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
             });
         }
 
-        if let Some(soc) = eb.soc {
+        if let Some(soc) = eb.pdo.soc {
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_soc",
                 value: soc as f64,
@@ -179,7 +179,7 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
             });
         }
 
-        if let Some(soh) = eb.soh {
+        if let Some(soh) = eb.pdo.soh {
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_soh",
                 value: soh as f64,
@@ -187,7 +187,7 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
             });
         }
 
-        if let Some(m) = &eb.pack_msgs {
+        if let Some(m) = &eb.pdo.msg_bits {
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_charge_fet",
                 value: if m.info_bit_2_chgfet_closed { 1.0 } else { 0.0 },
@@ -227,7 +227,7 @@ async fn try_read_serial_number(varta: &mut varta_easyblade::Varta, canbus: &str
     };
 
     if let Some(eb) = &mut varta.easyblades[node_id as usize] {
-        eb.serial_number = Some(serial_number);
+        eb.sdo.serial_number = Some(serial_number);
     }
 }
 
@@ -270,7 +270,7 @@ async fn main() {
                 // Try to read the serial number for any Easyblades that don't have it yet.
                 for node_id in 0..varta_easyblade::MAX_MODULES {
                     if let Some(eb) = &mut varta.easyblades[node_id]
-                        && eb.serial_number.is_none() {
+                        && eb.sdo.serial_number.is_none() {
                         try_read_serial_number(&mut varta, &args.canbus, node_id as u8).await;
                     }
                 }
