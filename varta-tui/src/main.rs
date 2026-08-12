@@ -691,7 +691,7 @@ fn draw_frame(
     f.render_widget(&middle_block, layout[1]);
     let middle_inner = middle_block.inner(layout[1]);
 
-    let header = Row::new(["Serial", "Voltage", "Current", "SOC", "FET", "Last Seen"])
+    let header = Row::new(["Node ID", "Serial", "Voltage", "Current", "SOC", "FET", "Last Seen"])
         .style(Style::new().add_modifier(Modifier::BOLD));
 
     let mut rows = Vec::new();
@@ -716,6 +716,7 @@ fn draw_frame(
         let fet = format_fet_status(eb.pdo.msg_bits.as_ref());
         let last_seen = format_last_seen(eb.last_seen);
         let row = Row::new([
+            format!("{}", eb.node_id),
             eb.sdo
                 .serial_number
                 .as_ref()
@@ -736,12 +737,13 @@ fn draw_frame(
     let table = Table::new(
         rows,
         [
+            Constraint::Percentage(8),
             Constraint::Percentage(12),
-            Constraint::Percentage(16),
-            Constraint::Percentage(16),
-            Constraint::Percentage(12),
-            Constraint::Percentage(12),
-            Constraint::Percentage(32),
+            Constraint::Percentage(15),
+            Constraint::Percentage(15),
+            Constraint::Percentage(11),
+            Constraint::Percentage(11),
+            Constraint::Percentage(28),
         ],
     )
     .header(header)
@@ -1500,56 +1502,25 @@ fn draw_frame(
         SelectedTab::MsgBits => {
             if let Some(eb) = eb {
                 if let Some(m) = &eb.pdo.msg_bits {
-                    let info = format!(
+                    let left_text = format!(
                         "=== Info ===\n\
-                         Empty:                   {}\n\
-                         Almost Empty:            {}\n\
-                         CHG FET Closed:          {}\n\
-                         DSG FET Closed:          {}\n\
-                         Bypass FET On:           {}\n\
-                         Fully Charged:           {}\n\
+                         Empty:              {}\n\
+                         Almost Empty:       {}\n\
+                         CHG FET Closed:     {}\n\
+                         DSG FET Closed:     {}\n\
+                         Bypass FET On:      {}\n\
+                         Fully Charged:      {}\n\
                          === Warnings ===\n\
-                         Low Voltage:             {}\n\
-                         Low SOC:                 {}\n\
-                         Reserve SOC:             {}\n\
-                         Over/Under Temp Discharge:{}\n\
-                         Over/Under Temp Charge:  {}\n\
-                         Max Charge Recuperation: {}\n\
-                         CAN Network Failure:     {}\n\
-                         Deactivation Enable:     {}\n\
-                         Node ID Process Enable:  {}\n\
-                         Unknown:                 {}\n\
-                         === Errors ===\n\
-                         Error Lock Discharge:    {}\n\
-                         Error Lock Charge:       {}\n\
-                         Over Charge Recuperation:{}\n\
-                         Short Circuit Charge:    {}\n\
-                         Short Circuit Discharge: {}\n\
-                         Max Voltage Alarm:       {}\n\
-                         Discharge FET Error:     {}\n\
-                         Charge FET Error:        {}\n\
-                         Max Charge Current:      {}\n\
-                         Max Discharge Current:   {}\n\
-                         Under Charge Alarm:      {}\n\
-                         Over Charge Alarm:       {}\n\
-                         Over/Under Temp Charge:  {}\n\
-                         Over/Under Temp Discharge:{}\n\
-                         Module Defect:           {}\n\
-                         Unknown:                 {}\n\
-                         === Charge ===\n\
-                         Voltage Enabled:         {}\n\
-                         Voltage Keep Power:      {}\n\
-                         Current Enable:          {}\n\
-                         Current Keep Power:      {}\n\
-                         Current Low Temp Range:  {}\n\
-                         Current Normal Temp Range:{}\n\
-                         Current High Temp Range: {}\n\
-                         Max Current Request:     {}\n\
-                         Max Cell Voltage Request:{}\n\
-                         Master Charger Output Off:{}\n\
-                         FET Disable Temp Cells:  {}\n\
-                         Charging Ready:          {}\n\
-                         Supply Conditions Ready: {}\n",
+                         Low Voltage:        {}\n\
+                         Low SOC:            {}\n\
+                         Reserve SOC:        {}\n\
+                         O/U Temp Discharge: {}\n\
+                         O/U Temp Charge:    {}\n\
+                         Max Chg Recup:      {}\n\
+                         CAN Network Fail:   {}\n\
+                         Deactivation Enb:   {}\n\
+                         Node ID Proc Enb:   {}\n\
+                         Unknown:            {}\n",
                         yes_no(m.info_bit_0_empty),
                         yes_no(m.info_bit_1_almost_empty),
                         yes_no(m.info_bit_2_chgfet_closed),
@@ -1566,6 +1537,39 @@ fn draw_frame(
                         yes_no(m.warn_bit_12_set_deactivation_enable),
                         yes_no(m.warn_bit_14_set_node_id_process_enable),
                         yes_no(m.warn_bit_15_unknown),
+                    );
+                    let right_text = format!(
+                        "=== Errors ===\n\
+                         Error Lock Discharge:   {}\n\
+                         Error Lock Charge:      {}\n\
+                         Over Charge Recup:      {}\n\
+                         Short Circuit Charge:   {}\n\
+                         Short Circuit Discharge:{}\n\
+                         Max Voltage Alarm:      {}\n\
+                         Discharge FET Error:    {}\n\
+                         Charge FET Error:       {}\n\
+                         Max Charge Current:     {}\n\
+                         Max Discharge Current:  {}\n\
+                         Under Charge Alarm:     {}\n\
+                         Over Charge Alarm:      {}\n\
+                         O/U Temp Charge:        {}\n\
+                         O/U Temp Discharge:     {}\n\
+                         Module Defect:          {}\n\
+                         Unknown:                {}\n\
+                         === Charge ===\n\
+                         Voltage Enabled:        {}\n\
+                         Voltage Keep Power:     {}\n\
+                         Current Enable:         {}\n\
+                         Current Keep Power:     {}\n\
+                         Current Low Temp:       {}\n\
+                         Current Normal Temp:    {}\n\
+                         Current High Temp:      {}\n\
+                         Max Current Request:    {}\n\
+                         Max Cell Volt Request:  {}\n\
+                         Master Chgr Output Off: {}\n\
+                         FET Disable Temp Cells: {}\n\
+                         Charging Ready:         {}\n\
+                         Supply Cond Ready:      {}\n",
                         yes_no(m.error_bit_0_error_lock_flag_discharge),
                         yes_no(m.error_bit_1_error_lock_flag_charge),
                         yes_no(m.error_bit_2_over_charge_condition_recuperation),
@@ -1596,8 +1600,16 @@ fn draw_frame(
                         yes_no(m.charge_bit_14_master_charger_control_charging_ready),
                         yes_no(m.charge_bit_15_charger_supply_conditions_ready),
                     );
-                    let text = Paragraph::new(info).wrap(Wrap { trim: true });
-                    f.render_widget(text, content_area);
+
+                    let col_layout = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+                        .split(content_area);
+
+                    let left = Paragraph::new(left_text).wrap(Wrap { trim: true });
+                    let right = Paragraph::new(right_text).wrap(Wrap { trim: true });
+                    f.render_widget(left, col_layout[0]);
+                    f.render_widget(right, col_layout[1]);
                 } else {
                     let text = Paragraph::new("Pending...").wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
