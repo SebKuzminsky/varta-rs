@@ -395,6 +395,23 @@ fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value 
     map.insert("node_id".into(), json!(eb.node_id));
     map.insert("serial_number".into(), json!(eb.sdo.serial_number));
 
+    // PDO data
+    if let Some(ref v) = eb.pdo.voltage {
+        map.insert("pdo_voltage".into(), json!(v));
+    }
+    if let Some(ref v) = eb.pdo.current {
+        map.insert("pdo_current".into(), json!(v));
+    }
+    if let Some(ref v) = eb.pdo.soc {
+        map.insert("pdo_soc".into(), json!(v));
+    }
+    if let Some(ref v) = eb.pdo.soh {
+        map.insert("pdo_soh".into(), json!(v));
+    }
+    if let Some(ref v) = eb.pdo.msg_bits {
+        map.insert("pdo_msg_bits".into(), json!(v));
+    }
+
     if let Some(ref v) = eb.sdo.software_version {
         map.insert("software_version".into(), json!(v));
     }
