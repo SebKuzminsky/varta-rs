@@ -257,6 +257,7 @@ async fn main() {
             result = varta.process_socketcan_msg() => {
                 match result {
                     Ok(Some(node_id)) => {
+                        // Found a new node, try to read its serial number via SDO.
                         try_read_serial_number(&mut varta, &args.canbus, node_id).await;
                     },
                     Ok(_) => { },
