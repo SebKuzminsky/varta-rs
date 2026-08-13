@@ -62,7 +62,7 @@ enum SelectedTab {
     Capacity,
     CycleCount,
     ChargeParameters,
-    MasterTemperature,
+    MaxBatteryTemperature,
     Configuration,
 }
 
@@ -170,7 +170,7 @@ fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
             SdoRequest::BatteryChargeCurrent,
             SdoRequest::BatteryChargeTemperature,
         ],
-        SelectedTab::MasterTemperature => vec![SdoRequest::MasterBatteryTemperature],
+        SelectedTab::MaxBatteryTemperature => vec![SdoRequest::MasterBatteryTemperature],
         SelectedTab::Configuration => vec![SdoRequest::BatteryChargeVoltage],
     }
 }
@@ -194,7 +194,7 @@ impl SelectedTab {
             SelectedTab::Capacity => "Capacity",
             SelectedTab::CycleCount => "Cycle Count",
             SelectedTab::ChargeParameters => "Charge Parameters",
-            SelectedTab::MasterTemperature => "Master Temperature",
+            SelectedTab::MaxBatteryTemperature => "Max Battery Temperature",
             SelectedTab::Configuration => "Configuration",
         }
     }
@@ -217,7 +217,7 @@ impl SelectedTab {
             SelectedTab::Capacity,
             SelectedTab::CycleCount,
             SelectedTab::ChargeParameters,
-            SelectedTab::MasterTemperature,
+            SelectedTab::MaxBatteryTemperature,
             SelectedTab::Configuration,
         ];
         let idx = tabs.iter().position(|t| *t == *self).unwrap();
@@ -778,7 +778,7 @@ fn draw_frame(
         SelectedTab::Capacity,
         SelectedTab::CycleCount,
         SelectedTab::ChargeParameters,
-        SelectedTab::MasterTemperature,
+        SelectedTab::MaxBatteryTemperature,
         SelectedTab::Configuration,
     ];
 
@@ -1479,7 +1479,7 @@ fn draw_frame(
             }
         },
 
-        SelectedTab::MasterTemperature => {
+        SelectedTab::MaxBatteryTemperature => {
             if let Some(eb) = eb {
                 if let Some(v) = &eb.sdo.master_battery_temperature {
                     let info = format!(
