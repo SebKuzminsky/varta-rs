@@ -2164,7 +2164,7 @@ async fn main() -> anyhow::Result<()> {
                         KeyCode::Right if !save_state.is_active() => {
                             selected_tab = selected_tab.cycle(true);
                         }
-                        KeyCode::Char('r') if !save_state.is_active() && count > 0 && key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        KeyCode::Char('r') | KeyCode::Char('R') if !save_state.is_active() && count > 0 && key.modifiers.contains(KeyModifiers::CONTROL) => {
                             let eb = varta.get_easyblade_by_index(selected);
                             if let Some(eb) = eb {
                                 let node_id = eb.node_id;
