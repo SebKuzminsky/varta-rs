@@ -40,6 +40,7 @@ use varta_easyblade::FetTemperature;
 use varta_easyblade::FetTemperatureLimit;
 use varta_easyblade::FetTemperatureMinMax;
 use varta_easyblade::HardwareVersion;
+use varta_easyblade::KeepPowerTimer;
 use varta_easyblade::MasterBatteryTemperature;
 use varta_easyblade::MsgBits;
 use varta_easyblade::Sdo;
@@ -1288,6 +1289,7 @@ impl Varta {
                     battery_charge_current: None,
                     battery_charge_temperature: None,
                     master_battery_temperature: None,
+                    keep_power_timer: None,
                 },
                 pdo: crate::varta_easyblade::Pdo {
                     voltage: None,
@@ -2358,10 +2360,16 @@ impl SdoSession {
                     .read_i32(BatteryCurrentLimit::INDEX, 0x01)
                     .await
                     .map_err(|e| e.to_string())?;
+                let fully_charged_end = self
+                    .sdo_client
+                    .read_u16(BatteryCurrentLimit::INDEX, 0x0a)
+                    .await
+                    .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryCurrentLimit {
                     node_id: self.node_id,
                     value: BatteryCurrentLimit {
                         discharge_sc_error_a: raw as f32 / 1000.0,
+                        charge_current_fully_charged_end_ma: fully_charged_end,
                     },
                 })
             },
@@ -2820,6 +2828,17 @@ impl SdoSession {
                     },
                 })
             },
+            SdoRequest::KeepPowerTimer => {
+                let raw = self
+                    .sdo_client
+                    .read_u32(KeepPowerTimer::INDEX, KeepPowerTimer::SUBINDEX)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::KeepPowerTimer {
+                    node_id: self.node_id,
+                    value: KeepPowerTimer { value: raw },
+                })
+            },
         }
     }
 
@@ -3101,8 +3120,29 @@ impl SdoSession {
         }
     }
 
-    /// Unlock code required to write configuration SDOs in the 0x3000 range.
-    const CONFIG_UNLOCK_CODE: u16 = 0x032f;
+    /// Unlock codes required to write configuration SDOs (from VARTA).
+    /// Different unlock codes for different OD indexes.
+    pub const CONFIG_UNLOCK_CODE_032F: u16 = 0x032f;
+    pub const CONFIG_UNLOCK_CODE_0717: u16 = 0x0717;
+
+    /// Save code to persist configuration to EEPROM (from VARTA handbook).
+    const CONFIG_SAVE_CODE: u16 = 0x1c2b;
+
+    /// Unlock configuration writes by writing the unlock code to 0x2010:01.
+    async fn sdo_unlock(&mut self, unlock_code: u16) -> Result<(), String> {
+        self.sdo_client
+            .write_u16(0x2010, 0x01, unlock_code)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Save configuration to EEPROM by writing the save code to 0x2010:01.
+    async fn sdo_save(&mut self) -> Result<(), String> {
+        self.sdo_client
+            .write_u16(0x2010, 0x01, Self::CONFIG_SAVE_CODE)
+            .await
+            .map_err(|e| e.to_string())
+    }
 
     /// Write the Battery Charge Max Voltage Parameter (0x3000sub02) if it differs from the target.
     ///
@@ -3120,17 +3160,13 @@ impl SdoSession {
         let current_v = current_raw as f32 / 1000.0;
 
         // Compare with a small tolerance to account for floating-point rounding
-        if (current_v - battery_charge_max_voltage).abs() < 0.001 {
+        if (current_v - battery_charge_max_voltage).abs() < 0.000_001 {
             return Ok(false);
         }
 
-        // Unlock configuration writes
-        self.sdo_client
-            .write_u16(0x2010, 0x01, Self::CONFIG_UNLOCK_CODE)
-            .await
-            .map_err(|e| e.to_string())?;
+        // Unlock, write, save
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
 
-        // Write the new value (stored in millivolts)
         let target_raw = (battery_charge_max_voltage * 1000.0) as u32;
         self.sdo_client
             .write_u32(0x3000, 0x02, target_raw)
@@ -3150,6 +3186,170 @@ impl SdoSession {
             ));
         }
 
+        self.sdo_save().await?;
+        Ok(true)
+    }
+
+    /// Write the Battery Charge Voltage Keep Power Parameter (0x3000sub03).
+    ///
+    /// `keep_power_voltage` is in volts. The value is stored internally in millivolts.
+    /// Returns `true` if the value was changed, `false` if it already matched.
+    pub async fn sdo_write_battery_charge_keep_power_voltage(
+        &mut self,
+        keep_power_voltage: f32,
+    ) -> Result<bool, String> {
+        let current_raw = self
+            .sdo_client
+            .read_u32(0x3000, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        let current_v = current_raw as f32 / 1000.0;
+
+        if (current_v - keep_power_voltage).abs() < 0.001 {
+            return Ok(false);
+        }
+
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+
+        let target_raw = (keep_power_voltage * 1000.0) as u32;
+        self.sdo_client
+            .write_u32(0x3000, 0x03, target_raw)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let verify_raw = self
+            .sdo_client
+            .read_u32(0x3000, 0x03)
+            .await
+            .map_err(|e| e.to_string())?;
+        if verify_raw != target_raw {
+            return Err(format!(
+                "Write verification failed: expected {}, got {}",
+                target_raw, verify_raw
+            ));
+        }
+
+        self.sdo_save().await?;
+        Ok(true)
+    }
+
+    /// Write the Keep Power Timer / Charger Standby to OFF Delay (0x3d00sub0c).
+    ///
+    /// `timer_seconds` is in seconds. 0xFFFFFFFF disables automatic shutdown.
+    /// Returns `true` if the value was changed, `false` if it already matched.
+    pub async fn sdo_write_keep_power_timer(&mut self, timer_seconds: u32) -> Result<bool, String> {
+        let current_raw = self
+            .sdo_client
+            .read_u32(0x3d00, 0x0c)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if current_raw == timer_seconds {
+            return Ok(false);
+        }
+
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+
+        self.sdo_client
+            .write_u32(0x3d00, 0x0c, timer_seconds)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let verify_raw = self
+            .sdo_client
+            .read_u32(0x3d00, 0x0c)
+            .await
+            .map_err(|e| e.to_string())?;
+        if verify_raw != timer_seconds {
+            return Err(format!(
+                "Write verification failed: expected {}, got {}",
+                timer_seconds, verify_raw
+            ));
+        }
+
+        self.sdo_save().await?;
+        Ok(true)
+    }
+
+    /// Write the Single Cell Max Charge Voltage (0x2104sub02).
+    ///
+    /// `voltage_mv` is in millivolts.
+    /// Returns `true` if the value was changed, `false` if it already matched.
+    pub async fn sdo_write_single_cell_max_charge_voltage(
+        &mut self,
+        voltage_mv: u32,
+    ) -> Result<bool, String> {
+        let current_raw = self
+            .sdo_client
+            .read_u32(0x2104, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if current_raw == voltage_mv {
+            return Ok(false);
+        }
+
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+
+        self.sdo_client
+            .write_u32(0x2104, 0x02, voltage_mv)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let verify_raw = self
+            .sdo_client
+            .read_u32(0x2104, 0x02)
+            .await
+            .map_err(|e| e.to_string())?;
+        if verify_raw != voltage_mv {
+            return Err(format!(
+                "Write verification failed: expected {}, got {}",
+                voltage_mv, verify_raw
+            ));
+        }
+
+        self.sdo_save().await?;
+        Ok(true)
+    }
+
+    /// Write the Battery Charge Current Fully Charged End (0x2304sub0a).
+    ///
+    /// `current_ma` is in milliamperes.
+    /// Returns `true` if the value was changed, `false` if it already matched.
+    pub async fn sdo_write_battery_charge_current_fully_charged_end(
+        &mut self,
+        current_ma: u16,
+    ) -> Result<bool, String> {
+        let current_raw = self
+            .sdo_client
+            .read_u16(0x2304, 0x0a)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if current_raw == current_ma {
+            return Ok(false);
+        }
+
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+
+        self.sdo_client
+            .write_u16(0x2304, 0x0a, current_ma)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let verify_raw = self
+            .sdo_client
+            .read_u16(0x2304, 0x0a)
+            .await
+            .map_err(|e| e.to_string())?;
+        if verify_raw != current_ma {
+            return Err(format!(
+                "Write verification failed: expected {}, got {}",
+                current_ma, verify_raw
+            ));
+        }
+
+        self.sdo_save().await?;
         Ok(true)
     }
 }

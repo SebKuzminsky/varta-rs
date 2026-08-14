@@ -35,6 +35,7 @@ pub use varta_easyblade::FetTemperature;
 pub use varta_easyblade::FetTemperatureLimit;
 pub use varta_easyblade::FetTemperatureMinMax;
 pub use varta_easyblade::HardwareVersion;
+pub use varta_easyblade::KeepPowerTimer;
 pub use varta_easyblade::MasterBatteryTemperature;
 pub use varta_easyblade::MasterInfo;
 pub use varta_easyblade::MsgBits;

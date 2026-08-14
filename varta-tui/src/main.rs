@@ -66,13 +66,33 @@ enum SelectedTab {
     Configuration,
 }
 
+/// Value type for a configuration field.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum ConfigValue {
+    /// Floating point value (voltages, currents) displayed with 3 decimal places.
+    Float(f32),
+    /// Unsigned integer value (timers, raw counts) displayed as integer.
+    UInt(u32),
+}
+
+impl ConfigValue {
+    fn edit_str(&self) -> String {
+        match self {
+            ConfigValue::Float(v) => format!("{:.3}", v),
+            ConfigValue::UInt(v) => format!("{}", v),
+        }
+    }
+}
+
 /// A single editable configuration field.
 #[derive(Debug, Clone)]
 struct ConfigField {
     /// Display label (e.g. "Battery Max Charge Voltage")
     label: &'static str,
-    /// Current value string shown in the field (e.g. "54.600 V")
-    value: String,
+    /// Current value (float or uint)
+    value: ConfigValue,
+    /// Unit string (e.g. "V", "s", "mA")
+    unit: &'static str,
     /// Editable portion of the value (just the number, e.g. "54.600")
     edit_buffer: String,
     /// Whether this field is currently being edited
@@ -82,21 +102,20 @@ struct ConfigField {
 }
 
 impl ConfigField {
-    fn new(label: &'static str, value: f32, unit: &str) -> Self {
-        let value_str = format!("{:.3} {}", value, unit);
-        let edit_buf = format!("{:.3}", value);
+    fn new(label: &'static str, value: ConfigValue, unit: &'static str) -> Self {
         Self {
             label,
-            value: value_str,
-            edit_buffer: edit_buf,
+            value,
+            unit,
+            edit_buffer: value.edit_str(),
             is_focused: false,
             status: None,
         }
     }
 
-    fn update_value(&mut self, value: f32, unit: &str) {
-        self.value = format!("{:.3} {}", value, unit);
-        self.edit_buffer = format!("{:.3}", value);
+    fn update_value(&mut self, value: ConfigValue) {
+        self.value = value;
+        self.edit_buffer = value.edit_str();
     }
 
     fn insert_char(&mut self, ch: char) {
@@ -107,7 +126,11 @@ impl ConfigField {
         self.edit_buffer.pop();
     }
 
-    fn parse_value(&self) -> Option<f32> {
+    fn parse_float(&self) -> Option<f32> {
+        self.edit_buffer.parse().ok()
+    }
+
+    fn parse_uint(&self) -> Option<u32> {
         self.edit_buffer.parse().ok()
     }
 }
@@ -171,7 +194,12 @@ fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
             SdoRequest::BatteryChargeTemperature,
         ],
         SelectedTab::MaxBatteryTemperature => vec![SdoRequest::MasterBatteryTemperature],
-        SelectedTab::Configuration => vec![SdoRequest::BatteryChargeVoltage],
+        SelectedTab::Configuration => vec![
+            SdoRequest::BatteryChargeVoltage,
+            SdoRequest::CellVoltageLimit,
+            SdoRequest::BatteryCurrentLimit,
+            SdoRequest::KeepPowerTimer,
+        ],
     }
 }
 
@@ -387,6 +415,9 @@ fn sdo_completion(eb: &varta_easyblade::VartaEasyblade) -> f64 {
     if eb.sdo.master_battery_temperature.is_some() {
         count += 1.0;
     }
+    if eb.sdo.keep_power_timer.is_some() {
+        count += 1.0;
+    }
     count
 }
 
@@ -519,6 +550,9 @@ fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value 
     if let Some(ref v) = eb.sdo.master_battery_temperature {
         map.insert("master_battery_temperature".into(), json!(v));
     }
+    if let Some(ref v) = eb.sdo.keep_power_timer {
+        map.insert("keep_power_timer".into(), json!(v));
+    }
 
     serde_json::Value::Object(map)
 }
@@ -568,23 +602,93 @@ fn update_config_state(
 
     // Initialize fields if empty
     if config_state.fields.is_empty() {
+        // Field 0: Battery Max Charge Voltage (0x3000:02)
         if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage {
             config_state.fields.push(ConfigField::new(
                 "Battery Max Charge Voltage",
-                charge_voltage.charge_max_voltage_v,
+                ConfigValue::Float(charge_voltage.charge_max_voltage_v),
                 "V",
             ));
+        }
+        // Field 1: Battery Keep Power Voltage (0x3000:03)
+        if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage {
+            config_state.fields.push(ConfigField::new(
+                "Battery Keep Power Voltage",
+                ConfigValue::Float(charge_voltage.charge_keep_power_voltage_v),
+                "V",
+            ));
+        }
+        // Field 2: Keep Power Timer (0x3d00:0c)
+        if let Some(ref kpt) = eb.sdo.keep_power_timer {
+            config_state.fields.push(ConfigField::new(
+                "Keep Power Timer",
+                ConfigValue::UInt(kpt.value),
+                "s",
+            ));
+        }
+        // Field 3: Single Cell Max Charge Voltage (0x2104:02)
+        if let Some(ref limit) = eb.sdo.cell_voltage_limit {
+            config_state.fields.push(ConfigField::new(
+                "Single Cell Max Charge Voltage",
+                ConfigValue::Float(limit.max_charge_voltage_v),
+                "V",
+            ));
+        }
+        // Field 4: Battery Charge Current Fully Charged End (0x2304:0a)
+        if let Some(ref current_limit) = eb.sdo.battery_current_limit {
+            config_state.fields.push(ConfigField::new(
+                "Charge Current Fully Charged End",
+                ConfigValue::Float(
+                    current_limit.charge_current_fully_charged_end_ma as f32 / 1000.0,
+                ),
+                "A",
+            ));
+        }
+        if !config_state.fields.is_empty() {
             config_state.fields[0].is_focused = true;
         }
         return;
     }
 
     // Update values from module data (but not while a field is being edited)
+    // Field 0: Battery Max Charge Voltage
     if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage
         && let Some(field) = config_state.fields.get_mut(0)
         && !field.is_focused
     {
-        field.update_value(charge_voltage.charge_max_voltage_v, "V");
+        field.update_value(ConfigValue::Float(charge_voltage.charge_max_voltage_v));
+    }
+    // Field 1: Battery Keep Power Voltage
+    if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage
+        && let Some(field) = config_state.fields.get_mut(1)
+        && !field.is_focused
+    {
+        field.update_value(ConfigValue::Float(
+            charge_voltage.charge_keep_power_voltage_v,
+        ));
+    }
+    // Field 2: Keep Power Timer
+    if let Some(ref kpt) = eb.sdo.keep_power_timer
+        && let Some(field) = config_state.fields.get_mut(2)
+        && !field.is_focused
+    {
+        field.update_value(ConfigValue::UInt(kpt.value));
+    }
+    // Field 3: Single Cell Max Charge Voltage
+    if let Some(ref limit) = eb.sdo.cell_voltage_limit
+        && let Some(field) = config_state.fields.get_mut(3)
+        && !field.is_focused
+    {
+        field.update_value(ConfigValue::Float(limit.max_charge_voltage_v));
+    }
+    // Field 4: Battery Charge Current Fully Charged End
+    if let Some(ref current_limit) = eb.sdo.battery_current_limit
+        && let Some(field) = config_state.fields.get_mut(4)
+        && !field.is_focused
+    {
+        field.update_value(ConfigValue::Float(
+            current_limit.charge_current_fully_charged_end_ma as f32 / 1000.0,
+        ));
     }
 }
 
@@ -1645,16 +1749,12 @@ fn draw_frame(
             } else {
                 let mut lines: Vec<Line> = Vec::new();
                 for field in config_state.fields.iter() {
-                    let display_value = if field.is_focused {
-                        &field.edit_buffer
+                    let display_value: String = if field.is_focused {
+                        field.edit_buffer.clone()
                     } else {
-                        field
-                            .value
-                            .split_whitespace()
-                            .next()
-                            .unwrap_or(&field.value)
+                        field.value.edit_str()
                     };
-                    let unit = field.value.split_whitespace().last().unwrap_or("");
+                    let unit = field.unit;
 
                     let mut spans: Vec<Span> = Vec::new();
                     spans.push(Span::raw(format!("{}: ", field.label)));
@@ -1751,6 +1851,7 @@ fn sdo_request_name(request: &SdoRequest) -> &'static str {
         SdoRequest::BatteryChargeCurrent => "BatteryChargeCurrent",
         SdoRequest::BatteryChargeTemperature => "BatteryChargeTemperature",
         SdoRequest::MasterBatteryTemperature => "MasterBatteryTemperature",
+        SdoRequest::KeepPowerTimer => "KeepPowerTimer",
     }
 }
 
@@ -1885,6 +1986,7 @@ fn burst_initial_sdos(node_id: u8, tx: &tokio::sync::mpsc::UnboundedSender<(u8, 
         .ok();
     tx.send((node_id, SdoRequest::MasterBatteryTemperature))
         .ok();
+    tx.send((node_id, SdoRequest::KeepPowerTimer)).ok();
 }
 
 #[tokio::main]
@@ -2139,6 +2241,11 @@ async fn main() -> anyhow::Result<()> {
                                 eb.sdo.master_battery_temperature = Some(value);
                             }
                         },
+                        varta_easyblade::SdoResponse::KeepPowerTimer { node_id, value } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.keep_power_timer = Some(value);
+                            }
+                        },
 
                     }
                 }
@@ -2208,53 +2315,111 @@ async fn main() -> anyhow::Result<()> {
                         }
                         // Configuration tab: Enter to write value
                         KeyCode::Enter if selected_tab == SelectedTab::Configuration => {
-                            if config_state.focused_index >= config_state.fields.len() {
+                            let idx = config_state.focused_index;
+                            if idx >= config_state.fields.len() {
                                 continue;
                             }
-                            let value = match config_state.fields[config_state.focused_index].parse_value() {
-                                Some(v) => v,
-                                None => {
-                                    config_state.fields[config_state.focused_index].status = Some("Invalid value".to_string());
-                                    continue;
-                                }
-                            };
                             let node_id = if let Some(eb) = varta.get_easyblade_by_index(selected) {
                                 eb.node_id
                             } else {
-                                config_state.fields[config_state.focused_index].status = Some("No module selected".to_string());
+                                config_state.fields[idx].status = Some("No module selected".to_string());
                                 continue;
                             };
-                            // Write the SDO
                             let mut sdo_session = match varta_easyblade::SdoSession::new(&args.can_interface, node_id) {
                                 Ok(s) => s,
                                 Err(e) => {
                                     debug_log(&format!("failed to create SdoSession: {}", e));
-                                    config_state.fields[config_state.focused_index].status = Some(format!("Error: {}", e));
+                                    config_state.fields[idx].status = Some(format!("Error: {}", e));
                                     continue;
                                 }
                             };
 
-                            match sdo_session.sdo_write_battery_charge_max_voltage(value).await {
+                            // Dispatch to the correct write method based on field index
+                            let result = match idx {
+                                // Field 0: Battery Max Charge Voltage (0x3000:02)
+                                0 => {
+                                    let value = match config_state.fields[idx].parse_float() {
+                                        Some(v) => v,
+                                        None => {
+                                            config_state.fields[idx].status = Some("Invalid value".to_string());
+                                            continue;
+                                        }
+                                    };
+                                    sdo_session.sdo_write_battery_charge_max_voltage(value).await
+                                }
+                                // Field 1: Battery Keep Power Voltage (0x3000:03)
+                                1 => {
+                                    let value = match config_state.fields[idx].parse_float() {
+                                        Some(v) => v,
+                                        None => {
+                                            config_state.fields[idx].status = Some("Invalid value".to_string());
+                                            continue;
+                                        }
+                                    };
+                                    sdo_session.sdo_write_battery_charge_keep_power_voltage(value).await
+                                }
+                                // Field 2: Keep Power Timer (0x3d00:0c)
+                                2 => {
+                                    let value = match config_state.fields[idx].parse_uint() {
+                                        Some(v) => v,
+                                        None => {
+                                            config_state.fields[idx].status = Some("Invalid value".to_string());
+                                            continue;
+                                        }
+                                    };
+                                    sdo_session.sdo_write_keep_power_timer(value).await
+                                }
+                                // Field 3: Single Cell Max Charge Voltage (0x2104:02)
+                                3 => {
+                                    let value_v = match config_state.fields[idx].parse_float() {
+                                        Some(v) => v,
+                                        None => {
+                                            config_state.fields[idx].status = Some("Invalid value".to_string());
+                                            continue;
+                                        }
+                                    };
+                                    let value_mv = (value_v * 1000.0) as u32;
+                                    sdo_session.sdo_write_single_cell_max_charge_voltage(value_mv).await
+                                }
+                                // Field 4: Battery Charge Current Fully Charged End (0x2304:0a)
+                                4 => {
+                                    let value_a = match config_state.fields[idx].parse_float() {
+                                        Some(v) => v,
+                                        None => {
+                                            config_state.fields[idx].status = Some("Invalid value".to_string());
+                                            continue;
+                                        }
+                                    };
+                                    let value_ma = (value_a * 1000.0) as u16;
+                                    sdo_session.sdo_write_battery_charge_current_fully_charged_end(value_ma).await
+                                }
+                                _ => {
+                                    config_state.fields[idx].status = Some("Unknown field".to_string());
+                                    continue;
+                                }
+                            };
+
+                            match result {
                                 Ok(changed) => {
                                     let msg = if changed { "OK - value changed" } else { "OK - already set" };
+                                    config_state.fields[idx].status = Some(msg.to_string());
                                     debug_log(&format!(
-                                        "[CONFIG:{}] BatteryChargeMaxVoltage (0x3000:0x02) <- {:.3}V - {}",
-                                        node_id, value, msg,
+                                        "[CONFIG:{}] Field {} written: {}",
+                                        node_id, config_state.fields[idx].label, msg,
                                     ));
-                                    config_state.fields[config_state.focused_index].status = Some(msg.to_string());
-                                    // Unfocus so update_config_state syncs the new value next frame
-                                    config_state.fields[config_state.focused_index].is_focused = false;
-                                    // Re-read the value so the display updates
-                                    let _ = varta_sdo_task
-                                        .sdo_request_tx
-                                        .send((node_id, SdoRequest::BatteryChargeVoltage));
+                                    config_state.fields[idx].is_focused = false;
+                                    // Re-read all config SDOs so the display updates
+                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::BatteryChargeVoltage));
+                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::CellVoltageLimit));
+                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::BatteryCurrentLimit));
+                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::KeepPowerTimer));
                                 },
                                 Err(e) => {
                                     debug_log(&format!(
-                                        "[CONFIG:{}] BatteryChargeMaxVoltage (0x3000:0x02) <- {:.3}V failed: {}",
-                                        node_id, value, e,
+                                        "[CONFIG:{}] Field {} write failed: {}",
+                                        node_id, config_state.fields[idx].label, e,
                                     ));
-                                    config_state.fields[config_state.focused_index].status = Some(format!("Error: {}", e));
+                                    config_state.fields[idx].status = Some(format!("Error: {}", e));
                                 },
                             }
                         }

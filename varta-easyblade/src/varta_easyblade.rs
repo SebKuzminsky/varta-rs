@@ -461,12 +461,33 @@ impl std::fmt::Display for BatteryCurrent {
 #[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct BatteryCurrentLimit {
     pub discharge_sc_error_a: f32,
+    /// Battery Charge Current Fully Charged End (0x2304 subA), in mA
+    pub charge_current_fully_charged_end_ma: u16,
 }
 
 impl Sdo for BatteryCurrentLimit {
     const NAME: &'static str = "Battery Current Limit Parameter";
     const INDEX: u16 = 0x2304;
     const SUBINDEX: u8 = 0x01;
+}
+
+/// Keep Power Timer (0x3d00 subC) — Charger Standby to OFF Delay Parameter.
+/// Value is in seconds; 0xFFFFFFFF means no automatic shutdown.
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct KeepPowerTimer {
+    pub value: u32,
+}
+
+impl Sdo for KeepPowerTimer {
+    const NAME: &'static str = "Charger Standby to OFF Delay Parameter";
+    const INDEX: u16 = 0x3d00;
+    const SUBINDEX: u8 = 0x0c;
+}
+
+impl std::fmt::Display for KeepPowerTimer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
 }
 
 impl std::fmt::Display for BatteryCurrentLimit {
@@ -773,6 +794,24 @@ impl std::fmt::Display for MasterBatteryTemperature {
     }
 }
 
+/// SDO write to save configuration to EEPROM (0x2010 sub1 = 0x1c2b).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct SaveConfig {
+    pub value: u16,
+}
+
+impl Sdo for SaveConfig {
+    const NAME: &'static str = "Save Configuration";
+    const INDEX: u16 = 0x2010;
+    const SUBINDEX: u8 = 0x01;
+}
+
+impl std::fmt::Display for SaveConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, serde::Serialize)]
 pub struct MsgBits {
     pub info_bit_0_empty: bool,
@@ -859,6 +898,7 @@ pub enum SdoRequest {
     BatteryChargeCurrent,
     BatteryChargeTemperature,
     MasterBatteryTemperature,
+    KeepPowerTimer,
 }
 
 impl std::fmt::Display for SdoRequest {
@@ -898,6 +938,7 @@ impl std::fmt::Display for SdoRequest {
             SdoRequest::BatteryChargeCurrent => <BatteryChargeCurrent as Sdo>::fmt_sdo(f),
             SdoRequest::BatteryChargeTemperature => <BatteryChargeTemperature as Sdo>::fmt_sdo(f),
             SdoRequest::MasterBatteryTemperature => <MasterBatteryTemperature as Sdo>::fmt_sdo(f),
+            SdoRequest::KeepPowerTimer => <KeepPowerTimer as Sdo>::fmt_sdo(f),
         }
     }
 }
@@ -937,6 +978,7 @@ pub enum SdoResponse {
     BatteryChargeCurrent { node_id: u8, value: BatteryChargeCurrent },
     BatteryChargeTemperature { node_id: u8, value: BatteryChargeTemperature },
     MasterBatteryTemperature { node_id: u8, value: MasterBatteryTemperature },
+    KeepPowerTimer { node_id: u8, value: KeepPowerTimer },
 }
 
 impl std::fmt::Display for SdoResponse {
@@ -1038,6 +1080,9 @@ impl std::fmt::Display for SdoResponse {
                     value.max_fet_temperature_c, value.max_cell_temperature_c,
                 )
             },
+            SdoResponse::KeepPowerTimer { value, .. } => {
+                write!(f, "{}s", value.value)
+            },
         }
     }
 }
@@ -1097,6 +1142,7 @@ pub struct SdoData {
     pub battery_charge_current: Option<BatteryChargeCurrent>,
     pub battery_charge_temperature: Option<BatteryChargeTemperature>,
     pub master_battery_temperature: Option<MasterBatteryTemperature>,
+    pub keep_power_timer: Option<KeepPowerTimer>,
 }
 
 /// PDO data received from Varta Easyblade CAN messages.
