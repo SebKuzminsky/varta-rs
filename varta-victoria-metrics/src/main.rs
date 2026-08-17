@@ -251,6 +251,7 @@ async fn main() {
     );
 
     let mut batch_interval = tokio::time::interval(Duration::from_millis(500));
+    let mut expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
 
     loop {
         tokio::select! {
@@ -266,7 +267,9 @@ async fn main() {
                         std::process::exit(1);
                     },
                 }
+                expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
             },
+
             _ = batch_interval.tick() => {
                 // Try to read the serial number for any Easyblades that don't have it yet.
                 for node_id in 0..varta_easyblade::MAX_MODULES {
@@ -283,6 +286,12 @@ async fn main() {
                     eprintln!("Error sending metrics: {}", e);
                 }
             },
+
+            _ = expire_timer.as_mut() => {
+                varta.expire_missing_modules();
+                expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
+            }
+
         }
     }
 }
