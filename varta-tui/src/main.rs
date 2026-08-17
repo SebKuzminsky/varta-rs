@@ -62,6 +62,7 @@ enum SelectedTab {
     Capacity,
     CycleCount,
     ChargeParameters,
+    ChargeCurrentParams,
     MaxBatteryTemperature,
     Configuration,
 }
@@ -193,6 +194,18 @@ fn sdos_for_tab(tab: SelectedTab) -> Vec<SdoRequest> {
             SdoRequest::BatteryChargeCurrent,
             SdoRequest::BatteryChargeTemperature,
         ],
+        SelectedTab::ChargeCurrentParams => vec![
+            SdoRequest::BatteryChargeCurrentValid,
+            SdoRequest::BatteryChargeCurrentMaxNormal,
+            SdoRequest::BatteryChargeCurrentMaxLow,
+            SdoRequest::BatteryChargeCurrentMaxHigh,
+            SdoRequest::BatteryChargeCurrentKeepPower,
+            SdoRequest::BatteryChargeCurrentDecreaseStepsize1,
+            SdoRequest::BatteryChargeCurrentIncreaseStepsize1,
+            SdoRequest::BatteryChargeCurrentDecreaseStepsize2,
+            SdoRequest::BatteryChargeCurrentIncreaseStepsize2,
+            SdoRequest::BatteryChargeCurrentModifyInterval,
+        ],
         SelectedTab::MaxBatteryTemperature => vec![SdoRequest::MasterBatteryTemperature],
         SelectedTab::Configuration => vec![
             SdoRequest::BatteryChargeVoltage,
@@ -222,6 +235,7 @@ impl SelectedTab {
             SelectedTab::Capacity => "Capacity",
             SelectedTab::CycleCount => "Cycle Count",
             SelectedTab::ChargeParameters => "Charge Parameters",
+            SelectedTab::ChargeCurrentParams => "Charge Current",
             SelectedTab::MaxBatteryTemperature => "Max Battery Temperature",
             SelectedTab::Configuration => "Configuration",
         }
@@ -245,6 +259,7 @@ impl SelectedTab {
             SelectedTab::Capacity,
             SelectedTab::CycleCount,
             SelectedTab::ChargeParameters,
+            SelectedTab::ChargeCurrentParams,
             SelectedTab::MaxBatteryTemperature,
             SelectedTab::Configuration,
         ];
@@ -409,6 +424,36 @@ fn sdo_completion(eb: &varta_easyblade::VartaEasyblade) -> f64 {
     if eb.sdo.battery_charge_current.is_some() {
         count += 1.0;
     }
+    if eb.sdo.battery_charge_current_valid.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_max_normal.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_max_low.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_max_high.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_keep_power.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_decrease_stepsize1.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_increase_stepsize1.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_decrease_stepsize2.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_increase_stepsize2.is_some() {
+        count += 1.0;
+    }
+    if eb.sdo.battery_charge_current_modify_interval.is_some() {
+        count += 1.0;
+    }
     if eb.sdo.battery_charge_temperature.is_some() {
         count += 1.0;
     }
@@ -543,6 +588,36 @@ fn easyblade_to_json(eb: &varta_easyblade::VartaEasyblade) -> serde_json::Value 
     }
     if let Some(ref v) = eb.sdo.battery_charge_current {
         map.insert("battery_charge_current".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_valid {
+        map.insert("battery_charge_current_valid".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_max_normal {
+        map.insert("battery_charge_current_max_normal".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_max_low {
+        map.insert("battery_charge_current_max_low".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_max_high {
+        map.insert("battery_charge_current_max_high".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_keep_power {
+        map.insert("battery_charge_current_keep_power".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_decrease_stepsize1 {
+        map.insert("battery_charge_current_decrease_stepsize1".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_increase_stepsize1 {
+        map.insert("battery_charge_current_increase_stepsize1".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_decrease_stepsize2 {
+        map.insert("battery_charge_current_decrease_stepsize2".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_increase_stepsize2 {
+        map.insert("battery_charge_current_increase_stepsize2".into(), json!(v));
+    }
+    if let Some(ref v) = eb.sdo.battery_charge_current_modify_interval {
+        map.insert("battery_charge_current_modify_interval".into(), json!(v));
     }
     if let Some(ref v) = eb.sdo.battery_charge_temperature {
         map.insert("battery_charge_temperature".into(), json!(v));
@@ -899,6 +974,7 @@ fn draw_frame(
         SelectedTab::Capacity,
         SelectedTab::CycleCount,
         SelectedTab::ChargeParameters,
+        SelectedTab::ChargeCurrentParams,
         SelectedTab::MaxBatteryTemperature,
         SelectedTab::Configuration,
     ];
@@ -1600,6 +1676,134 @@ fn draw_frame(
             }
         },
 
+        SelectedTab::ChargeCurrentParams => {
+            if let Some(eb) = eb {
+                let sdo = &eb.sdo;
+                let mut lines = String::from("Object 0x3100 Battery Charge Current Parameter\n\n");
+                let add = |lines: &mut String,
+                           label: &str,
+                           raw: Option<u32>,
+                           human: Option<f32>,
+                           unit: &str| {
+                    match (raw, human) {
+                        (Some(r), Some(h)) => {
+                            lines.push_str(&format!("{}: {:>8} ({:.3} {})\n", label, r, h, unit));
+                        },
+                        _ => lines.push_str(&format!("{}: {:>8}\n", label, "pending")),
+                    }
+                };
+                add(
+                    &mut lines,
+                    "Charge Current Valid",
+                    sdo.battery_charge_current_valid.as_ref().map(|v| v.value),
+                    sdo.battery_charge_current_valid.as_ref().map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Max Current Normal Temp",
+                    sdo.battery_charge_current_max_normal
+                        .as_ref()
+                        .map(|v| v.value),
+                    sdo.battery_charge_current_max_normal
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Max Current Low Temp",
+                    sdo.battery_charge_current_max_low.as_ref().map(|v| v.value),
+                    sdo.battery_charge_current_max_low
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Max Current High Temp",
+                    sdo.battery_charge_current_max_high
+                        .as_ref()
+                        .map(|v| v.value),
+                    sdo.battery_charge_current_max_high
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Keep Power Current",
+                    sdo.battery_charge_current_keep_power
+                        .as_ref()
+                        .map(|v| v.value),
+                    sdo.battery_charge_current_keep_power
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Decrease Stepsize 1",
+                    sdo.battery_charge_current_decrease_stepsize1
+                        .as_ref()
+                        .map(|v| v.value as u32),
+                    sdo.battery_charge_current_decrease_stepsize1
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Increase Stepsize 1",
+                    sdo.battery_charge_current_increase_stepsize1
+                        .as_ref()
+                        .map(|v| v.value as u32),
+                    sdo.battery_charge_current_increase_stepsize1
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Decrease Stepsize 2",
+                    sdo.battery_charge_current_decrease_stepsize2
+                        .as_ref()
+                        .map(|v| v.value as u32),
+                    sdo.battery_charge_current_decrease_stepsize2
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Increase Stepsize 2",
+                    sdo.battery_charge_current_increase_stepsize2
+                        .as_ref()
+                        .map(|v| v.value as u32),
+                    sdo.battery_charge_current_increase_stepsize2
+                        .as_ref()
+                        .map(|v| v.value_a),
+                    "A",
+                );
+                add(
+                    &mut lines,
+                    "Modify Interval Time",
+                    sdo.battery_charge_current_modify_interval
+                        .as_ref()
+                        .map(|v| v.value),
+                    sdo.battery_charge_current_modify_interval
+                        .as_ref()
+                        .map(|v| v.value_ms),
+                    "ms",
+                );
+                let text = Paragraph::new(lines).wrap(Wrap { trim: true });
+                f.render_widget(text, content_area);
+            } else {
+                let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
+                f.render_widget(text, content_area);
+            }
+        },
+
         SelectedTab::MaxBatteryTemperature => {
             if let Some(eb) = eb {
                 if let Some(v) = &eb.sdo.master_battery_temperature {
@@ -1849,6 +2053,24 @@ fn sdo_request_name(request: &SdoRequest) -> &'static str {
         SdoRequest::BatteryCycleCount => "BatteryCycleCount",
         SdoRequest::BatteryChargeVoltage => "BatteryChargeVoltage",
         SdoRequest::BatteryChargeCurrent => "BatteryChargeCurrent",
+        SdoRequest::BatteryChargeCurrentValid => "BatteryChargeCurrentValid",
+        SdoRequest::BatteryChargeCurrentMaxNormal => "BatteryChargeCurrentMaxNormal",
+        SdoRequest::BatteryChargeCurrentMaxLow => "BatteryChargeCurrentMaxLow",
+        SdoRequest::BatteryChargeCurrentMaxHigh => "BatteryChargeCurrentMaxHigh",
+        SdoRequest::BatteryChargeCurrentKeepPower => "BatteryChargeCurrentKeepPower",
+        SdoRequest::BatteryChargeCurrentDecreaseStepsize1 => {
+            "BatteryChargeCurrentDecreaseStepsize1"
+        },
+        SdoRequest::BatteryChargeCurrentIncreaseStepsize1 => {
+            "BatteryChargeCurrentIncreaseStepsize1"
+        },
+        SdoRequest::BatteryChargeCurrentDecreaseStepsize2 => {
+            "BatteryChargeCurrentDecreaseStepsize2"
+        },
+        SdoRequest::BatteryChargeCurrentIncreaseStepsize2 => {
+            "BatteryChargeCurrentIncreaseStepsize2"
+        },
+        SdoRequest::BatteryChargeCurrentModifyInterval => "BatteryChargeCurrentModifyInterval",
         SdoRequest::BatteryChargeTemperature => "BatteryChargeTemperature",
         SdoRequest::MasterBatteryTemperature => "MasterBatteryTemperature",
         SdoRequest::KeepPowerTimer => "KeepPowerTimer",
@@ -1982,6 +2204,26 @@ fn burst_initial_sdos(node_id: u8, tx: &tokio::sync::mpsc::UnboundedSender<(u8, 
     tx.send((node_id, SdoRequest::BatteryCycleCount)).ok();
     tx.send((node_id, SdoRequest::BatteryChargeVoltage)).ok();
     tx.send((node_id, SdoRequest::BatteryChargeCurrent)).ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentValid))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentMaxNormal))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentMaxLow))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentMaxHigh))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentKeepPower))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentDecreaseStepsize1))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentIncreaseStepsize1))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentDecreaseStepsize2))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentIncreaseStepsize2))
+        .ok();
+    tx.send((node_id, SdoRequest::BatteryChargeCurrentModifyInterval))
+        .ok();
     tx.send((node_id, SdoRequest::BatteryChargeTemperature))
         .ok();
     tx.send((node_id, SdoRequest::MasterBatteryTemperature))
@@ -2229,6 +2471,86 @@ async fn main() -> anyhow::Result<()> {
                         varta_easyblade::SdoResponse::BatteryChargeCurrent { node_id, value } => {
                             if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
                                 eb.sdo.battery_charge_current = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentValid {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_valid = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentMaxNormal {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_max_normal = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentMaxLow {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_max_low = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentMaxHigh {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_max_high = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentKeepPower {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_keep_power = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentDecreaseStepsize1 {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_decrease_stepsize1 = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentIncreaseStepsize1 {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_increase_stepsize1 = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentDecreaseStepsize2 {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_decrease_stepsize2 = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentIncreaseStepsize2 {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_increase_stepsize2 = Some(value);
+                            }
+                        },
+                        varta_easyblade::SdoResponse::BatteryChargeCurrentModifyInterval {
+                            node_id,
+                            value,
+                        } => {
+                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                eb.sdo.battery_charge_current_modify_interval = Some(value);
                             }
                         },
                         varta_easyblade::SdoResponse::BatteryChargeTemperature { node_id, value } => {

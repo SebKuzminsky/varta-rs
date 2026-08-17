@@ -754,6 +754,216 @@ impl std::fmt::Display for BatteryChargeCurrent {
     }
 }
 
+/// Battery Charge Current Valid Value (0x3100 subindex 1, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentValid {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u32,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentValid {
+    const NAME: &'static str = "Battery Charge Current Valid Value";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x01;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentValid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Max Current Normal Temp Parameter (0x3100 subindex 2, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentMaxNormal {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u32,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentMaxNormal {
+    const NAME: &'static str = "Battery Charge Max Current Normal Temp Parameter";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x02;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentMaxNormal {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Max Current Low Temp Parameter (0x3100 subindex 3, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentMaxLow {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u32,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentMaxLow {
+    const NAME: &'static str = "Battery Charge Max Current Low Temp Parameter";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x03;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentMaxLow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Max Current High Temp Parameter (0x3100 subindex 4, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentMaxHigh {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u32,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentMaxHigh {
+    const NAME: &'static str = "Battery Charge Max Current High Temp Parameter";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x04;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentMaxHigh {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Current Keep Power Parameter (0x3100 subindex 5, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentKeepPower {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u32,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentKeepPower {
+    const NAME: &'static str = "Battery Charge Current Keep Power Parameter";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x05;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentKeepPower {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Current Decrease Stepsize Parameter 1 (0x3100 subindex 6, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentDecreaseStepsize1 {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u16,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentDecreaseStepsize1 {
+    const NAME: &'static str = "Battery Charge Current Decrease Stepsize Parameter 1";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x06;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentDecreaseStepsize1 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Current Increase Stepsize Parameter 1 (0x3100 subindex 7, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentIncreaseStepsize1 {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u16,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentIncreaseStepsize1 {
+    const NAME: &'static str = "Battery Charge Current Increase Stepsize Parameter 1";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x07;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentIncreaseStepsize1 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Current Decrease Stepsize Parameter 2 (0x3100 subindex 8, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentDecreaseStepsize2 {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u16,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentDecreaseStepsize2 {
+    const NAME: &'static str = "Battery Charge Current Decrease Stepsize Parameter 2";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x08;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentDecreaseStepsize2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Current Increase Stepsize Parameter 2 (0x3100 subindex 9, raw value in 0.001 A).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentIncreaseStepsize2 {
+    /// Raw value as read from the SDO (in 0.001 A).
+    pub value: u16,
+    /// Human-readable value in Amperes.
+    pub value_a: f32,
+}
+
+impl Sdo for BatteryChargeCurrentIncreaseStepsize2 {
+    const NAME: &'static str = "Battery Charge Current Increase Stepsize Parameter 2";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x09;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentIncreaseStepsize2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
+/// Battery Charge Current Modify Intervall Time Parameter (0x3100 subindex 10, raw value in ms).
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BatteryChargeCurrentModifyInterval {
+    /// Raw value as read from the SDO (in ms).
+    pub value: u32,
+    /// Human-readable value in milliseconds.
+    pub value_ms: f32,
+}
+
+impl Sdo for BatteryChargeCurrentModifyInterval {
+    const NAME: &'static str = "Battery Charge Current Modify Intervall Time Parameter";
+    const INDEX: u16 = 0x3100;
+    const SUBINDEX: u8 = 0x0a;
+}
+
+impl std::fmt::Display for BatteryChargeCurrentModifyInterval {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Sdo>::fmt_sdo(f)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BatteryChargeTemperature {
     pub temp_min_low_c: f32,
@@ -896,6 +1106,16 @@ pub enum SdoRequest {
     BatteryCycleCount,
     BatteryChargeVoltage,
     BatteryChargeCurrent,
+    BatteryChargeCurrentValid,
+    BatteryChargeCurrentMaxNormal,
+    BatteryChargeCurrentMaxLow,
+    BatteryChargeCurrentMaxHigh,
+    BatteryChargeCurrentKeepPower,
+    BatteryChargeCurrentDecreaseStepsize1,
+    BatteryChargeCurrentIncreaseStepsize1,
+    BatteryChargeCurrentDecreaseStepsize2,
+    BatteryChargeCurrentIncreaseStepsize2,
+    BatteryChargeCurrentModifyInterval,
     BatteryChargeTemperature,
     MasterBatteryTemperature,
     KeepPowerTimer,
@@ -936,6 +1156,34 @@ impl std::fmt::Display for SdoRequest {
             SdoRequest::BatteryCycleCount => <BatteryCycleCount as Sdo>::fmt_sdo(f),
             SdoRequest::BatteryChargeVoltage => <BatteryChargeVoltage as Sdo>::fmt_sdo(f),
             SdoRequest::BatteryChargeCurrent => <BatteryChargeCurrent as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeCurrentValid => <BatteryChargeCurrentValid as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeCurrentMaxNormal => {
+                <BatteryChargeCurrentMaxNormal as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentMaxLow => {
+                <BatteryChargeCurrentMaxLow as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentMaxHigh => {
+                <BatteryChargeCurrentMaxHigh as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentKeepPower => {
+                <BatteryChargeCurrentKeepPower as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentDecreaseStepsize1 => {
+                <BatteryChargeCurrentDecreaseStepsize1 as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentIncreaseStepsize1 => {
+                <BatteryChargeCurrentIncreaseStepsize1 as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentDecreaseStepsize2 => {
+                <BatteryChargeCurrentDecreaseStepsize2 as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentIncreaseStepsize2 => {
+                <BatteryChargeCurrentIncreaseStepsize2 as Sdo>::fmt_sdo(f)
+            },
+            SdoRequest::BatteryChargeCurrentModifyInterval => {
+                <BatteryChargeCurrentModifyInterval as Sdo>::fmt_sdo(f)
+            },
             SdoRequest::BatteryChargeTemperature => <BatteryChargeTemperature as Sdo>::fmt_sdo(f),
             SdoRequest::MasterBatteryTemperature => <MasterBatteryTemperature as Sdo>::fmt_sdo(f),
             SdoRequest::KeepPowerTimer => <KeepPowerTimer as Sdo>::fmt_sdo(f),
@@ -944,41 +1192,186 @@ impl std::fmt::Display for SdoRequest {
 }
 
 pub enum SdoResponse {
-    SerialNumber { node_id: u8, value: SerialNumber },
-    SoftwareVersion { node_id: u8, value: SoftwareVersion },
-    HardwareVersion { node_id: u8, value: HardwareVersion },
-    DeviceErrorHistory { node_id: u8, value: DeviceErrorHistory },
-    CellVoltages { node_id: u8, value: CellVoltages },
-    DeviceConfigInfo { node_id: u8, value: DeviceConfigInfo },
-    DeviceSerialNumberInfo { node_id: u8, value: DeviceSerialNumberInfo },
-    DeviceDateInfo { node_id: u8, value: DeviceDateInfo },
-    DeviceVariantInfo { node_id: u8, value: DeviceVariantInfo },
-    DeviceControlParam { node_id: u8, value: DeviceControlParam },
-    DeviceOperationTime { node_id: u8, value: DeviceOperationTime },
-    DeviceErrorCounter { node_id: u8, value: DeviceErrorCounterInfo },
-    CellVoltageMinMax { node_id: u8, value: CellVoltageMinMax },
-    CellVoltageLimit { node_id: u8, value: CellVoltageLimit },
-    BatteryVoltage { node_id: u8, value: BatteryVoltage },
-    BatteryVoltageLimit { node_id: u8, value: BatteryVoltageLimit },
-    BatteryCurrent { node_id: u8, value: BatteryCurrent },
-    BatteryCurrentLimit { node_id: u8, value: BatteryCurrentLimit },
-    FetTemperature { node_id: u8, value: FetTemperature },
-    FetTemperatureMinMax { node_id: u8, value: FetTemperatureMinMax },
-    FetTemperatureLimit { node_id: u8, value: FetTemperatureLimit },
-    CellTemperature { node_id: u8, value: CellTemperature },
-    CellTemperatureMinMax { node_id: u8, value: CellTemperatureMinMax },
-    CellTemperatureLimit { node_id: u8, value: CellTemperatureLimit },
-    CellBalanceStatus { node_id: u8, value: CellBalanceStatus },
-    CellBalanceLimit { node_id: u8, value: CellBalanceLimit },
-    CellImpedance { node_id: u8, value: CellImpedance },
-    BatteryCapacity { node_id: u8, value: BatteryCapacity },
-    BatteryCapacityParam { node_id: u8, value: BatteryCapacityParam },
-    BatteryCycleCount { node_id: u8, value: BatteryCycleCount },
-    BatteryChargeVoltage { node_id: u8, value: BatteryChargeVoltage },
-    BatteryChargeCurrent { node_id: u8, value: BatteryChargeCurrent },
-    BatteryChargeTemperature { node_id: u8, value: BatteryChargeTemperature },
-    MasterBatteryTemperature { node_id: u8, value: MasterBatteryTemperature },
-    KeepPowerTimer { node_id: u8, value: KeepPowerTimer },
+    SerialNumber {
+        node_id: u8,
+        value: SerialNumber,
+    },
+    SoftwareVersion {
+        node_id: u8,
+        value: SoftwareVersion,
+    },
+    HardwareVersion {
+        node_id: u8,
+        value: HardwareVersion,
+    },
+    DeviceErrorHistory {
+        node_id: u8,
+        value: DeviceErrorHistory,
+    },
+    CellVoltages {
+        node_id: u8,
+        value: CellVoltages,
+    },
+    DeviceConfigInfo {
+        node_id: u8,
+        value: DeviceConfigInfo,
+    },
+    DeviceSerialNumberInfo {
+        node_id: u8,
+        value: DeviceSerialNumberInfo,
+    },
+    DeviceDateInfo {
+        node_id: u8,
+        value: DeviceDateInfo,
+    },
+    DeviceVariantInfo {
+        node_id: u8,
+        value: DeviceVariantInfo,
+    },
+    DeviceControlParam {
+        node_id: u8,
+        value: DeviceControlParam,
+    },
+    DeviceOperationTime {
+        node_id: u8,
+        value: DeviceOperationTime,
+    },
+    DeviceErrorCounter {
+        node_id: u8,
+        value: DeviceErrorCounterInfo,
+    },
+    CellVoltageMinMax {
+        node_id: u8,
+        value: CellVoltageMinMax,
+    },
+    CellVoltageLimit {
+        node_id: u8,
+        value: CellVoltageLimit,
+    },
+    BatteryVoltage {
+        node_id: u8,
+        value: BatteryVoltage,
+    },
+    BatteryVoltageLimit {
+        node_id: u8,
+        value: BatteryVoltageLimit,
+    },
+    BatteryCurrent {
+        node_id: u8,
+        value: BatteryCurrent,
+    },
+    BatteryCurrentLimit {
+        node_id: u8,
+        value: BatteryCurrentLimit,
+    },
+    FetTemperature {
+        node_id: u8,
+        value: FetTemperature,
+    },
+    FetTemperatureMinMax {
+        node_id: u8,
+        value: FetTemperatureMinMax,
+    },
+    FetTemperatureLimit {
+        node_id: u8,
+        value: FetTemperatureLimit,
+    },
+    CellTemperature {
+        node_id: u8,
+        value: CellTemperature,
+    },
+    CellTemperatureMinMax {
+        node_id: u8,
+        value: CellTemperatureMinMax,
+    },
+    CellTemperatureLimit {
+        node_id: u8,
+        value: CellTemperatureLimit,
+    },
+    CellBalanceStatus {
+        node_id: u8,
+        value: CellBalanceStatus,
+    },
+    CellBalanceLimit {
+        node_id: u8,
+        value: CellBalanceLimit,
+    },
+    CellImpedance {
+        node_id: u8,
+        value: CellImpedance,
+    },
+    BatteryCapacity {
+        node_id: u8,
+        value: BatteryCapacity,
+    },
+    BatteryCapacityParam {
+        node_id: u8,
+        value: BatteryCapacityParam,
+    },
+    BatteryCycleCount {
+        node_id: u8,
+        value: BatteryCycleCount,
+    },
+    BatteryChargeVoltage {
+        node_id: u8,
+        value: BatteryChargeVoltage,
+    },
+    BatteryChargeCurrent {
+        node_id: u8,
+        value: BatteryChargeCurrent,
+    },
+    BatteryChargeCurrentValid {
+        node_id: u8,
+        value: BatteryChargeCurrentValid,
+    },
+    BatteryChargeCurrentMaxNormal {
+        node_id: u8,
+        value: BatteryChargeCurrentMaxNormal,
+    },
+    BatteryChargeCurrentMaxLow {
+        node_id: u8,
+        value: BatteryChargeCurrentMaxLow,
+    },
+    BatteryChargeCurrentMaxHigh {
+        node_id: u8,
+        value: BatteryChargeCurrentMaxHigh,
+    },
+    BatteryChargeCurrentKeepPower {
+        node_id: u8,
+        value: BatteryChargeCurrentKeepPower,
+    },
+    BatteryChargeCurrentDecreaseStepsize1 {
+        node_id: u8,
+        value: BatteryChargeCurrentDecreaseStepsize1,
+    },
+    BatteryChargeCurrentIncreaseStepsize1 {
+        node_id: u8,
+        value: BatteryChargeCurrentIncreaseStepsize1,
+    },
+    BatteryChargeCurrentDecreaseStepsize2 {
+        node_id: u8,
+        value: BatteryChargeCurrentDecreaseStepsize2,
+    },
+    BatteryChargeCurrentIncreaseStepsize2 {
+        node_id: u8,
+        value: BatteryChargeCurrentIncreaseStepsize2,
+    },
+    BatteryChargeCurrentModifyInterval {
+        node_id: u8,
+        value: BatteryChargeCurrentModifyInterval,
+    },
+    BatteryChargeTemperature {
+        node_id: u8,
+        value: BatteryChargeTemperature,
+    },
+    MasterBatteryTemperature {
+        node_id: u8,
+        value: MasterBatteryTemperature,
+    },
+    KeepPowerTimer {
+        node_id: u8,
+        value: KeepPowerTimer,
+    },
 }
 
 impl std::fmt::Display for SdoResponse {
@@ -1070,6 +1463,36 @@ impl std::fmt::Display for SdoResponse {
             SdoResponse::BatteryChargeCurrent { value, .. } => {
                 write!(f, "valid={:.3}A", value.charge_current_valid_a)
             },
+            SdoResponse::BatteryChargeCurrentValid { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentMaxNormal { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentMaxLow { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentMaxHigh { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentKeepPower { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentDecreaseStepsize1 { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentIncreaseStepsize1 { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentDecreaseStepsize2 { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentIncreaseStepsize2 { value, .. } => {
+                write!(f, "{} ({:.3}A)", value.value, value.value_a)
+            },
+            SdoResponse::BatteryChargeCurrentModifyInterval { value, .. } => {
+                write!(f, "{} ({:.1}ms)", value.value, value.value_ms)
+            },
             SdoResponse::BatteryChargeTemperature { value, .. } => {
                 write!(f, "min_low={:.1}C", value.temp_min_low_c)
             },
@@ -1140,6 +1563,16 @@ pub struct SdoData {
     pub battery_cycle_count: Option<BatteryCycleCount>,
     pub battery_charge_voltage: Option<BatteryChargeVoltage>,
     pub battery_charge_current: Option<BatteryChargeCurrent>,
+    pub battery_charge_current_valid: Option<BatteryChargeCurrentValid>,
+    pub battery_charge_current_max_normal: Option<BatteryChargeCurrentMaxNormal>,
+    pub battery_charge_current_max_low: Option<BatteryChargeCurrentMaxLow>,
+    pub battery_charge_current_max_high: Option<BatteryChargeCurrentMaxHigh>,
+    pub battery_charge_current_keep_power: Option<BatteryChargeCurrentKeepPower>,
+    pub battery_charge_current_decrease_stepsize1: Option<BatteryChargeCurrentDecreaseStepsize1>,
+    pub battery_charge_current_increase_stepsize1: Option<BatteryChargeCurrentIncreaseStepsize1>,
+    pub battery_charge_current_decrease_stepsize2: Option<BatteryChargeCurrentDecreaseStepsize2>,
+    pub battery_charge_current_increase_stepsize2: Option<BatteryChargeCurrentIncreaseStepsize2>,
+    pub battery_charge_current_modify_interval: Option<BatteryChargeCurrentModifyInterval>,
     pub battery_charge_temperature: Option<BatteryChargeTemperature>,
     pub master_battery_temperature: Option<MasterBatteryTemperature>,
     pub keep_power_timer: Option<KeepPowerTimer>,

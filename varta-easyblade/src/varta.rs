@@ -12,6 +12,16 @@ use crate::varta_easyblade_can_messages;
 use varta_easyblade::BatteryCapacity;
 use varta_easyblade::BatteryCapacityParam;
 use varta_easyblade::BatteryChargeCurrent;
+use varta_easyblade::BatteryChargeCurrentDecreaseStepsize1;
+use varta_easyblade::BatteryChargeCurrentDecreaseStepsize2;
+use varta_easyblade::BatteryChargeCurrentIncreaseStepsize1;
+use varta_easyblade::BatteryChargeCurrentIncreaseStepsize2;
+use varta_easyblade::BatteryChargeCurrentKeepPower;
+use varta_easyblade::BatteryChargeCurrentMaxHigh;
+use varta_easyblade::BatteryChargeCurrentMaxLow;
+use varta_easyblade::BatteryChargeCurrentMaxNormal;
+use varta_easyblade::BatteryChargeCurrentModifyInterval;
+use varta_easyblade::BatteryChargeCurrentValid;
 use varta_easyblade::BatteryChargeTemperature;
 use varta_easyblade::BatteryChargeVoltage;
 use varta_easyblade::BatteryCurrent;
@@ -1287,6 +1297,16 @@ impl Varta {
                     battery_cycle_count: None,
                     battery_charge_voltage: None,
                     battery_charge_current: None,
+                    battery_charge_current_valid: None,
+                    battery_charge_current_max_normal: None,
+                    battery_charge_current_max_low: None,
+                    battery_charge_current_max_high: None,
+                    battery_charge_current_keep_power: None,
+                    battery_charge_current_decrease_stepsize1: None,
+                    battery_charge_current_increase_stepsize1: None,
+                    battery_charge_current_decrease_stepsize2: None,
+                    battery_charge_current_increase_stepsize2: None,
+                    battery_charge_current_modify_interval: None,
                     battery_charge_temperature: None,
                     master_battery_temperature: None,
                     keep_power_timer: None,
@@ -2766,6 +2786,158 @@ impl SdoSession {
                     },
                 })
             },
+            SdoRequest::BatteryChargeCurrentValid => {
+                let v = self
+                    .sdo_client
+                    .read_u32(
+                        BatteryChargeCurrentValid::INDEX,
+                        BatteryChargeCurrentValid::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentValid {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentValid { value: v, value_a: v as f32 / 1000.0 },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentMaxNormal => {
+                let v = self
+                    .sdo_client
+                    .read_u32(
+                        BatteryChargeCurrentMaxNormal::INDEX,
+                        BatteryChargeCurrentMaxNormal::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentMaxNormal {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentMaxNormal { value: v, value_a: v as f32 / 1000.0 },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentMaxLow => {
+                let v = self
+                    .sdo_client
+                    .read_u32(
+                        BatteryChargeCurrentMaxLow::INDEX,
+                        BatteryChargeCurrentMaxLow::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentMaxLow {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentMaxLow { value: v, value_a: v as f32 / 1000.0 },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentMaxHigh => {
+                let v = self
+                    .sdo_client
+                    .read_u32(
+                        BatteryChargeCurrentMaxHigh::INDEX,
+                        BatteryChargeCurrentMaxHigh::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentMaxHigh {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentMaxHigh { value: v, value_a: v as f32 / 1000.0 },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentKeepPower => {
+                let v = self
+                    .sdo_client
+                    .read_u32(
+                        BatteryChargeCurrentKeepPower::INDEX,
+                        BatteryChargeCurrentKeepPower::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentKeepPower {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentKeepPower { value: v, value_a: v as f32 / 1000.0 },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentDecreaseStepsize1 => {
+                let v = self
+                    .sdo_client
+                    .read_u16(
+                        BatteryChargeCurrentDecreaseStepsize1::INDEX,
+                        BatteryChargeCurrentDecreaseStepsize1::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentDecreaseStepsize1 {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentDecreaseStepsize1 {
+                        value: v,
+                        value_a: v as f32 / 1000.0,
+                    },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentIncreaseStepsize1 => {
+                let v = self
+                    .sdo_client
+                    .read_u16(
+                        BatteryChargeCurrentIncreaseStepsize1::INDEX,
+                        BatteryChargeCurrentIncreaseStepsize1::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentIncreaseStepsize1 {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentIncreaseStepsize1 {
+                        value: v,
+                        value_a: v as f32 / 1000.0,
+                    },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentDecreaseStepsize2 => {
+                let v = self
+                    .sdo_client
+                    .read_u16(
+                        BatteryChargeCurrentDecreaseStepsize2::INDEX,
+                        BatteryChargeCurrentDecreaseStepsize2::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentDecreaseStepsize2 {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentDecreaseStepsize2 {
+                        value: v,
+                        value_a: v as f32 / 1000.0,
+                    },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentIncreaseStepsize2 => {
+                let v = self
+                    .sdo_client
+                    .read_u16(
+                        BatteryChargeCurrentIncreaseStepsize2::INDEX,
+                        BatteryChargeCurrentIncreaseStepsize2::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentIncreaseStepsize2 {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentIncreaseStepsize2 {
+                        value: v,
+                        value_a: v as f32 / 1000.0,
+                    },
+                })
+            },
+            SdoRequest::BatteryChargeCurrentModifyInterval => {
+                let v = self
+                    .sdo_client
+                    .read_u32(
+                        BatteryChargeCurrentModifyInterval::INDEX,
+                        BatteryChargeCurrentModifyInterval::SUBINDEX,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(SdoResponse::BatteryChargeCurrentModifyInterval {
+                    node_id: self.node_id,
+                    value: BatteryChargeCurrentModifyInterval { value: v, value_ms: v as f32 },
+                })
+            },
             SdoRequest::BatteryChargeTemperature => {
                 let t1 = self
                     .sdo_client
@@ -3165,7 +3337,8 @@ impl SdoSession {
         }
 
         // Unlock, write, save
-        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F)
+            .await?;
 
         let target_raw = (battery_charge_max_voltage * 1000.0) as u32;
         self.sdo_client
@@ -3209,7 +3382,8 @@ impl SdoSession {
             return Ok(false);
         }
 
-        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F)
+            .await?;
 
         let target_raw = (keep_power_voltage * 1000.0) as u32;
         self.sdo_client
@@ -3248,7 +3422,8 @@ impl SdoSession {
             return Ok(false);
         }
 
-        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F)
+            .await?;
 
         self.sdo_client
             .write_u32(0x3d00, 0x0c, timer_seconds)
@@ -3289,7 +3464,8 @@ impl SdoSession {
             return Ok(false);
         }
 
-        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F)
+            .await?;
 
         self.sdo_client
             .write_u32(0x2104, 0x02, voltage_mv)
@@ -3330,7 +3506,8 @@ impl SdoSession {
             return Ok(false);
         }
 
-        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F).await?;
+        self.sdo_unlock(crate::varta::SdoSession::CONFIG_UNLOCK_CODE_032F)
+            .await?;
 
         self.sdo_client
             .write_u16(0x2304, 0x0a, current_ma)
