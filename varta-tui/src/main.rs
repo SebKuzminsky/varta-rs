@@ -90,40 +90,56 @@ impl ConfigValue {
 struct ConfigField {
     /// Display label (e.g. "Battery Max Charge Voltage")
     label: &'static str,
-    /// Current value (float or uint)
-    value: ConfigValue,
+    /// Current value (float or uint), or None while the SDO read is pending
+    value: Option<ConfigValue>,
     /// Unit string (e.g. "V", "s", "mA")
     unit: &'static str,
     /// Editable portion of the value (just the number, e.g. "54.600")
     edit_buffer: String,
     /// Whether this field is currently being edited
     is_focused: bool,
+    /// Whether the user has typed into the edit buffer since it was last
+    /// filled from the read value (protects in-progress input from updates)
+    user_edited: bool,
     /// Status message after last write attempt (cleared on next input)
     status: Option<String>,
 }
 
 impl ConfigField {
-    fn new(label: &'static str, value: ConfigValue, unit: &'static str) -> Self {
+    /// Create a field whose value has not been read yet (shows "Pending...").
+    fn new(label: &'static str, unit: &'static str) -> Self {
         Self {
             label,
-            value,
+            value: None,
             unit,
-            edit_buffer: value.edit_str(),
+            edit_buffer: String::new(),
             is_focused: false,
+            user_edited: false,
             status: None,
         }
     }
 
     fn update_value(&mut self, value: ConfigValue) {
-        self.value = value;
+        self.value = Some(value);
         self.edit_buffer = value.edit_str();
+        self.user_edited = false;
+    }
+
+    /// Reset the field to the pending state (e.g. after a write, while the
+    /// re-read is in flight).
+    fn reset_to_pending(&mut self) {
+        self.value = None;
+        self.edit_buffer.clear();
+        self.user_edited = false;
     }
 
     fn insert_char(&mut self, ch: char) {
+        self.user_edited = true;
         self.edit_buffer.push(ch);
     }
 
     fn backspace(&mut self) {
+        self.user_edited = true;
         self.edit_buffer.pop();
     }
 
@@ -675,91 +691,63 @@ fn update_config_state(
         },
     };
 
-    // Initialize fields if empty
+    // Always show all configuration fields; values are pending until read.
     if config_state.fields.is_empty() {
-        // Field 0: Battery Max Charge Voltage (0x3000:02)
-        if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage {
-            config_state.fields.push(ConfigField::new(
-                "Battery Max Charge Voltage",
-                ConfigValue::Float(charge_voltage.charge_max_voltage_v),
-                "V",
-            ));
-        }
-        // Field 1: Battery Keep Power Voltage (0x3000:03)
-        if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage {
-            config_state.fields.push(ConfigField::new(
-                "Battery Keep Power Voltage",
-                ConfigValue::Float(charge_voltage.charge_keep_power_voltage_v),
-                "V",
-            ));
-        }
-        // Field 2: Keep Power Timer (0x3d00:0c)
-        if let Some(ref kpt) = eb.sdo.keep_power_timer {
-            config_state.fields.push(ConfigField::new(
-                "Keep Power Timer",
-                ConfigValue::UInt(kpt.value),
-                "s",
-            ));
-        }
-        // Field 3: Single Cell Max Charge Voltage (0x2104:02)
-        if let Some(ref limit) = eb.sdo.cell_voltage_limit {
-            config_state.fields.push(ConfigField::new(
-                "Single Cell Max Charge Voltage",
-                ConfigValue::Float(limit.max_charge_voltage_v),
-                "V",
-            ));
-        }
-        // Field 4: Battery Charge Current Fully Charged End (0x2304:0a)
-        if let Some(ref current_limit) = eb.sdo.battery_current_limit {
-            config_state.fields.push(ConfigField::new(
-                "Charge Current Fully Charged End",
-                ConfigValue::Float(
-                    current_limit.charge_current_fully_charged_end_ma as f32 / 1000.0,
-                ),
-                "A",
-            ));
-        }
-        if !config_state.fields.is_empty() {
-            config_state.fields[0].is_focused = true;
-        }
-        return;
+        config_state.fields = vec![
+            // Field 0: Battery Max Charge Voltage (0x3000:02)
+            ConfigField::new("Battery Max Charge Voltage", "V"),
+            // Field 1: Battery Keep Power Voltage (0x3000:03)
+            ConfigField::new("Battery Keep Power Voltage", "V"),
+            // Field 2: Keep Power Timer (0x3d00:0c)
+            ConfigField::new("Keep Power Timer", "s"),
+            // Field 3: Single Cell Max Charge Voltage (0x2104:02)
+            ConfigField::new("Single Cell Max Charge Voltage", "V"),
+            // Field 4: Battery Charge Current Fully Charged End (0x2304:0a)
+            ConfigField::new("Charge Current Fully Charged End", "A"),
+        ];
+        config_state.fields[0].is_focused = true;
     }
 
-    // Update values from module data (but not while a field is being edited)
-    // Field 0: Battery Max Charge Voltage
-    if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage
-        && let Some(field) = config_state.fields.get_mut(0)
-        && !field.is_focused
-    {
-        field.update_value(ConfigValue::Float(charge_voltage.charge_max_voltage_v));
-    }
-    // Field 1: Battery Keep Power Voltage
-    if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage
-        && let Some(field) = config_state.fields.get_mut(1)
-        && !field.is_focused
-    {
-        field.update_value(ConfigValue::Float(
-            charge_voltage.charge_keep_power_voltage_v,
-        ));
+    // Update values from module data as the SDO reads complete
+    // (but not while a field is being edited)
+    // A focused field is skipped to avoid clobbering user input, unless the
+    // user hasn't typed anything into it yet (e.g. initial focus on a
+    // not-yet-read value).
+    let editable = |field: &ConfigField| !field.is_focused || !field.user_edited;
+
+    // Fields 0 & 1: from BatteryChargeVoltage (0x3000)
+    if let Some(ref charge_voltage) = eb.sdo.battery_charge_voltage {
+        if let Some(field) = config_state.fields.get_mut(0)
+            && editable(field)
+        {
+            field.update_value(ConfigValue::Float(charge_voltage.charge_max_voltage_v));
+        }
+        if let Some(field) = config_state.fields.get_mut(1)
+            && editable(field)
+        {
+            field.update_value(ConfigValue::Float(
+                charge_voltage.charge_keep_power_voltage_v,
+            ));
+        }
     }
     // Field 2: Keep Power Timer
     if let Some(ref kpt) = eb.sdo.keep_power_timer
         && let Some(field) = config_state.fields.get_mut(2)
-        && !field.is_focused
+        && editable(field)
     {
         field.update_value(ConfigValue::UInt(kpt.value));
     }
     // Field 3: Single Cell Max Charge Voltage
     if let Some(ref limit) = eb.sdo.cell_voltage_limit
         && let Some(field) = config_state.fields.get_mut(3)
-        && !field.is_focused
+        && editable(field)
     {
         field.update_value(ConfigValue::Float(limit.max_charge_voltage_v));
     }
     // Field 4: Battery Charge Current Fully Charged End
     if let Some(ref current_limit) = eb.sdo.battery_current_limit
         && let Some(field) = config_state.fields.get_mut(4)
-        && !field.is_focused
+        && editable(field)
     {
         field.update_value(ConfigValue::Float(
             current_limit.charge_current_fully_charged_end_ma as f32 / 1000.0,
@@ -1947,29 +1935,26 @@ fn draw_frame(
 
         SelectedTab::Configuration => {
             if config_state.fields.is_empty() {
-                let text =
-                    Paragraph::new("No configuration data available").wrap(Wrap { trim: true });
+                let text = Paragraph::new("No module selected").wrap(Wrap { trim: true });
                 f.render_widget(text, content_area);
             } else {
                 let mut lines: Vec<Line> = Vec::new();
                 for field in config_state.fields.iter() {
-                    let display_value: String = if field.is_focused {
-                        field.edit_buffer.clone()
-                    } else {
-                        field.value.edit_str()
-                    };
-                    let unit = field.unit;
-
                     let mut spans: Vec<Span> = Vec::new();
                     spans.push(Span::raw(format!("{}: ", field.label)));
 
                     if field.is_focused {
                         spans.push(Span::styled(
-                            format!("{} {}", display_value, unit),
+                            format!("{} {}", field.edit_buffer, field.unit),
                             Style::new().add_modifier(Modifier::REVERSED),
                         ));
+                    } else if let Some(value) = &field.value {
+                        spans.push(Span::raw(format!("{} {}", value.edit_str(), field.unit)));
                     } else {
-                        spans.push(Span::raw(format!("{} {}", display_value, unit)));
+                        spans.push(Span::styled(
+                            "Pending...".to_string(),
+                            Style::new().fg(Color::Gray),
+                        ));
                     }
 
                     lines.push(Line::from(spans));
@@ -2632,6 +2617,7 @@ async fn main() -> anyhow::Result<()> {
                             config_state.focused_index = (config_state.focused_index + 1) % config_state.fields.len();
                             for (i, field) in config_state.fields.iter_mut().enumerate() {
                                 field.is_focused = i == config_state.focused_index;
+                                field.user_edited = false;
                                 field.status = None;
                             }
                         }
@@ -2647,6 +2633,11 @@ async fn main() -> anyhow::Result<()> {
                                 config_state.fields[idx].status = Some("No module selected".to_string());
                                 continue;
                             };
+                            if config_state.fields[idx].value.is_none() {
+                                config_state.fields[idx]
+                                    .status = Some("Value not read yet".to_string());
+                                continue;
+                            }
                             let mut sdo_session = match varta_easyblade::SdoSession::new(&args.can_interface, node_id) {
                                 Ok(s) => s,
                                 Err(e) => {
@@ -2730,11 +2721,40 @@ async fn main() -> anyhow::Result<()> {
                                         node_id, config_state.fields[idx].label, msg,
                                     ));
                                     config_state.fields[idx].is_focused = false;
-                                    // Re-read all config SDOs so the display updates
-                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::BatteryChargeVoltage));
-                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::CellVoltageLimit));
-                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::BatteryCurrentLimit));
-                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, SdoRequest::KeepPowerTimer));
+                                    // Show the field as pending until the re-read confirms
+                                    config_state.fields[idx].reset_to_pending();
+                                    // Drop the cached value of the SDO we just wrote (so the
+                                    // stale value doesn't repopulate the field) and re-read
+                                    // just that one SDO.
+                                    let re_read = match idx {
+                                        // Fields 0 & 1 both come from 0x3000
+                                        0 | 1 => {
+                                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                                eb.sdo.battery_charge_voltage = None;
+                                            }
+                                            SdoRequest::BatteryChargeVoltage
+                                        }
+                                        2 => {
+                                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                                eb.sdo.keep_power_timer = None;
+                                            }
+                                            SdoRequest::KeepPowerTimer
+                                        }
+                                        3 => {
+                                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                                eb.sdo.cell_voltage_limit = None;
+                                            }
+                                            SdoRequest::CellVoltageLimit
+                                        }
+                                        4 => {
+                                            if let Some(Some(eb)) = varta.easyblades.get_mut(node_id as usize) {
+                                                eb.sdo.battery_current_limit = None;
+                                            }
+                                            SdoRequest::BatteryCurrentLimit
+                                        }
+                                        _ => unreachable!("unknown config field"),
+                                    };
+                                    let _ = varta_sdo_task.sdo_request_tx.send((node_id, re_read));
                                 },
                                 Err(e) => {
                                     debug_log(&format!(
