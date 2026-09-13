@@ -10,6 +10,10 @@ struct Args {
     #[arg(long)]
     vm_url: String,
 
+    /// Used as identifying label for all metrics posted to Victora Metrics.
+    #[arg(long)]
+    battery_name: String,
+
     /// The CAN interface to connect to (e.g. 'can0' or 'vcan0').
     #[arg(long, default_value_t = String::from("can0"))]
     canbus: String,
@@ -29,7 +33,7 @@ fn now_ms() -> i64 {
         .as_millis() as i64
 }
 
-async fn send_metrics(client: &Client, vm_url: &str, points: &[MetricPoint]) -> Result<(), String> {
+async fn send_metrics(client: &Client, vm_url: &str, battery_name: &str, points: &[MetricPoint]) -> Result<(), String> {
     for p in points {
         let mut obj = serde_json::Map::new();
 
@@ -37,6 +41,10 @@ async fn send_metrics(client: &Client, vm_url: &str, points: &[MetricPoint]) -> 
         metric_obj.insert(
             "__name__".into(),
             serde_json::Value::String(p.metric.clone()),
+        );
+        metric_obj.insert(
+            "battery_name".into(),
+            serde_json::Value::String(battery_name.into()),
         );
         obj.insert("metric".into(), serde_json::Value::Object(metric_obj));
 
@@ -281,7 +289,7 @@ async fn main() {
 
                 let points = collect_metrics(&varta);
                 if !points.is_empty()
-                    && let Err(e) = send_metrics(&client, &args.vm_url, &points).await
+                    && let Err(e) = send_metrics(&client, &args.vm_url, &args.battery_name, &points).await
                 {
                     eprintln!("Error sending metrics: {}", e);
                 }
