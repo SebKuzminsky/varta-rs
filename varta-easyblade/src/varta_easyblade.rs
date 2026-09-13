@@ -462,7 +462,7 @@ impl std::fmt::Display for BatteryCurrent {
 pub struct BatteryCurrentLimit {
     pub discharge_sc_error_a: f32,
     /// Battery Charge Current Fully Charged End (0x2304 subA), in mA
-    pub charge_current_fully_charged_end_ma: u16,
+    pub charge_current_fully_charged_end_ma: i32,
 }
 
 impl Sdo for BatteryCurrentLimit {

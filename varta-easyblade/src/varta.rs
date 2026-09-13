@@ -2382,7 +2382,7 @@ impl SdoSession {
                     .map_err(|e| e.to_string())?;
                 let fully_charged_end = self
                     .sdo_client
-                    .read_u16(BatteryCurrentLimit::INDEX, 0x0a)
+                    .read_i32(BatteryCurrentLimit::INDEX, 0x0a)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(SdoResponse::BatteryCurrentLimit {
