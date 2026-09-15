@@ -20,7 +20,7 @@ RestartSec=60
 User=seb
 
 WorkingDirectory=/home/seb
-ExecStart=/home/seb/.cargo/bin/varta-victoria-metrics --vm-url http://bifrost.local:8428 --canbus can-varta
+ExecStart=/home/seb/.cargo/bin/varta-victoria-metrics --vm-url http://bifrost.local:8428 --canbus can-varta --battery-name garage
 
 
 [Install]
