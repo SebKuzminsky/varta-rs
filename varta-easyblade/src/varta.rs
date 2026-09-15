@@ -166,16 +166,7 @@ impl Varta {
         Ok(varta)
     }
 
-    pub async fn process_socketcan_msg(&mut self) -> Result<Option<u8>, Error> {
-        let can_frame = self
-            .socketcan_interface
-            .read_frame()
-            .await
-            .map_err(|e| Error::Io {
-                can_interface: self.canbus_interface.clone(),
-                e,
-            })?;
-
+    fn handle_frame(&mut self, can_frame: socketcan::frame::CanFrame) -> Result<Option<u8>, Error> {
         let msg = crate::varta_easyblade_can_messages::Messages::from_can_message(
             can_frame.id(),
             can_frame.data(),
@@ -1218,6 +1209,44 @@ impl Varta {
         self.expire_missing_modules();
 
         Ok(new_module)
+    }
+
+    // Process up to `max_to_process` CAN messages. Returns early if
+    // it discovers a new node, or if there are no more CAN frames
+    // to process.
+    pub fn process_socketcan_messages(&mut self, max_to_process: usize) -> Result<Option<u8>, Error> {
+        for _ in 0..max_to_process {
+            match self.socketcan_interface.try_read_frame() {
+                Ok(frame) => {
+                    match self.handle_frame(frame) {
+                        Ok(Some(new_node)) => return Ok(Some(new_node)),
+                        Ok(None) => (),
+                        Err(e) => return Err(e),
+                    }
+                }
+                Err(e) => {
+                    return Err(Error::Io {
+                        can_interface: self.canbus_interface.clone(),
+                        e,
+                    });
+                }
+            }
+        }
+        println!("read all {max_to_process}!");
+        Ok(None)
+    }
+
+    // Wait for an process one CAN frame.
+    pub async fn process_socketcan_msg(&mut self) -> Result<Option<u8>, Error> {
+        let can_frame = self
+            .socketcan_interface
+            .read_frame()
+            .await
+            .map_err(|e| Error::Io {
+                can_interface: self.canbus_interface.clone(),
+                e,
+            })?;
+        self.handle_frame(can_frame)
     }
 
     /// Expire any modules that have not reported in the last 10 seconds.

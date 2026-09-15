@@ -836,6 +836,10 @@ fn draw_frame(
     let top_block = Block::bordered().title(" Master ");
     let top_inner = top_block.inner(layout[0]);
     let master = &varta.master;
+    let last_seen = match master.last_seen {
+        Some(t) => format_last_seen(t),
+        None => String::from("none"),
+    };
     if master
         .last_seen
         .and_then(|t| std::time::SystemTime::now().duration_since(t).ok())
@@ -843,7 +847,7 @@ fn draw_frame(
         .unwrap_or(false)
     {
         let info = format!(
-            "{:>7.2} V  {:>7.2} A  SOC: {:>6}\n\
+            "{:>7.2} V  {:>7.2} A  SOC: {:>6}   (Last seen {})\n\
              Charge Request: {:>7.2} V, {:>7.2} A  Status: {:>6}\n\
              FET Temp: {:>6.1}  Cell Temp: {:>6.1}\n\
              Capacity: {:>7.2} Ah remaining / {:>7.2} Ah full ({:>7.2} Ah design)",
@@ -852,6 +856,7 @@ fn draw_frame(
             master
                 .soc
                 .map_or("-----".to_string(), |v| format!("{:.1}%", v)),
+            last_seen,
             master.charge_voltage_request.unwrap_or(0.0),
             master.charge_current_request.unwrap_or(0.0),
             master
@@ -2249,6 +2254,8 @@ async fn main() -> anyhow::Result<()> {
     let mut save_state = SaveState::Idle;
     let mut config_state = ConfigState::default();
 
+    let mut last_redraw: Option<tokio::time::Instant> = None;
+
     loop {
         let count = varta.easyblade_count();
         if selected >= count {
@@ -2258,19 +2265,26 @@ async fn main() -> anyhow::Result<()> {
         // Update config fields from current module data
         update_config_state(&mut config_state, &varta, selected);
 
-        let current_tab = selected_tab;
-        let current_save_state = save_state.clone();
-        let current_config_state = config_state.clone();
-        terminal.draw(|f| {
-            draw_frame(
-                f,
-                &varta,
-                selected,
-                current_tab,
-                &current_save_state,
-                &current_config_state,
-            )
-        })?;
+        let should_redraw = match last_redraw {
+            None => true,
+            Some(t) => tokio::time::Instant::now() - t > tokio::time::Duration::from_millis(100),
+        };
+        if should_redraw {
+            let current_tab = selected_tab;
+            let current_save_state = save_state.clone();
+            let current_config_state = config_state.clone();
+            terminal.draw(|f| {
+                draw_frame(
+                    f,
+                    &varta,
+                    selected,
+                    current_tab,
+                    &current_save_state,
+                    &current_config_state,
+                )
+            })?;
+            last_redraw = Some(tokio::time::Instant::now());
+        }
 
         tokio::select! {
             result = varta.process_socketcan_msg() => {
@@ -2284,8 +2298,20 @@ async fn main() -> anyhow::Result<()> {
                         debug_log(&format!("[CAN] Error processing message: {}", e));
                     },
                 }
+                // ... And while we're here, process a bunch more CAN frames, if available.
+                match varta.process_socketcan_messages(32) {
+                    Ok(Some(node_id)) => {
+                        debug_log(&format!("[CAN] New module detected: node_id={}", node_id));
+                        burst_initial_sdos(node_id, &varta_sdo_task.sdo_request_tx);
+                    },
+                    Ok(None) => {},
+                    Err(e) => {
+                        debug_log(&format!("[CAN] Error processing message: {}", e));
+                    },
+                }
                 expire_timer = Box::pin(tokio::time::sleep(varta.next_expiry_delay()));
             }
+
             _ = expire_timer.as_mut() => {
                 let before = varta.easyblade_count();
                 varta.expire_missing_modules();
