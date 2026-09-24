@@ -2279,7 +2279,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "varta-easyblade",
- "zencan-client",
+ "zencan-client 0.0.4 (git+https://github.com/mcbridejc/zencan.git?rev=c8eb8f44548cd5515496fa0e385083a839674c14)",
 ]
 
 [[package]]
@@ -2296,7 +2296,7 @@ dependencies = [
  "strum 0.27.2",
  "thiserror",
  "tokio",
- "zencan-client",
+ "zencan-client 0.0.4 (git+https://github.com/mcbridejc/zencan.git?rev=c8eb8f44548cd5515496fa0e385083a839674c14)",
 ]
 
 [[package]]
@@ -2313,7 +2313,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "varta-easyblade",
- "zencan-client",
+ "zencan-client 0.0.4 (git+https://github.com/mcbridejc/zencan.git)",
 ]
 
 [[package]]
@@ -2326,7 +2326,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "varta-easyblade",
- "zencan-client",
+ "zencan-client 0.0.4 (git+https://github.com/mcbridejc/zencan.git?rev=c8eb8f44548cd5515496fa0e385083a839674c14)",
 ]
 
 [[package]]
@@ -2667,6 +2667,24 @@ dependencies = [
 [[package]]
 name = "zencan-client"
 version = "0.0.4"
+source = "git+https://github.com/mcbridejc/zencan.git?rev=c8eb8f44548cd5515496fa0e385083a839674c14#c8eb8f44548cd5515496fa0e385083a839674c14"
+dependencies = [
+ "crc16",
+ "futures",
+ "log",
+ "paste",
+ "serde",
+ "snafu",
+ "socketcan",
+ "tokio",
+ "tokio-util",
+ "toml",
+ "zencan-common 0.0.4 (git+https://github.com/mcbridejc/zencan.git?rev=c8eb8f44548cd5515496fa0e385083a839674c14)",
+]
+
+[[package]]
+name = "zencan-client"
+version = "0.0.4"
 source = "git+https://github.com/mcbridejc/zencan.git#e05de88e75b965043e2a68c640951555f3a75ccb"
 dependencies = [
  "crc16",
@@ -2679,7 +2697,25 @@ dependencies = [
  "tokio",
  "tokio-util",
  "toml",
- "zencan-common",
+ "zencan-common 0.0.4 (git+https://github.com/mcbridejc/zencan.git)",
+]
+
+[[package]]
+name = "zencan-common"
+version = "0.0.4"
+source = "git+https://github.com/mcbridejc/zencan.git?rev=c8eb8f44548cd5515496fa0e385083a839674c14#c8eb8f44548cd5515496fa0e385083a839674c14"
+dependencies = [
+ "arbitrary-int",
+ "chrono",
+ "critical-section",
+ "defmt-or-log",
+ "int-enum",
+ "regex",
+ "serde",
+ "snafu",
+ "socketcan",
+ "tokio",
+ "toml",
 ]
 
 [[package]]
