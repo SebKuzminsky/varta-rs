@@ -1,13 +1,14 @@
 use anyhow::Context;
 
-fn main() {
+fn dbc_codegen() {
     let dbc_path = String::from("./varta-easyblade.dbc");
     let dbc_contents = std::fs::read_to_string(&dbc_path)
         .context("failed to read DBC file {dbc_path}\n")
         .unwrap();
     println!("cargo:rerun-if-changed={}", dbc_path);
 
-    let output_path = String::from("src/varta_easyblade_can_messages.rs");
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let output_path = std::path::Path::new(&out_dir).join("varta_easyblade_can_messages.rs");
 
     dbc_codegen::Config::builder()
         .dbc_name(&dbc_path)
@@ -20,4 +21,8 @@ fn main() {
         .build()
         .write_to_file(&output_path)
         .unwrap();
+}
+
+fn main() {
+    dbc_codegen();
 }

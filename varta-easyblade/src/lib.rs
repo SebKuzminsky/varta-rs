@@ -49,7 +49,9 @@ pub use varta_easyblade::VartaEasyblade;
 
 #[rustfmt::skip]
 #[allow(clippy::too_many_arguments)]
-mod varta_easyblade_can_messages;
+mod varta_easyblade_can_messages {
+    include!(concat!(env!("OUT_DIR"), "/varta_easyblade_can_messages.rs"));
+}
 
 /// Maximum number of EasyBlade modules supported.
 pub const MAX_MODULES: usize = 16;
