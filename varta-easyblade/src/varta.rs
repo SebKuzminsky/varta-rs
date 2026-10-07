@@ -9,6 +9,8 @@ use crate::SdoResponse;
 use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
+use crate::varta_easyblade_object_dictionary;
+use crate::varta_easyblade_object_dictionary::SdoReadable;
 
 use varta_easyblade::BatteryCapacity;
 use varta_easyblade::BatteryCapacityParam;
@@ -1405,19 +1407,11 @@ impl SdoSession {
     pub async fn read(&mut self, request: SdoRequest) -> Result<SdoResponse, String> {
         match request {
             SdoRequest::SerialNumber => {
-                let bytes = self
-                    .sdo_client
-                    .upload(SerialNumber::INDEX, SerialNumber::SUBINDEX)
-                    .await
+                let serial_number = varta_easyblade_object_dictionary::SerialNumberCustomer1_0x2004_0x01::new(&mut self.sdo_client).await
                     .map_err(|e| e.to_string())?;
-                if bytes.len() < 2 {
-                    return Err("Serial number data too short".to_string());
-                }
                 Ok(SdoResponse::SerialNumber {
                     node_id: self.node_id,
-                    value: SerialNumber {
-                        value: u16::from_le_bytes([bytes[0], bytes[1]]),
-                    },
+                    value: SerialNumber { value: serial_number.value as u16, },
                 })
             },
             SdoRequest::SoftwareVersion => {

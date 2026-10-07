@@ -43,7 +43,6 @@ pub use varta_easyblade::MsgBits;
 pub use varta_easyblade::Pdo;
 pub use varta_easyblade::SdoRequest;
 pub use varta_easyblade::SdoResponse;
-pub use varta_easyblade::SerialNumber;
 pub use varta_easyblade::SoftwareVersion;
 pub use varta_easyblade::VartaEasyblade;
 

@@ -1,5 +1,8 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+use crate::varta_easyblade_object_dictionary;
+use crate::varta_easyblade_object_dictionary::Sdo;
+
 /// Trait for SDO objects that defines their CANopen index and subindex.
 /// This is the single source of truth for SDO address constants, eliminating
 /// duplication between Display formatting and read logic.
@@ -20,18 +23,6 @@ pub trait OldSdo: std::fmt::Display + Sized {
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SerialNumber {
     pub value: u16,
-}
-
-impl OldSdo for SerialNumber {
-    const NAME: &'static str = "Serial Number Customer 1";
-    const INDEX: u16 = 0x2004;
-    const SUBINDEX: u8 = 0x01;
-}
-
-impl std::fmt::Display for SerialNumber {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as OldSdo>::fmt_sdo(f)
-    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -1124,7 +1115,11 @@ pub enum SdoRequest {
 impl std::fmt::Display for SdoRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SdoRequest::SerialNumber => <SerialNumber as OldSdo>::fmt_sdo(f),
+            SdoRequest::SerialNumber => write!(
+                f,
+                "{}",
+                varta_easyblade_object_dictionary::SerialNumberCustomer1_0x2004_0x01::NAME
+            ),
             SdoRequest::SoftwareVersion => <SoftwareVersion as OldSdo>::fmt_sdo(f),
             SdoRequest::HardwareVersion => <HardwareVersion as OldSdo>::fmt_sdo(f),
             SdoRequest::DeviceErrorHistory => <DeviceErrorHistory as OldSdo>::fmt_sdo(f),
@@ -1383,7 +1378,7 @@ pub enum SdoResponse {
 impl std::fmt::Display for SdoResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SdoResponse::SerialNumber { value, .. } => write!(f, "{}", value),
+            SdoResponse::SerialNumber { value, .. } => write!(f, "{}", value.value),
             SdoResponse::SoftwareVersion { value, .. } => write!(f, "{}", value),
             SdoResponse::HardwareVersion { value, .. } => write!(f, "{}", value),
             SdoResponse::DeviceErrorHistory { value, .. } => {
