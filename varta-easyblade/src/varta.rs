@@ -53,7 +53,7 @@ use varta_easyblade::HardwareVersion;
 use varta_easyblade::KeepPowerTimer;
 use varta_easyblade::MasterBatteryTemperature;
 use varta_easyblade::MsgBits;
-use varta_easyblade::Sdo;
+use varta_easyblade::OldSdo;
 use varta_easyblade::SerialNumber;
 use varta_easyblade::SoftwareVersion;
 

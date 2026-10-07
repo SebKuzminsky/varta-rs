@@ -3,7 +3,7 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 /// Trait for SDO objects that defines their CANopen index and subindex.
 /// This is the single source of truth for SDO address constants, eliminating
 /// duplication between Display formatting and read logic.
-pub trait Sdo: std::fmt::Display + Sized {
+pub trait OldSdo: std::fmt::Display + Sized {
     /// Human-readable name from the EDS (e.g. "Serial Number Customer 1").
     const NAME: &'static str;
     /// The CANopen object dictionary index for this SDO.
@@ -22,7 +22,7 @@ pub struct SerialNumber {
     pub value: u16,
 }
 
-impl Sdo for SerialNumber {
+impl OldSdo for SerialNumber {
     const NAME: &'static str = "Serial Number Customer 1";
     const INDEX: u16 = 0x2004;
     const SUBINDEX: u8 = 0x01;
@@ -30,7 +30,7 @@ impl Sdo for SerialNumber {
 
 impl std::fmt::Display for SerialNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -39,7 +39,7 @@ pub struct SoftwareVersion {
     pub value: String,
 }
 
-impl Sdo for SoftwareVersion {
+impl OldSdo for SoftwareVersion {
     const NAME: &'static str = "Application FW RevVersion Information";
     const INDEX: u16 = 0x2000;
     const SUBINDEX: u8 = 0x02;
@@ -47,7 +47,7 @@ impl Sdo for SoftwareVersion {
 
 impl std::fmt::Display for SoftwareVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -56,7 +56,7 @@ pub struct HardwareVersion {
     pub value: String,
 }
 
-impl Sdo for HardwareVersion {
+impl OldSdo for HardwareVersion {
     const NAME: &'static str = "Hardware Version Information";
     const INDEX: u16 = 0x2000;
     const SUBINDEX: u8 = 0x01;
@@ -64,7 +64,7 @@ impl Sdo for HardwareVersion {
 
 impl std::fmt::Display for HardwareVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -74,7 +74,7 @@ pub struct DeviceErrorHistory {
     pub values: Vec<DeviceError>,
 }
 
-impl Sdo for DeviceErrorHistory {
+impl OldSdo for DeviceErrorHistory {
     const NAME: &'static str = "Device Error History Values";
     const INDEX: u16 = 0x2018;
     const SUBINDEX: u8 = 0x00;
@@ -82,7 +82,7 @@ impl Sdo for DeviceErrorHistory {
 
 impl std::fmt::Display for DeviceErrorHistory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -92,7 +92,7 @@ pub struct CellVoltages {
     pub values: Vec<f32>,
 }
 
-impl Sdo for CellVoltages {
+impl OldSdo for CellVoltages {
     const NAME: &'static str = "Cell Voltage Values";
     const INDEX: u16 = 0x2100;
     const SUBINDEX: u8 = 0x01;
@@ -100,7 +100,7 @@ impl Sdo for CellVoltages {
 
 impl std::fmt::Display for CellVoltages {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -109,7 +109,7 @@ pub struct DeviceControlParam {
     pub value: u16,
 }
 
-impl Sdo for DeviceControlParam {
+impl OldSdo for DeviceControlParam {
     const NAME: &'static str = "Code Number";
     const INDEX: u16 = 0x2010;
     const SUBINDEX: u8 = 0x01;
@@ -117,7 +117,7 @@ impl Sdo for DeviceControlParam {
 
 impl std::fmt::Display for DeviceControlParam {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -126,7 +126,7 @@ pub struct BatteryCapacityParam {
     pub value: u8,
 }
 
-impl Sdo for BatteryCapacityParam {
+impl OldSdo for BatteryCapacityParam {
     const NAME: &'static str = "SOC Capacity Fully Charged Flag Reset";
     const INDEX: u16 = 0x2804;
     const SUBINDEX: u8 = 0x01;
@@ -134,7 +134,7 @@ impl Sdo for BatteryCapacityParam {
 
 impl std::fmt::Display for BatteryCapacityParam {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -145,7 +145,7 @@ pub struct DeviceConfigInfo {
     pub config_3: String,
 }
 
-impl Sdo for DeviceConfigInfo {
+impl OldSdo for DeviceConfigInfo {
     const NAME: &'static str = "Device Configuration Information";
     const INDEX: u16 = 0x2002;
     const SUBINDEX: u8 = 0x01;
@@ -153,7 +153,7 @@ impl Sdo for DeviceConfigInfo {
 
 impl std::fmt::Display for DeviceConfigInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -164,7 +164,7 @@ pub struct DeviceSerialNumberInfo {
     pub serial_part_3: u32,
 }
 
-impl Sdo for DeviceSerialNumberInfo {
+impl OldSdo for DeviceSerialNumberInfo {
     const NAME: &'static str = "Device Serial Number Information";
     const INDEX: u16 = 0x2004;
     const SUBINDEX: u8 = 0x01;
@@ -172,7 +172,7 @@ impl Sdo for DeviceSerialNumberInfo {
 
 impl std::fmt::Display for DeviceSerialNumberInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -183,7 +183,7 @@ pub struct DeviceDateInfo {
     pub day: u16,
 }
 
-impl Sdo for DeviceDateInfo {
+impl OldSdo for DeviceDateInfo {
     const NAME: &'static str = "Device Date Information";
     const INDEX: u16 = 0x2006;
     const SUBINDEX: u8 = 0x01;
@@ -191,7 +191,7 @@ impl Sdo for DeviceDateInfo {
 
 impl std::fmt::Display for DeviceDateInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -206,7 +206,7 @@ pub struct DeviceVariantInfo {
     pub variant_7: u8,
 }
 
-impl Sdo for DeviceVariantInfo {
+impl OldSdo for DeviceVariantInfo {
     const NAME: &'static str = "Device Variant Information";
     const INDEX: u16 = 0x2008;
     const SUBINDEX: u8 = 0x01;
@@ -214,7 +214,7 @@ impl Sdo for DeviceVariantInfo {
 
 impl std::fmt::Display for DeviceVariantInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -301,7 +301,7 @@ pub struct DeviceErrorCounterInfo {
     pub reserved_0f: u16,
 }
 
-impl Sdo for DeviceErrorCounterInfo {
+impl OldSdo for DeviceErrorCounterInfo {
     const NAME: &'static str = "Device Error Counter Values";
     const INDEX: u16 = 0x201A;
     const SUBINDEX: u8 = 0x01;
@@ -309,7 +309,7 @@ impl Sdo for DeviceErrorCounterInfo {
 
 impl std::fmt::Display for DeviceErrorCounterInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -327,7 +327,7 @@ pub struct DeviceOperationTime {
     pub hours_above_80: u32,
 }
 
-impl Sdo for DeviceOperationTime {
+impl OldSdo for DeviceOperationTime {
     const NAME: &'static str = "Device Operation Time Values";
     const INDEX: u16 = 0x2016;
     const SUBINDEX: u8 = 0x01;
@@ -335,7 +335,7 @@ impl Sdo for DeviceOperationTime {
 
 impl std::fmt::Display for DeviceOperationTime {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -345,7 +345,7 @@ pub struct CellVoltageMinMax {
     pub max_voltage_v: f32,
 }
 
-impl Sdo for CellVoltageMinMax {
+impl OldSdo for CellVoltageMinMax {
     const NAME: &'static str = "Cell Voltage Min Max Values";
     const INDEX: u16 = 0x2102;
     const SUBINDEX: u8 = 0x01;
@@ -353,7 +353,7 @@ impl Sdo for CellVoltageMinMax {
 
 impl std::fmt::Display for CellVoltageMinMax {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -389,7 +389,7 @@ pub struct CellVoltageLimit {
     pub max_charge_voltage_no_password_v: f32,
 }
 
-impl Sdo for CellVoltageLimit {
+impl OldSdo for CellVoltageLimit {
     const NAME: &'static str = "Cell Voltage Limit Parameter";
     const INDEX: u16 = 0x2104;
     const SUBINDEX: u8 = 0x01;
@@ -397,7 +397,7 @@ impl Sdo for CellVoltageLimit {
 
 impl std::fmt::Display for CellVoltageLimit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -408,7 +408,7 @@ pub struct BatteryVoltage {
     pub external_connector_voltage_v: f32,
 }
 
-impl Sdo for BatteryVoltage {
+impl OldSdo for BatteryVoltage {
     const NAME: &'static str = "Battery Voltage Values";
     const INDEX: u16 = 0x2200;
     const SUBINDEX: u8 = 0x01;
@@ -416,7 +416,7 @@ impl Sdo for BatteryVoltage {
 
 impl std::fmt::Display for BatteryVoltage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -425,7 +425,7 @@ pub struct BatteryVoltageLimit {
     pub internal_external_min_delta_v: f32,
 }
 
-impl Sdo for BatteryVoltageLimit {
+impl OldSdo for BatteryVoltageLimit {
     const NAME: &'static str = "Battery Voltage Limit Parameter";
     const INDEX: u16 = 0x2204;
     const SUBINDEX: u8 = 0x01;
@@ -433,7 +433,7 @@ impl Sdo for BatteryVoltageLimit {
 
 impl std::fmt::Display for BatteryVoltageLimit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -446,7 +446,7 @@ pub struct BatteryCurrent {
     pub average_10s_current_a: f32,
 }
 
-impl Sdo for BatteryCurrent {
+impl OldSdo for BatteryCurrent {
     const NAME: &'static str = "Battery Current Values";
     const INDEX: u16 = 0x2300;
     const SUBINDEX: u8 = 0x01;
@@ -454,7 +454,7 @@ impl Sdo for BatteryCurrent {
 
 impl std::fmt::Display for BatteryCurrent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -465,10 +465,16 @@ pub struct BatteryCurrentLimit {
     pub charge_current_fully_charged_end_ma: i32,
 }
 
-impl Sdo for BatteryCurrentLimit {
+impl OldSdo for BatteryCurrentLimit {
     const NAME: &'static str = "Battery Current Limit Parameter";
     const INDEX: u16 = 0x2304;
     const SUBINDEX: u8 = 0x01;
+}
+
+impl std::fmt::Display for BatteryCurrentLimit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as OldSdo>::fmt_sdo(f)
+    }
 }
 
 /// Keep Power Timer (0x3d00 subC) — Charger Standby to OFF Delay Parameter.
@@ -478,7 +484,7 @@ pub struct KeepPowerTimer {
     pub value: u32,
 }
 
-impl Sdo for KeepPowerTimer {
+impl OldSdo for KeepPowerTimer {
     const NAME: &'static str = "Charger Standby to OFF Delay Parameter";
     const INDEX: u16 = 0x3d00;
     const SUBINDEX: u8 = 0x0c;
@@ -486,13 +492,7 @@ impl Sdo for KeepPowerTimer {
 
 impl std::fmt::Display for KeepPowerTimer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
-    }
-}
-
-impl std::fmt::Display for BatteryCurrentLimit {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -502,7 +502,7 @@ pub struct FetTemperature {
     pub temperature_2_c: f32,
 }
 
-impl Sdo for FetTemperature {
+impl OldSdo for FetTemperature {
     const NAME: &'static str = "FET Temperature Values";
     const INDEX: u16 = 0x2400;
     const SUBINDEX: u8 = 0x01;
@@ -510,7 +510,7 @@ impl Sdo for FetTemperature {
 
 impl std::fmt::Display for FetTemperature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -520,7 +520,7 @@ pub struct FetTemperatureMinMax {
     pub max_temperature_c: f32,
 }
 
-impl Sdo for FetTemperatureMinMax {
+impl OldSdo for FetTemperatureMinMax {
     const NAME: &'static str = "FET Temperature Min Max Values";
     const INDEX: u16 = 0x2402;
     const SUBINDEX: u8 = 0x01;
@@ -528,7 +528,7 @@ impl Sdo for FetTemperatureMinMax {
 
 impl std::fmt::Display for FetTemperatureMinMax {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -537,7 +537,7 @@ pub struct FetTemperatureLimit {
     pub discharge_over_temp_c: f32,
 }
 
-impl Sdo for FetTemperatureLimit {
+impl OldSdo for FetTemperatureLimit {
     const NAME: &'static str = "FET Temperature Limit Parameter";
     const INDEX: u16 = 0x2404;
     const SUBINDEX: u8 = 0x01;
@@ -545,7 +545,7 @@ impl Sdo for FetTemperatureLimit {
 
 impl std::fmt::Display for FetTemperatureLimit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -559,7 +559,7 @@ pub struct CellTemperature {
     pub temperature_6_c: f32,
 }
 
-impl Sdo for CellTemperature {
+impl OldSdo for CellTemperature {
     const NAME: &'static str = "Cell Temperature Values";
     const INDEX: u16 = 0x2500;
     const SUBINDEX: u8 = 0x01;
@@ -567,7 +567,7 @@ impl Sdo for CellTemperature {
 
 impl std::fmt::Display for CellTemperature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -577,7 +577,7 @@ pub struct CellTemperatureMinMax {
     pub max_temperature_c: f32,
 }
 
-impl Sdo for CellTemperatureMinMax {
+impl OldSdo for CellTemperatureMinMax {
     const NAME: &'static str = "Cell Temperature Min Max Values";
     const INDEX: u16 = 0x2502;
     const SUBINDEX: u8 = 0x01;
@@ -585,7 +585,7 @@ impl Sdo for CellTemperatureMinMax {
 
 impl std::fmt::Display for CellTemperatureMinMax {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -594,7 +594,7 @@ pub struct CellTemperatureLimit {
     pub discharge_over_temp_c: f32,
 }
 
-impl Sdo for CellTemperatureLimit {
+impl OldSdo for CellTemperatureLimit {
     const NAME: &'static str = "Cell Temperature Limit Parameter";
     const INDEX: u16 = 0x2504;
     const SUBINDEX: u8 = 0x01;
@@ -602,7 +602,7 @@ impl Sdo for CellTemperatureLimit {
 
 impl std::fmt::Display for CellTemperatureLimit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -613,7 +613,7 @@ pub struct CellBalanceStatus {
     pub balance_fet_active_persistent: u16,
 }
 
-impl Sdo for CellBalanceStatus {
+impl OldSdo for CellBalanceStatus {
     const NAME: &'static str = "Cell Balance Status Register Values";
     const INDEX: u16 = 0x2600;
     const SUBINDEX: u8 = 0x01;
@@ -621,7 +621,7 @@ impl Sdo for CellBalanceStatus {
 
 impl std::fmt::Display for CellBalanceStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -630,7 +630,7 @@ pub struct CellBalanceLimit {
     pub balance_start_diff_voltage_v: f32,
 }
 
-impl Sdo for CellBalanceLimit {
+impl OldSdo for CellBalanceLimit {
     const NAME: &'static str = "Cell Balance Limit Parameter";
     const INDEX: u16 = 0x2604;
     const SUBINDEX: u8 = 0x01;
@@ -638,7 +638,7 @@ impl Sdo for CellBalanceLimit {
 
 impl std::fmt::Display for CellBalanceLimit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -649,7 +649,7 @@ pub struct CellImpedance {
     pub high_temp_factor: u16,
 }
 
-impl Sdo for CellImpedance {
+impl OldSdo for CellImpedance {
     const NAME: &'static str = "Cell Impedance Parameter";
     const INDEX: u16 = 0x2700;
     const SUBINDEX: u8 = 0x01;
@@ -657,7 +657,7 @@ impl Sdo for CellImpedance {
 
 impl std::fmt::Display for CellImpedance {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -672,7 +672,7 @@ pub struct BatteryCapacity {
     pub total_charged_capacity_ah: f32,
 }
 
-impl Sdo for BatteryCapacity {
+impl OldSdo for BatteryCapacity {
     const NAME: &'static str = "Battery Capacity Values";
     const INDEX: u16 = 0x2800;
     const SUBINDEX: u8 = 0x01;
@@ -680,7 +680,7 @@ impl Sdo for BatteryCapacity {
 
 impl std::fmt::Display for BatteryCapacity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -697,7 +697,7 @@ pub struct BatteryCycleCount {
     pub charge_use_high_temperature: u32,
 }
 
-impl Sdo for BatteryCycleCount {
+impl OldSdo for BatteryCycleCount {
     const NAME: &'static str = "Battery Cycles Count Values";
     const INDEX: u16 = 0x2900;
     const SUBINDEX: u8 = 0x01;
@@ -705,7 +705,7 @@ impl Sdo for BatteryCycleCount {
 
 impl std::fmt::Display for BatteryCycleCount {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -716,7 +716,7 @@ pub struct BatteryChargeVoltage {
     pub charge_keep_power_voltage_v: f32,
 }
 
-impl Sdo for BatteryChargeVoltage {
+impl OldSdo for BatteryChargeVoltage {
     const NAME: &'static str = "Battery Charge Voltage Parameter";
     const INDEX: u16 = 0x3000;
     const SUBINDEX: u8 = 0x01;
@@ -724,7 +724,7 @@ impl Sdo for BatteryChargeVoltage {
 
 impl std::fmt::Display for BatteryChargeVoltage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -742,7 +742,7 @@ pub struct BatteryChargeCurrent {
     pub charge_current_config: u32,
 }
 
-impl Sdo for BatteryChargeCurrent {
+impl OldSdo for BatteryChargeCurrent {
     const NAME: &'static str = "Battery Charge Current Parameter";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x01;
@@ -750,7 +750,7 @@ impl Sdo for BatteryChargeCurrent {
 
 impl std::fmt::Display for BatteryChargeCurrent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -763,7 +763,7 @@ pub struct BatteryChargeCurrentValid {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentValid {
+impl OldSdo for BatteryChargeCurrentValid {
     const NAME: &'static str = "Battery Charge Current Valid Value";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x01;
@@ -771,7 +771,7 @@ impl Sdo for BatteryChargeCurrentValid {
 
 impl std::fmt::Display for BatteryChargeCurrentValid {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -784,7 +784,7 @@ pub struct BatteryChargeCurrentMaxNormal {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentMaxNormal {
+impl OldSdo for BatteryChargeCurrentMaxNormal {
     const NAME: &'static str = "Battery Charge Max Current Normal Temp Parameter";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x02;
@@ -792,7 +792,7 @@ impl Sdo for BatteryChargeCurrentMaxNormal {
 
 impl std::fmt::Display for BatteryChargeCurrentMaxNormal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -805,7 +805,7 @@ pub struct BatteryChargeCurrentMaxLow {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentMaxLow {
+impl OldSdo for BatteryChargeCurrentMaxLow {
     const NAME: &'static str = "Battery Charge Max Current Low Temp Parameter";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x03;
@@ -813,7 +813,7 @@ impl Sdo for BatteryChargeCurrentMaxLow {
 
 impl std::fmt::Display for BatteryChargeCurrentMaxLow {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -826,7 +826,7 @@ pub struct BatteryChargeCurrentMaxHigh {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentMaxHigh {
+impl OldSdo for BatteryChargeCurrentMaxHigh {
     const NAME: &'static str = "Battery Charge Max Current High Temp Parameter";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x04;
@@ -834,7 +834,7 @@ impl Sdo for BatteryChargeCurrentMaxHigh {
 
 impl std::fmt::Display for BatteryChargeCurrentMaxHigh {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -847,7 +847,7 @@ pub struct BatteryChargeCurrentKeepPower {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentKeepPower {
+impl OldSdo for BatteryChargeCurrentKeepPower {
     const NAME: &'static str = "Battery Charge Current Keep Power Parameter";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x05;
@@ -855,7 +855,7 @@ impl Sdo for BatteryChargeCurrentKeepPower {
 
 impl std::fmt::Display for BatteryChargeCurrentKeepPower {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -868,7 +868,7 @@ pub struct BatteryChargeCurrentDecreaseStepsize1 {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentDecreaseStepsize1 {
+impl OldSdo for BatteryChargeCurrentDecreaseStepsize1 {
     const NAME: &'static str = "Battery Charge Current Decrease Stepsize Parameter 1";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x06;
@@ -876,7 +876,7 @@ impl Sdo for BatteryChargeCurrentDecreaseStepsize1 {
 
 impl std::fmt::Display for BatteryChargeCurrentDecreaseStepsize1 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -889,7 +889,7 @@ pub struct BatteryChargeCurrentIncreaseStepsize1 {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentIncreaseStepsize1 {
+impl OldSdo for BatteryChargeCurrentIncreaseStepsize1 {
     const NAME: &'static str = "Battery Charge Current Increase Stepsize Parameter 1";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x07;
@@ -897,7 +897,7 @@ impl Sdo for BatteryChargeCurrentIncreaseStepsize1 {
 
 impl std::fmt::Display for BatteryChargeCurrentIncreaseStepsize1 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -910,7 +910,7 @@ pub struct BatteryChargeCurrentDecreaseStepsize2 {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentDecreaseStepsize2 {
+impl OldSdo for BatteryChargeCurrentDecreaseStepsize2 {
     const NAME: &'static str = "Battery Charge Current Decrease Stepsize Parameter 2";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x08;
@@ -918,7 +918,7 @@ impl Sdo for BatteryChargeCurrentDecreaseStepsize2 {
 
 impl std::fmt::Display for BatteryChargeCurrentDecreaseStepsize2 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -931,7 +931,7 @@ pub struct BatteryChargeCurrentIncreaseStepsize2 {
     pub value_a: f32,
 }
 
-impl Sdo for BatteryChargeCurrentIncreaseStepsize2 {
+impl OldSdo for BatteryChargeCurrentIncreaseStepsize2 {
     const NAME: &'static str = "Battery Charge Current Increase Stepsize Parameter 2";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x09;
@@ -939,7 +939,7 @@ impl Sdo for BatteryChargeCurrentIncreaseStepsize2 {
 
 impl std::fmt::Display for BatteryChargeCurrentIncreaseStepsize2 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -952,7 +952,7 @@ pub struct BatteryChargeCurrentModifyInterval {
     pub value_ms: f32,
 }
 
-impl Sdo for BatteryChargeCurrentModifyInterval {
+impl OldSdo for BatteryChargeCurrentModifyInterval {
     const NAME: &'static str = "Battery Charge Current Modify Intervall Time Parameter";
     const INDEX: u16 = 0x3100;
     const SUBINDEX: u8 = 0x0a;
@@ -960,7 +960,7 @@ impl Sdo for BatteryChargeCurrentModifyInterval {
 
 impl std::fmt::Display for BatteryChargeCurrentModifyInterval {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -974,7 +974,7 @@ pub struct BatteryChargeTemperature {
     pub temp_6_c: f32,
 }
 
-impl Sdo for BatteryChargeTemperature {
+impl OldSdo for BatteryChargeTemperature {
     const NAME: &'static str = "Battery Charge Temperature Parameter";
     const INDEX: u16 = 0x3200;
     const SUBINDEX: u8 = 0x01;
@@ -982,7 +982,7 @@ impl Sdo for BatteryChargeTemperature {
 
 impl std::fmt::Display for BatteryChargeTemperature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -992,7 +992,7 @@ pub struct MasterBatteryTemperature {
     pub max_cell_temperature_c: f32,
 }
 
-impl Sdo for MasterBatteryTemperature {
+impl OldSdo for MasterBatteryTemperature {
     const NAME: &'static str = "Master Battery Temperature Values";
     const INDEX: u16 = 0x3700;
     const SUBINDEX: u8 = 0x01;
@@ -1000,7 +1000,7 @@ impl Sdo for MasterBatteryTemperature {
 
 impl std::fmt::Display for MasterBatteryTemperature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -1010,7 +1010,7 @@ pub struct SaveConfig {
     pub value: u16,
 }
 
-impl Sdo for SaveConfig {
+impl OldSdo for SaveConfig {
     const NAME: &'static str = "Save Configuration";
     const INDEX: u16 = 0x2010;
     const SUBINDEX: u8 = 0x01;
@@ -1018,7 +1018,7 @@ impl Sdo for SaveConfig {
 
 impl std::fmt::Display for SaveConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        <Self as Sdo>::fmt_sdo(f)
+        <Self as OldSdo>::fmt_sdo(f)
     }
 }
 
@@ -1124,69 +1124,75 @@ pub enum SdoRequest {
 impl std::fmt::Display for SdoRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SdoRequest::SerialNumber => <SerialNumber as Sdo>::fmt_sdo(f),
-            SdoRequest::SoftwareVersion => <SoftwareVersion as Sdo>::fmt_sdo(f),
-            SdoRequest::HardwareVersion => <HardwareVersion as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceErrorHistory => <DeviceErrorHistory as Sdo>::fmt_sdo(f),
-            SdoRequest::CellVoltages => <CellVoltages as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceConfigInfo => <DeviceConfigInfo as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceSerialNumberInfo => <DeviceSerialNumberInfo as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceDateInfo => <DeviceDateInfo as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceVariantInfo => <DeviceVariantInfo as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceControlParam => <DeviceControlParam as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceOperationTime => <DeviceOperationTime as Sdo>::fmt_sdo(f),
-            SdoRequest::DeviceErrorCounter => <DeviceErrorCounterInfo as Sdo>::fmt_sdo(f),
-            SdoRequest::CellVoltageMinMax => <CellVoltageMinMax as Sdo>::fmt_sdo(f),
-            SdoRequest::CellVoltageLimit => <CellVoltageLimit as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryVoltage => <BatteryVoltage as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryVoltageLimit => <BatteryVoltageLimit as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryCurrent => <BatteryCurrent as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryCurrentLimit => <BatteryCurrentLimit as Sdo>::fmt_sdo(f),
-            SdoRequest::FetTemperature => <FetTemperature as Sdo>::fmt_sdo(f),
-            SdoRequest::FetTemperatureMinMax => <FetTemperatureMinMax as Sdo>::fmt_sdo(f),
-            SdoRequest::FetTemperatureLimit => <FetTemperatureLimit as Sdo>::fmt_sdo(f),
-            SdoRequest::CellTemperature => <CellTemperature as Sdo>::fmt_sdo(f),
-            SdoRequest::CellTemperatureMinMax => <CellTemperatureMinMax as Sdo>::fmt_sdo(f),
-            SdoRequest::CellTemperatureLimit => <CellTemperatureLimit as Sdo>::fmt_sdo(f),
-            SdoRequest::CellBalanceStatus => <CellBalanceStatus as Sdo>::fmt_sdo(f),
-            SdoRequest::CellBalanceLimit => <CellBalanceLimit as Sdo>::fmt_sdo(f),
-            SdoRequest::CellImpedance => <CellImpedance as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryCapacity => <BatteryCapacity as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryCapacityParam => <BatteryCapacityParam as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryCycleCount => <BatteryCycleCount as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryChargeVoltage => <BatteryChargeVoltage as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryChargeCurrent => <BatteryChargeCurrent as Sdo>::fmt_sdo(f),
-            SdoRequest::BatteryChargeCurrentValid => <BatteryChargeCurrentValid as Sdo>::fmt_sdo(f),
+            SdoRequest::SerialNumber => <SerialNumber as OldSdo>::fmt_sdo(f),
+            SdoRequest::SoftwareVersion => <SoftwareVersion as OldSdo>::fmt_sdo(f),
+            SdoRequest::HardwareVersion => <HardwareVersion as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceErrorHistory => <DeviceErrorHistory as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellVoltages => <CellVoltages as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceConfigInfo => <DeviceConfigInfo as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceSerialNumberInfo => <DeviceSerialNumberInfo as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceDateInfo => <DeviceDateInfo as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceVariantInfo => <DeviceVariantInfo as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceControlParam => <DeviceControlParam as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceOperationTime => <DeviceOperationTime as OldSdo>::fmt_sdo(f),
+            SdoRequest::DeviceErrorCounter => <DeviceErrorCounterInfo as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellVoltageMinMax => <CellVoltageMinMax as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellVoltageLimit => <CellVoltageLimit as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryVoltage => <BatteryVoltage as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryVoltageLimit => <BatteryVoltageLimit as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryCurrent => <BatteryCurrent as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryCurrentLimit => <BatteryCurrentLimit as OldSdo>::fmt_sdo(f),
+            SdoRequest::FetTemperature => <FetTemperature as OldSdo>::fmt_sdo(f),
+            SdoRequest::FetTemperatureMinMax => <FetTemperatureMinMax as OldSdo>::fmt_sdo(f),
+            SdoRequest::FetTemperatureLimit => <FetTemperatureLimit as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellTemperature => <CellTemperature as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellTemperatureMinMax => <CellTemperatureMinMax as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellTemperatureLimit => <CellTemperatureLimit as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellBalanceStatus => <CellBalanceStatus as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellBalanceLimit => <CellBalanceLimit as OldSdo>::fmt_sdo(f),
+            SdoRequest::CellImpedance => <CellImpedance as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryCapacity => <BatteryCapacity as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryCapacityParam => <BatteryCapacityParam as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryCycleCount => <BatteryCycleCount as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeVoltage => <BatteryChargeVoltage as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeCurrent => <BatteryChargeCurrent as OldSdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeCurrentValid => {
+                <BatteryChargeCurrentValid as OldSdo>::fmt_sdo(f)
+            },
             SdoRequest::BatteryChargeCurrentMaxNormal => {
-                <BatteryChargeCurrentMaxNormal as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentMaxNormal as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentMaxLow => {
-                <BatteryChargeCurrentMaxLow as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentMaxLow as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentMaxHigh => {
-                <BatteryChargeCurrentMaxHigh as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentMaxHigh as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentKeepPower => {
-                <BatteryChargeCurrentKeepPower as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentKeepPower as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentDecreaseStepsize1 => {
-                <BatteryChargeCurrentDecreaseStepsize1 as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentDecreaseStepsize1 as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentIncreaseStepsize1 => {
-                <BatteryChargeCurrentIncreaseStepsize1 as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentIncreaseStepsize1 as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentDecreaseStepsize2 => {
-                <BatteryChargeCurrentDecreaseStepsize2 as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentDecreaseStepsize2 as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentIncreaseStepsize2 => {
-                <BatteryChargeCurrentIncreaseStepsize2 as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentIncreaseStepsize2 as OldSdo>::fmt_sdo(f)
             },
             SdoRequest::BatteryChargeCurrentModifyInterval => {
-                <BatteryChargeCurrentModifyInterval as Sdo>::fmt_sdo(f)
+                <BatteryChargeCurrentModifyInterval as OldSdo>::fmt_sdo(f)
             },
-            SdoRequest::BatteryChargeTemperature => <BatteryChargeTemperature as Sdo>::fmt_sdo(f),
-            SdoRequest::MasterBatteryTemperature => <MasterBatteryTemperature as Sdo>::fmt_sdo(f),
-            SdoRequest::KeepPowerTimer => <KeepPowerTimer as Sdo>::fmt_sdo(f),
+            SdoRequest::BatteryChargeTemperature => {
+                <BatteryChargeTemperature as OldSdo>::fmt_sdo(f)
+            },
+            SdoRequest::MasterBatteryTemperature => {
+                <MasterBatteryTemperature as OldSdo>::fmt_sdo(f)
+            },
+            SdoRequest::KeepPowerTimer => <KeepPowerTimer as OldSdo>::fmt_sdo(f),
         }
     }
 }
