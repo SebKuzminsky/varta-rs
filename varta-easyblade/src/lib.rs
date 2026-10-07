@@ -53,6 +53,12 @@ mod varta_easyblade_can_messages {
     include!(concat!(env!("OUT_DIR"), "/varta_easyblade_can_messages.rs"));
 }
 
+#[rustfmt::skip]
+#[allow(dead_code)]
+mod varta_easyblade_object_dictionary {
+    include!(concat!(env!("OUT_DIR"), "/varta_easyblade_object_dictionary.rs"));
+}
+
 /// Maximum number of EasyBlade modules supported.
 pub const MAX_MODULES: usize = 16;
 

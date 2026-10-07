@@ -23,6 +23,18 @@ fn dbc_codegen() {
         .unwrap();
 }
 
+fn eds_codegen() {
+    let eds_path = String::from("../doc/Easy Blade 48_56654799092/Datasheet and Technical Info/EDS file_V02.06.02.00/V02.06.02.00.eds");
+    println!("cargo:rerun-if-changed={}", eds_path);
+
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let output_path = std::path::Path::new(&out_dir).join("varta_easyblade_object_dictionary.rs");
+
+    let eds = eds_codegen::read_eds(&eds_path).unwrap();
+    eds_codegen::write(&eds, &output_path.to_string_lossy()).unwrap();
+}
+
 fn main() {
+    eds_codegen();
     dbc_codegen();
 }

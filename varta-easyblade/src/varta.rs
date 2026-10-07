@@ -9,6 +9,7 @@ use crate::SdoResponse;
 use crate::VartaEasyblade;
 use crate::varta_easyblade;
 use crate::varta_easyblade_can_messages;
+
 use varta_easyblade::BatteryCapacity;
 use varta_easyblade::BatteryCapacityParam;
 use varta_easyblade::BatteryChargeCurrent;
