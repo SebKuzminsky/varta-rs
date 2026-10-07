@@ -10,6 +10,7 @@ default = [ "std" ]
 [build-dependencies]
 anyhow = "1.0.103"
 dbc-codegen = { git = "https://github.com/oxibus/dbc-codegen.git" }
+eds-codegen = { git = "https://codeberg.org/SebKuzminsky/eds-codegen.git", version = "0.1.0", features = ["zencan"] }
 
 [dependencies]
 bitvec = "1.0.1"

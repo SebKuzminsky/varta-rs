@@ -1,5 +1,8 @@
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
+use crate::varta_easyblade_object_dictionary;
+use crate::varta_easyblade_object_dictionary::{Sdo, SdoIoController, SdoReadable, SdoWritable};
+
 /// Trait for SDO objects that defines their CANopen index and subindex.
 /// This is the single source of truth for SDO address constants, eliminating
 /// duplication between Display formatting and read logic.
