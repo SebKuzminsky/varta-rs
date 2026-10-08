@@ -6,8 +6,8 @@ use varta_easyblade::Varta;
 #[derive(Debug, Parser)]
 #[command(name = "varta-victoria-metrics")]
 struct Args {
-    /// Victoria Metrics HTTP URL (e.g. http://localhost:8428)
-    #[arg(long)]
+    /// Victoria Metrics HTTP URL 
+    #[arg(long, default_value_t = String::from("http://localhost:8428"))]
     vm_url: String,
 
     /// Used as identifying label for all metrics posted to Victora Metrics.
