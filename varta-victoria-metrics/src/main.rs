@@ -211,6 +211,11 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
                 value: if m.info_bit_4_bypass_fet_on { 1.0 } else { 0.0 },
                 timestamp: ts,
             });
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_fully_charged",
+                value: if m.info_bit_6_fully_charged { 1.0 } else { 0.0 },
+                timestamp: ts,
+            });
         }
     }
 
