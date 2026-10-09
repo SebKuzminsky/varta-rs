@@ -6,8 +6,8 @@ use varta_easyblade::Varta;
 #[derive(Debug, Parser)]
 #[command(name = "varta-victoria-metrics")]
 struct Args {
-    /// Victoria Metrics HTTP URL (e.g. http://localhost:8428)
-    #[arg(long)]
+    /// Victoria Metrics HTTP URL 
+    #[arg(long, default_value_t = String::from("http://localhost:8428"))]
     vm_url: String,
 
     /// Used as identifying label for all metrics posted to Victora Metrics.
@@ -209,6 +209,11 @@ fn collect_metrics(varta: &Varta) -> Vec<MetricPoint> {
             points.push(MetricPoint {
                 metric: metric_header.clone() + "_bypass_fet",
                 value: if m.info_bit_4_bypass_fet_on { 1.0 } else { 0.0 },
+                timestamp: ts,
+            });
+            points.push(MetricPoint {
+                metric: metric_header.clone() + "_fully_charged",
+                value: if m.info_bit_6_fully_charged { 1.0 } else { 0.0 },
                 timestamp: ts,
             });
         }
