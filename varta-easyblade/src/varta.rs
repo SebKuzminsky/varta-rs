@@ -3,59 +3,10 @@ use zencan_client::common::{SocketCanReceiver, SocketCanSender};
 
 use crate::Error;
 use crate::MAX_MODULES;
-use crate::MasterInfo;
-use crate::SdoRequest;
-use crate::SdoResponse;
+use crate::sdo::*;
 use crate::VartaEasyblade;
-use crate::varta_easyblade;
+use crate::varta_easyblade::MasterInfo;
 use crate::varta_easyblade_can_messages;
-use varta_easyblade::BatteryCapacity;
-use varta_easyblade::BatteryCapacityParam;
-use varta_easyblade::BatteryChargeCurrent;
-use varta_easyblade::BatteryChargeCurrentDecreaseStepsize1;
-use varta_easyblade::BatteryChargeCurrentDecreaseStepsize2;
-use varta_easyblade::BatteryChargeCurrentIncreaseStepsize1;
-use varta_easyblade::BatteryChargeCurrentIncreaseStepsize2;
-use varta_easyblade::BatteryChargeCurrentKeepPower;
-use varta_easyblade::BatteryChargeCurrentMaxHigh;
-use varta_easyblade::BatteryChargeCurrentMaxLow;
-use varta_easyblade::BatteryChargeCurrentMaxNormal;
-use varta_easyblade::BatteryChargeCurrentModifyInterval;
-use varta_easyblade::BatteryChargeCurrentValid;
-use varta_easyblade::BatteryChargeTemperature;
-use varta_easyblade::BatteryChargeVoltage;
-use varta_easyblade::BatteryCurrent;
-use varta_easyblade::BatteryCurrentLimit;
-use varta_easyblade::BatteryCycleCount;
-use varta_easyblade::BatteryVoltage;
-use varta_easyblade::BatteryVoltageLimit;
-use varta_easyblade::CellBalanceLimit;
-use varta_easyblade::CellBalanceStatus;
-use varta_easyblade::CellImpedance;
-use varta_easyblade::CellTemperature;
-use varta_easyblade::CellTemperatureLimit;
-use varta_easyblade::CellTemperatureMinMax;
-use varta_easyblade::CellVoltageLimit;
-use varta_easyblade::CellVoltageMinMax;
-use varta_easyblade::CellVoltages;
-use varta_easyblade::DeviceConfigInfo;
-use varta_easyblade::DeviceControlParam;
-use varta_easyblade::DeviceDateInfo;
-use varta_easyblade::DeviceErrorCounterInfo;
-use varta_easyblade::DeviceErrorHistory;
-use varta_easyblade::DeviceOperationTime;
-use varta_easyblade::DeviceSerialNumberInfo;
-use varta_easyblade::DeviceVariantInfo;
-use varta_easyblade::FetTemperature;
-use varta_easyblade::FetTemperatureLimit;
-use varta_easyblade::FetTemperatureMinMax;
-use varta_easyblade::HardwareVersion;
-use varta_easyblade::KeepPowerTimer;
-use varta_easyblade::MasterBatteryTemperature;
-use varta_easyblade::MsgBits;
-use varta_easyblade::Sdo;
-use varta_easyblade::SerialNumber;
-use varta_easyblade::SoftwareVersion;
 
 fn get_node_id_from_can_message(msg: &varta_easyblade_can_messages::Messages) -> Option<u8> {
     match msg {
@@ -1471,10 +1422,10 @@ impl SdoSession {
                         .read_u8(DeviceErrorHistory::INDEX, sub_index)
                         .await
                         .map_err(|e| e.to_string())?;
-                    let e: varta_easyblade::DeviceError =
-                        match varta_easyblade::DeviceError::try_from(val) {
+                    let e: crate::DeviceError =
+                        match crate::DeviceError::try_from(val) {
                             Ok(e) => e,
-                            Err(_) => varta_easyblade::DeviceError::Unknown,
+                            Err(_) => crate::DeviceError::Unknown,
                         };
                     errors.push(e);
                 }
