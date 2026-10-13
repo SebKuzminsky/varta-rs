@@ -1,5 +1,9 @@
 use crate::sdo::*;
 
+/// Records a change in the overall state of the Varta battery.
+#[derive(Debug)]
+pub struct StateChange {
+    node_id: Option<u8>,
 }
 
 #[derive(Debug, Clone, Default)]
