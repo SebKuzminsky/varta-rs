@@ -1157,28 +1157,23 @@ fn draw_frame(
             if let Some(eb) = eb {
                 if let Some(v) = &eb.sdo.device_operation_time {
                     let info = format!(
-                        "Operation Minutes (by temp range):\n\
-                         <0°C:       {:>3} min\n\
-                         0-40°C:     {:>3} min\n\
-                         40-60°C:    {:>3} min\n\
-                         60-80°C:    {:>3} min\n\
-                         >80°C:      {:>3} min\n\
-                         Operation Hours (by temp range):\n\
-                         <0°C:       {:>10} h\n\
-                         0-40°C:     {:>10} h\n\
-                         40-60°C:    {:>10} h\n\
-                         60-80°C:    {:>10} h\n\
-                         >80°C:      {:>10} h\n",
-                        v.minutes_below_zero,
-                        v.minutes_zero_to_40,
-                        v.minutes_40_to_60,
-                        v.minutes_60_to_80,
-                        v.minutes_above_80,
+                        "Operation Time (by temp range):\n\
+                         <0°C:       {:>10}:{:02} hrs:mins\n\
+                         0-40°C:     {:>10}:{:02} hrs:mins\n\
+                         40-60°C:    {:>10}:{:02} hrs:mins\n\
+                         60-80°C:    {:>10}:{:02} hrs:mins\n\
+                         >80°C:      {:>10}:{:02} hrs:mins\n",
+
                         v.hours_below_zero,
+                        v.minutes_below_zero,
                         v.hours_zero_to_40,
+                        v.minutes_zero_to_40,
                         v.hours_40_to_60,
+                        v.minutes_40_to_60,
                         v.hours_60_to_80,
+                        v.minutes_60_to_80,
                         v.hours_above_80,
+                        v.minutes_above_80,
                     );
                     let text = Paragraph::new(info).wrap(Wrap { trim: true });
                     f.render_widget(text, content_area);
